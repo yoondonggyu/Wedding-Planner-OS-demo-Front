@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Wedding Planner OS</title>
+  <meta name="description" content="AI Wedding Planner OS – 기능 우선 랜딩 페이지" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b0d12;--card:#141517;--soft:#1a1f2e;--text:#e8ecf3;--muted:#a7b0c0;--accent:#8b5cf6;--accent-2:#22d3ee;--ok:#10b981;--warn:#f59e0b;--danger:#ef4444;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:linear-gradient(180deg,#0a0c11 0%,#0d111a 60%,#0b0d12 100%);color:var(--text);font-family:'Pretendard',system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    a{color:inherit;text-decoration:none}
+    .container{width:min(1160px,92%);margin:0 auto}
+    header{position:sticky;top:0;backdrop-filter:blur(10px);background-color:rgba(11,13,18,0.6);border-bottom:1px solid rgba(255,255,255,0.06);z-index:30}
+    .nav{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+    .brand{display:flex;gap:10px;align-items:center}
+    .logo{width:28px;height:28px;border-radius:8px;background:conic-gradient(from 180deg,var(--accent),var(--accent-2));box-shadow:0 0 24px rgba(139,92,246,.4)}
+    .nav a{opacity:.9}
+    .nav .links{display:flex;gap:18px;align-items:center}
+    .mobile-menu-btn{display:none;background:none;border:0;color:var(--text);font-size:24px;cursor:pointer;padding:8px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--soft);border:1px solid rgba(255,255,255,0.15);color:#ffffff;font-weight:500;transition:.2s ease;}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.25);background:rgba(139,92,246,0.2);border-color:rgba(139,92,246,0.4)}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b0d12;border:0;font-weight:700}
+
+    .hero{padding:72px 0 40px;position:relative}
+    .glow{position:absolute;inset:-10% -20% auto; height:420px;background:radial-gradient(700px 220px at 40% 10%, rgba(139,92,246,.35), transparent 60%),radial-gradient(600px 200px at 80% 0%, rgba(34,211,238,.25), transparent 60%);filter:blur(40px);pointer-events:none}
+    .hero .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:36px;align-items:center}
+    .tag{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-size:12px;color:var(--muted)}
+    h1{font-size:42px;line-height:1.15;margin:14px 0 16px}
+    .lead{color:var(--muted);font-size:16px}
+    .hero-card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:18px}
+    .hero-card .row{display:flex;gap:12px}
+    .hero-card .col{flex:1;background:var(--card);border:1px solid rgba(255,255,255,.06);padding:16px;border-radius:14px}
+    .kpi{display:flex;gap:12px;align-items:center}
+    .kpi .dot{width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(16,185,129,.15)}
+
+    section{padding:32px 0}
+    .section-title{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+    .section-title h2{margin:0;font-size:22px}
+    .section-title .hint{color:var(--muted);font-size:13px}
+
+    .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .feature-grid.ai4{grid-template-columns:repeat(4,1fr)}
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .card{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:16px;transition:.2s}
+    .card:hover{transform:translateY(-2px)}
+    .card .title{display:flex;align-items:center;justify-content:space-between;font-weight:600}
+    .badge{font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.1);color:var(--muted)}
+    .badge.ok{background:rgba(16,185,129,.12);color:#a7f3d0;border-color:rgba(16,185,129,.3)}
+    .badge.wip{background:rgba(245,158,11,.12);color:#fde68a;border-color:rgba(245,158,11,.3)}
+    .badge.todo{background:rgba(255,255,255,.04)}
+    .card p{color:var(--muted);font-size:14px;margin:10px 0 12px}
+    .card .foot{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{font-size:11px;padding:6px 10px;border-radius:999px;background:#0e1320;border:1px solid rgba(255,255,255,.06);color:#b8c2d6}
+
+    .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .flow .step{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);padding:16px;border-radius:14px}
+    .step .num{font-size:12px;color:var(--muted)}
+    .step h3{margin:6px 0 8px;font-size:16px}
+
+    .cta{display:flex;gap:12px;flex-wrap:wrap}
+
+    .table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    .table th{font-size:12px;color:var(--muted);text-align:left;font-weight:500;padding:0 10px}
+    .table td{background:var(--card);border:1px solid rgba(255,255,255,.06);padding:10px;border-left:0;border-right:0}
+
+    footer{padding:40px 0 60px;color:var(--muted);font-size:13px}
+
+    /* 태블릿 */
+    @media (max-width: 1100px){
+      .feature-grid.ai4,.grid-4{grid-template-columns:1fr 1fr}
+      .container{width:min(1000px,90%)}
+    }
+    @media (max-width: 960px){
+      .hero .grid{grid-template-columns:1fr}
+      .feature-grid,.grid-3{grid-template-columns:1fr 1fr}
+      .flow{grid-template-columns:1fr 1fr}
+      .grid-4{grid-template-columns:1fr 1fr}
+    }
+    /* 모바일 */
+    @media (max-width: 768px){
+      .mobile-menu-btn{display:block}
+      .nav .links{position:fixed;top:65px;left:0;right:0;background:var(--card);border-bottom:1px solid rgba(255,255,255,.08);flex-direction:column;padding:20px;gap:12px;transform:translateY(-100%);opacity:0;pointer-events:none;transition:.3s;z-index:20}
+      .nav .links.active{transform:translateY(0);opacity:1;pointer-events:all}
+      .nav .links a{width:100%;text-align:center;padding:12px}
+      h1{font-size:32px;line-height:1.2}
+      .hero{padding:40px 0 30px}
+      .tag{font-size:11px;padding:5px 8px}
+      .lead{font-size:15px}
+      section{padding:28px 0}
+      .section-title{flex-direction:column;align-items:flex-start;gap:8px;text-align:left}
+      .section-title h2{font-size:22px}
+      .section-title .hint{font-size:12px}
+      section[style*="text-align:center"] .section-title{text-align:center;align-items:center}
+      .feature-grid,.flow,.grid-4,.grid-3,.grid-2{grid-template-columns:1fr}
+      .feature-grid.ai4{grid-template-columns:1fr}
+      .cta{justify-content:center}
+      .kpi{font-size:13px}
+    }
+    @media (max-width: 620px){
+      h1{font-size:26px}
+      .container{width:94%}
+      .hero-card .row{flex-direction:column}
+      .section-title h2{font-size:20px}
+      .card{padding:14px}
+      .card .title{font-size:15px}
+      .card p{font-size:13px}
+    }
+    input.in,textarea.in{width:100%;padding:10px;border-radius:10px;background:var(--card);border:1px solid rgba(255,255,255,.06);color:var(--text);font-family:inherit}
+      .clickable{cursor:pointer}
+    .sidebar{position:fixed;left:0;top:0;width:240px;height:100vh;background:var(--card);border-right:1px solid rgba(255,255,255,0.06);z-index:25;padding:16px 0;overflow-y:auto;transition:width .3s ease;display:flex;flex-direction:column}
+    .sidebar.collapsed{width:70px}
+    .sidebar-header{display:flex;align-items:center;justify-content:flex-start;gap:10px;padding:0 16px 16px;margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.06);position:relative}
+    .sidebar-header .logo{width:32px;height:32px;flex-shrink:0}
+    .sidebar-header strong{font-size:14px;font-weight:600;white-space:nowrap;transition:opacity .3s ease}
+    .sidebar.collapsed .sidebar-header strong{opacity:0;width:0;overflow:hidden}
+    .sidebar-expand-btn{position:absolute;right:8px;width:28px;height:28px;border-radius:6px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;opacity:0.7;flex-shrink:0}
+    .sidebar-expand-btn:hover{background:var(--soft);opacity:1}
+    .sidebar-expand-btn .icon{width:16px;height:16px;display:flex;align-items:center;justify-content:center;position:relative}
+    .sidebar-expand-btn .icon::before,.sidebar-expand-btn .icon::after{content:'';position:absolute;background:transparent;border:1.5px solid currentColor;border-radius:2px}
+    .sidebar-expand-btn .icon::before{width:6px;height:10px;left:1px}
+    .sidebar-expand-btn .icon::after{width:6px;height:10px;right:1px;margin-left:2px}
+    .sidebar.collapsed .sidebar-expand-btn .icon::before{left:3px}
+    .sidebar.collapsed .sidebar-expand-btn .icon::after{right:3px}
+    .sidebar-menu{display:flex;flex-direction:column;gap:2px;flex:1;padding:0 8px}
+    .sidebar-menu-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:var(--text);text-decoration:none;transition:.2s;cursor:pointer;justify-content:flex-start;font-size:14px}
+    .sidebar-menu-item:hover{background:rgba(255,255,255,0.05)}
+    .sidebar-menu-item.active{background:rgba(139,92,246,0.15);color:var(--accent)}
+    .sidebar-menu-item .icon{font-size:18px;width:20px;text-align:center;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+    .sidebar-menu-item .text{flex:1;font-size:14px;font-weight:400;white-space:nowrap;transition:opacity .3s ease}
+    .sidebar.collapsed .sidebar-menu-item .text{opacity:0;width:0;overflow:hidden}
+    .sidebar.collapsed .sidebar-menu-item{justify-content:center}
+    .sidebar-divider{margin:8px 0;border-top:1px solid rgba(255,255,255,0.06)}
+    .sidebar-section-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;padding:12px 12px 8px;white-space:nowrap;transition:opacity .3s ease}
+    .sidebar.collapsed .sidebar-section-title{opacity:0;width:0;overflow:hidden}
+    .sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,0.06);margin-top:auto}
+    .main-content{margin-left:240px;transition:margin-left .3s ease}
+    .main-content.sidebar-collapsed{margin-left:70px}
+    .login-modal{width:min(420px,95vw);max-height:90vh;background:var(--card);border:1px solid rgba(255,255,255,0.12);border-radius:18px;box-shadow:0 28px 90px rgba(0,0,0,0.55);display:flex;flex-direction:column;overflow:hidden;position:relative}
+    .login-modal-header{display:flex;justify-content:space-between;align-items:center;padding:24px 28px;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .login-modal-header h3{margin:0;font-size:20px}
+    .login-modal-body{padding:28px;display:flex;flex-direction:column;gap:16px}
+    .login-tabs{display:flex;gap:8px;border-bottom:1px solid rgba(255,255,255,0.06);margin:-28px -28px 20px;padding:0 28px}
+    .login-tab{flex:1;padding:12px;background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;font-size:14px;font-weight:500;transition:.2s}
+    .login-tab.active{color:var(--text);border-bottom-color:var(--accent)}
+    .login-form{display:flex;flex-direction:column;gap:14px}
+    .form-group{display:flex;flex-direction:column;gap:6px}
+    .form-group label{font-size:13px;color:var(--muted);font-weight:500}
+    .form-group input{width:100%;padding:12px;border-radius:10px;background:var(--soft);border:1px solid rgba(255,255,255,.08);color:var(--text);font-family:inherit;font-size:14px}
+    .form-group input:focus{outline:none;border-color:var(--accent)}
+    .form-group textarea{width:100%;padding:12px;border-radius:10px;background:var(--soft);border:1px solid rgba(255,255,255,.08);color:var(--text);font-family:inherit;font-size:14px;resize:vertical}
+    .form-group textarea:focus{outline:none;border-color:var(--accent)}
+    .login-error{color:var(--danger);font-size:13px;padding:8px 12px;background:rgba(239,68,68,0.1);border-radius:8px;border:1px solid rgba(239,68,68,0.2);display:none}
+    .login-error.show{display:block}
+    .login-required-toast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--card);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px 32px;box-shadow:0 20px 60px rgba(0,0,0,0.5);z-index:200;display:none;flex-direction:column;align-items:center;gap:16px;min-width:320px}
+    .login-required-toast.active{display:flex}
+    .login-required-toast .icon{font-size:48px}
+    .login-required-toast h3{margin:0;font-size:18px}
+    .login-required-toast p{margin:0;color:var(--muted);font-size:14px;text-align:center;line-height:1.6}
+    .login-required-toast .actions{display:flex;gap:12px;margin-top:8px}
+    @media (max-width: 768px){
+      .sidebar{width:100%;transform:translateX(-100%)}
+      .sidebar.expanded{transform:translateX(0)}
+      .main-content{margin-left:0}
+      .main-content.sidebar-expanded{margin-left:0}
+    }
+
+    /* 채팅창 스타일 */
+    .chat-widget{position:fixed;bottom:24px;right:24px;z-index:100;transition:.3s ease}
+    .chat-toggle{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));border:0;color:#fff;font-size:24px;cursor:pointer;box-shadow:0 8px 24px rgba(139,92,246,.4);transition:.2s}
+    .chat-toggle:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(139,92,246,.5)}
+    .chat-box{position:absolute;bottom:80px;right:0;width:380px;height:560px;background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.5);display:none;flex-direction:column;overflow:hidden}
+    .chat-box.active{display:flex}
+    .chat-header{padding:20px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b0d12;display:flex;align-items:center;justify-content:space-between}
+    .chat-header h3{margin:0;font-size:18px}
+    .chat-close{background:rgba(0,0,0,.2);border:0;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center}
+    .chat-close:hover{background:rgba(0,0,0,.3)}
+    .chat-messages{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+    .chat-message{padding:12px 16px;border-radius:12px;max-width:80%;font-size:14px;line-height:1.5}
+    .chat-message.bot{background:var(--soft);align-self:flex-start}
+    .chat-message.user{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b0d12;align-self:flex-end}
+    .chat-input-area{padding:16px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px}
+    .chat-input{flex:1;padding:12px;border-radius:12px;background:var(--soft);border:1px solid rgba(255,255,255,.08);color:var(--text);font-family:inherit;font-size:14px}
+    .chat-input:focus{outline:none;border-color:var(--accent)}
+    .chat-send{padding:12px 20px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));border:0;color:#0b0d12;font-weight:600;cursor:pointer;transition:.2s}
+    .chat-send:hover{transform:translateY(-1px)}
+    .card.clickable{cursor:pointer}
+    .modal-overlay{position:fixed;inset:0;background:rgba(7,9,14,0.85);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;z-index:120;padding:20px}
+    .modal-overlay.active{display:flex}
+    .modal{width:min(760px,95vw);max-height:90vh;background:var(--card);border:1px solid rgba(255,255,255,0.12);border-radius:18px;box-shadow:0 28px 90px rgba(0,0,0,0.55);display:flex;flex-direction:column;overflow:hidden;position:relative}
+    .modal-header{display:flex;justify-content:space-between;align-items:flex-start;padding:24px 28px 0}
+    .modal-header h3{margin:6px 0 0;font-size:22px}
+    .modal-tag{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.35);color:#c4b5fd;font-size:12px;font-weight:500}
+    .modal-body{padding:18px 28px 28px;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
+    .modal-section h4{margin:0 0 8px;font-size:16px}
+    .modal-section p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+    .modal-list{margin:0;padding-left:20px;color:var(--muted);font-size:14px;line-height:1.6}
+    .modal-list li{margin-bottom:6px}
+    .modal-meta{display:flex;flex-wrap:wrap;gap:10px;color:var(--muted);font-size:13px}
+    .modal-meta span{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08)}
+    .modal-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px}
+    .modal-actions .btn{padding:10px 16px;font-size:14px}
+    .modal-close{background:rgba(255,255,255,0.06);border:0;color:var(--text);width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;margin-left:12px}
+    .modal-close:hover{background:rgba(255,255,255,0.12)}
+    .modal-highlight{padding:14px;border-radius:12px;background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.2);color:var(--text);font-size:13px;line-height:1.5}
+    .modal-chip-row{display:flex;flex-wrap:wrap;gap:8px}
+    .modal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .modal-grid .card{padding:14px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.08);margin:0}
+    .modal-section-text{color:var(--muted);font-size:14px;line-height:1.6;margin:0}
+    body.modal-open{overflow:hidden}
+    @media (max-width: 480px){
+      .chat-box{width:calc(100vw - 32px);height:calc(100vh - 120px)}
+    }
+  </style>
+</head>
+<body>
+  <!-- 사이드바 -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo" aria-hidden="true"></div>
+      <strong>AI Wedding Planner</strong>
+      <button class="sidebar-expand-btn" onclick="toggleSidebarExpand()" aria-label="사이드바 펼치기/접기" title="사이드바 펼치기/접기">
+        <span class="icon"></span>
+      </button>
+    </div>
+    <nav class="sidebar-menu">
+      <a href="#ai4" class="sidebar-menu-item" onclick="handleSidebarClick(event, '#ai4')">
+        <span class="icon">🏠</span>
+        <span class="text">홈</span>
+      </a>
+      <a href="#features" class="sidebar-menu-item" onclick="handleSidebarClick(event, '#features')">
+        <span class="icon">⚙️</span>
+        <span class="text">세부 기능</span>
+      </a>
+      <a href="#flow" class="sidebar-menu-item" onclick="handleSidebarClick(event, '#flow')">
+        <span class="icon">📊</span>
+        <span class="text">업무 흐름</span>
+      </a>
+      <a href="#demo" class="sidebar-menu-item" onclick="handleSidebarClick(event, '#demo')">
+        <span class="icon">🎬</span>
+        <span class="text">데모</span>
+      </a>
+      
+      <div class="sidebar-divider"></div>
+      
+      <div class="sidebar-section-title">주요 기능</div>
+      <a href="#" class="sidebar-menu-item" onclick="handleFeatureClick(event, 'board')">
+        <span class="icon">📋</span>
+        <span class="text">게시판</span>
+      </a>
+      <a href="#" class="sidebar-menu-item" onclick="handleFeatureClick(event, 'chat')">
+        <span class="icon">🤖</span>
+        <span class="text">챗봇</span>
+      </a>
+      <a href="#" class="sidebar-menu-item" onclick="handleFeatureClick(event, 'calendar')">
+        <span class="icon">📅</span>
+        <span class="text">캘린더</span>
+      </a>
+      <a href="#" class="sidebar-menu-item" onclick="handleFeatureClick(event, 'voice')">
+        <span class="icon">🎤</span>
+        <span class="text">음성 비서</span>
+      </a>
+      <a href="#" class="sidebar-menu-item" onclick="handleFeatureClick(event, 'budget')">
+        <span class="icon">💰</span>
+        <span class="text">예산서</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-menu-item" id="sidebarUserInfo" style="display:none">
+        <span class="icon">👤</span>
+        <span class="text" id="sidebarUserNickname"></span>
+      </div>
+    </div>
+  </div>
+
+  <header>
+    <div class="container nav">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <strong>AI Wedding Planner OS</strong>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <span id="headerUserInfo" style="display:none">
+          <span style="color:var(--muted);font-size:14px" id="headerUserNickname"></span>
+          <a href="#" class="btn" onclick="event.preventDefault();logout()">로그아웃</a>
+        </span>
+        <span id="headerAuthButtons" style="display:flex;gap:12px;align-items:center">
+          <a href="#" class="btn primary" onclick="event.preventDefault();openContactModal()">문의하기</a>
+          <a href="#" class="btn" onclick="event.preventDefault();openLoginModal()">로그인</a>
+          <a href="#" class="btn" onclick="event.preventDefault();switchLoginTab('signup');openLoginModal()">회원가입</a>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="glow"></div>
+    <section class="hero">
+      <div class="container grid">
+        <div>
+          <span class="tag">🎤 Vision + Voice + LLM • 덤탱이 방지 • 24/7 AI 비서</span>
+          <h1>AI가 예비 부부의 <span style="background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent">감정·예산·스타일</span>을 이해하고 웨딩 전 과정을 자동 조율</h1>
+          <p class="lead">운전 중에도 음성으로 질문하고, 견적서 덤탱이 자동 탐지, 감정 분석 기반 심리 코칭까지. <b>Vision·Voice·LLM</b>이 통합된 차세대 웨딩 플래닝 OS.</p>
+          <div class="cta" style="margin-top:16px">
+            <a class="btn primary" href="#demo">빠른 데모 보기 ▶</a>
+            <a class="btn" href="#ai4">핵심 AI 기능 5가지 보기</a>
+          </div>
+          <div style="margin-top:18px;display:flex;gap:18px;flex-wrap:wrap">
+            <div class="kpi"><span class="dot"></span><small>한국 웨딩 시장 연 4조원 규모</small></div>
+            <div class="kpi"><span class="dot" style="background:var(--warn)"></span><small>평균 예산 초과율 23% 해결</small></div>
+          </div>
+        </div>
+        <div>
+          <div class="hero-card">
+            <div class="row" style="margin-bottom:12px">
+              <div class="col">
+                <small style="color:var(--muted)">🧾 견적 덤탱이 방지</small>
+                <div style="font-weight:700;margin-top:6px">Verbal Cost Auditor</div>
+                <p class="lead" style="font-size:13px">견적서 소리 내어 읽거나 사진 찍으면 시장가 대비 과다 항목 즉시 탐지</p>
+              </div>
+              <div class="col">
+                <small style="color:var(--muted)">🎤 24/7 음성 비서</small>
+                <div style="font-weight:700;margin-top:6px">Voice Personal Assistant</div>
+                <p class="lead" style="font-size:13px">운전 중에도 음성 메시지로 일정·예산·벤더 질문 → AI가 브리핑</p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col">
+                <small style="color:var(--muted)">💭 감정 분석 코칭</small>
+                <div style="font-weight:700;margin-top:6px">Emotional Planner</div>
+                <p class="lead" style="font-size:13px">음성 대화로 스트레스 수준 파악, 갈등 유형 진단 + 심리 코칭</p>
+              </div>
+              <div class="col">
+                <small style="color:var(--muted)">🔎 Q&A/추천</small>
+                <div style="font-weight:700;margin-top:6px">RAG Assistant</div>
+                <p class="lead" style="font-size:13px">자연어 질문하면 추천 3개 + 근거 스니펫까지 음성 브리핑</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 시장 문제 -->
+    <section style="background:linear-gradient(180deg,rgba(139,92,246,0.03),rgba(34,211,238,0.02));padding:40px 0;margin:20px 0;border-radius:20px">
+      <div class="container">
+        <div class="section-title" style="text-align:center;display:block;margin-bottom:24px">
+          <h2 style="font-size:28px;margin-bottom:12px">왜 AI Wedding OS가 필요한가?</h2>
+          <p class="lead">한국 웨딩 시장 <b>연 4조원</b> 규모, 평균 예산 초과율 <b>23%</b></p>
+        </div>
+        <div class="feature-grid grid-4">
+          <div class="card" style="text-align:center">
+            <div style="font-size:32px;margin-bottom:8px">💸</div>
+            <div class="title" style="justify-content:center;margin-bottom:8px">덤탱이 문제</div>
+            <p style="font-size:13px">견적 불투명성으로 과다 청구 항목을 사전에 식별하기 어려움</p>
+          </div>
+          <div class="card" style="text-align:center">
+            <div style="font-size:32px;margin-bottom:8px">⏰</div>
+            <div class="title" style="justify-content:center;margin-bottom:8px">시간 부족</div>
+            <p style="font-size:13px">맞벌이 예비 부부는 평일 저녁·주말에만 준비 가능, 효율 절실</p>
+          </div>
+          <div class="card" style="text-align:center">
+            <div style="font-size:32px;margin-bottom:8px">😰</div>
+            <div class="title" style="justify-content:center;margin-bottom:8px">스트레스·갈등</div>
+            <p style="font-size:13px">복잡한 의사결정 과정에서 커플 간 갈등 발생, 심리적 부담</p>
+          </div>
+          <div class="card" style="text-align:center">
+            <div style="font-size:32px;margin-bottom:8px">🤷</div>
+            <div class="title" style="justify-content:center;margin-bottom:8px">취향 파악 어려움</div>
+            <p style="font-size:13px">막연한 "이쁜 거"로는 구체적 스타일·예산 범위 특정 불가</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 핵심 AI 기능 5가지 -->
+    <section id="ai4">
+      <div class="container">
+        <div class="section-title">
+          <h2>핵심 AI 기능 5가지</h2>
+          <span class="hint">웨딩 준비의 모든 것을 한 곳에서</span>
+        </div>
+        <div class="feature-grid" style="grid-template-columns:repeat(2,1fr)">
+          <div class="card clickable" onclick="handleFeatureClick(event, 'board')">
+            <div class="title">📋 게시판 <span class="badge ok">MVP</span></div>
+            <p><strong>🎯 목적:</strong> 실제 사용자의 경험·후기를 수집해 "웨딩 지식 데이터베이스" 구축, 플래너 리뷰로 신뢰도 강화, 커플 전용 공간 제공</p>
+            <div class="foot">
+              <span class="chip">예비부부 게시판</span>
+              <span class="chip">플래너 리뷰</span>
+              <span class="chip">커플 전용 공간</span>
+              <span class="chip">리뷰 자동 요약</span>
+            </div>
+          </div>
+          <div class="card clickable" onclick="handleFeatureClick(event, 'chat')">
+            <div class="title">🤖 챗봇 <span class="badge wip">In Progress</span></div>
+            <p><strong>🎯 목적:</strong> "사람 플래너"처럼 준비 전 과정을 함께하는 AI, 정보를 모아서 정리해주는 Personal Knowledge Manager</p>
+            <div class="foot">
+              <span class="chip">개인 DB 기반 상담</span>
+              <span class="chip">공유 데이터 정보</span>
+              <span class="chip">자동 정리</span>
+              <span class="chip">웨딩홀 추천</span>
+            </div>
+          </div>
+          <div class="card clickable" onclick="handleFeatureClick(event, 'calendar')">
+            <div class="title">📅 개인화 일정 관리(캘린더) <span class="badge wip">In Progress</span></div>
+            <p><strong>🎯 목적:</strong> 결혼식까지 남은 기간을 기준으로 자동으로 할 일을 배치하고 개인 맞춤형 타임라인을 만들어주는 기능</p>
+            <div class="foot">
+              <span class="chip">D-Day 타임라인</span>
+              <span class="chip">Todo 리스트</span>
+              <span class="chip">알림 기능</span>
+              <span class="chip">챗봇 연동</span>
+            </div>
+          </div>
+          <div class="card clickable" onclick="handleFeatureClick(event, 'voice')">
+            <div class="title">🎤 음성 비서 <span class="badge wip">In Progress</span></div>
+            <p><strong>🎯 목적:</strong> 손이 자유롭지 않을 때도 음성만으로 웨딩 플래닝을 진행하고, 그 내용을 자동으로 정리·저장해 주는 "핸즈프리 플래너"</p>
+            <div class="foot">
+              <span class="chip">음성 상담 입력</span>
+              <span class="chip">핵심 요약</span>
+              <span class="chip">자동 연동</span>
+              <span class="chip">핸즈프리 모드</span>
+            </div>
+          </div>
+          <div class="card clickable" onclick="handleFeatureClick(event, 'budget')" style="grid-column:1/-1">
+            <div class="title">💰 Excel 형식의 예산서 <span class="badge ok">MVP</span></div>
+            <p><strong>🎯 목적:</strong> 헬 같은 예산 관리(홀/드레스/스냅/혼수…)를 "1개의 대시보드"에 정리해주는 UI</p>
+            <div class="foot">
+              <span class="chip">직접 입력 테이블</span>
+              <span class="chip">항목 추천</span>
+              <span class="chip">CSV/XLSX 다운로드</span>
+              <span class="chip">챗봇 연동</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 일반 기능 -->
+    <section id="features">
+      <div class="container">
+        <div class="section-title">
+          <h2>일반 기능</h2>
+          <span class="hint">핵심 4와 연동되는 운영 모듈</span>
+        </div>
+        <div class="feature-grid">
+          <div class="card clickable" onclick="openFeatureModal('budget')">
+            <div class="title">Budget Planner <span class="badge ok">MVP</span></div>
+            <p>예산 한도, 계약금/잔금, 할인, 결제수단, 결제자까지 항목형 관리.</p>
+            <div class="foot"><span class="chip">가계부 내보내기</span><span class="chip">분담 비율</span><span class="chip">영수증 업로드</span></div>
+          </div>
+          <div class="card clickable" onclick="openFeatureModal('timeline')">
+            <div class="title">Timeline Generator <span class="badge wip">In Progress</span></div>
+            <p>D-일 입력 시 체크리스트/알림 자동 생성. 우선순위/담당자 지정.</p>
+            <div class="foot"><span class="chip">캘린더 연동</span><span class="chip">리마인더</span></div>
+          </div>
+          <div class="card clickable" onclick="openFeatureModal('vendor')">
+            <div class="title">Vendor Matcher <span class="badge wip">In Progress</span></div>
+            <p>요건 기반 후보군 추천 및 점수화(가격/후기/거리/일정 호환).</p>
+            <div class="foot"><span class="chip">스코어 카드</span><span class="chip">계약상태</span></div>
+          </div>
+          <div class="card clickable" onclick="openFeatureModal('document')">
+            <div class="title">Document Vault <span class="badge ok">MVP</span></div>
+            <p>계약서/견적서/촬영컷/체크리스트 템플릿 보관소.</p>
+            <div class="foot"><span class="chip">버전 관리</span><span class="chip">공유 권한</span></div>
+          </div>
+          <div class="card clickable" onclick="openFeatureModal('guest')">
+            <div class="title">Guest Manager <span class="badge todo">Planned</span></div>
+            <p>연락처/좌석/초대장/RSVP/답례품 관리.</p>
+            <div class="foot"><span class="chip">좌석 배치</span><span class="chip">초대 링크</span></div>
+          </div>
+          <div class="card clickable" onclick="openFeatureModal('plannerChat')">
+            <div class="title">AI Planner Chat <span class="badge todo">Planned</span></div>
+            <p>상황 기반 Q&A, 일정/예산 제안, 벤더 비교 코멘트 자동화.</p>
+            <div class="foot"><span class="chip">프롬프트 킷</span><span class="chip">대화 내 액션</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 흐름 -->
+    <section id="flow">
+      <div class="container">
+        <div class="section-title">
+          <h2>업무 흐름(End-to-End)</h2>
+          <span class="hint">실제 사용 시나리오 기반 단계</span>
+        </div>
+        <div class="flow">
+          <div class="step">
+            <div class="num">01</div>
+            <h3>온보딩</h3>
+            <p class="lead">결혼일 · 예산 범위 · 선호 스타일 · 지역 입력</p>
+          </div>
+          <div class="step">
+            <div class="num">02</div>
+            <h3>타임라인·체크리스트</h3>
+            <p class="lead">D-기반 체크리스트 생성 → 담당자 할당</p>
+          </div>
+          <div class="step">
+            <div class="num">03</div>
+            <h3>벤더 스카우팅</h3>
+            <p class="lead">후보 추천·스코어·계약상태 트래킹</p>
+          </div>
+          <div class="step">
+            <div class="num">04</div>
+            <h3>결제/문서/알림</h3>
+            <p class="lead">잔금일 자동 알림, 계약·영수증 보관</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 차별화 포인트 -->
+    <section style="background:linear-gradient(180deg,rgba(34,211,238,0.03),rgba(139,92,246,0.02));padding:40px 0;margin:20px 0;border-radius:20px">
+      <div class="container">
+        <div class="section-title">
+          <h2>왜 다른 서비스와 다를까?</h2>
+          <span class="hint">기존 웨딩 플래너·정보 플랫폼과의 차별점</span>
+        </div>
+        <div class="feature-grid grid-3">
+          <div class="card">
+            <div class="title">🆚 웨딩 플래너 (오프라인)</div>
+            <div style="margin:12px 0;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px">
+              <div style="font-size:13px;color:var(--muted);margin-bottom:6px">기존 방식:</div>
+              <p style="font-size:13px;margin:0">평균 300~500만원, 상담 시간 제약</p>
+            </div>
+            <div style="padding:10px;background:rgba(139,92,246,0.1);border-radius:8px">
+              <div style="font-size:13px;color:#a78bfa;margin-bottom:6px">AI Wedding OS:</div>
+              <p style="font-size:13px;margin:0"><b>24/7 이용 가능, 비용 1/10 수준</b></p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="title">🆚 웨딩 정보 플랫폼</div>
+            <div style="margin:12px 0;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px">
+              <div style="font-size:13px;color:var(--muted);margin-bottom:6px">기존 방식:</div>
+              <p style="font-size:13px;margin:0">단순 정보 나열, 가격 불투명</p>
+            </div>
+            <div style="padding:10px;background:rgba(139,92,246,0.1);border-radius:8px">
+              <div style="font-size:13px;color:#a78bfa;margin-bottom:6px">AI Wedding OS:</div>
+              <p style="font-size:13px;margin:0"><b>AI 맞춤 추천 + 덤탱이 방지</b></p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="title">🆚 일반 챗봇</div>
+            <div style="margin:12px 0;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px">
+              <div style="font-size:13px;color:var(--muted);margin-bottom:6px">기존 방식:</div>
+              <p style="font-size:13px;margin:0">텍스트 기반, 일반적 답변</p>
+            </div>
+            <div style="padding:10px;background:rgba(139,92,246,0.1);border-radius:8px">
+              <div style="font-size:13px;color:#a78bfa;margin-bottom:6px">AI Wedding OS:</div>
+              <p style="font-size:13px;margin:0"><b>Vision+Voice 통합, 웨딩 특화 DB</b></p>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:24px;padding:20px;background:linear-gradient(135deg,rgba(139,92,246,0.15),rgba(34,211,238,0.1));border-radius:16px;border:1px solid rgba(139,92,246,0.2)">
+          <h3 style="margin:0 0 12px;font-size:18px">🎯 핵심 차별화 요소</h3>
+          <div class="grid-2">
+            <div style="display:flex;gap:10px;align-items:start">
+              <span style="font-size:24px">🎤</span>
+              <div>
+                <div style="font-weight:600;margin-bottom:4px">음성 기반 상호작용</div>
+                <p style="font-size:13px;margin:0;color:var(--muted)">STT/TTS로 바쁜 예비 부부도 운전 중·출퇴근 중 활용 가능</p>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:start">
+              <span style="font-size:24px">💭</span>
+              <div>
+                <div style="font-weight:600;margin-bottom:4px">감정 분석 & 갈등 코칭</div>
+                <p style="font-size:13px;margin:0;color:var(--muted)">스트레스·갈등 유형 진단 후 심리 코칭 제공</p>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:start">
+              <span style="font-size:24px">💸</span>
+              <div>
+                <div style="font-weight:600;margin-bottom:4px">덤탱이 자동 탐지</div>
+                <p style="font-size:13px;margin:0;color:var(--muted)">시장 가격 데이터와 비교하여 과다 청구 항목 즉시 식별</p>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:start">
+              <span style="font-size:24px">🤖</span>
+              <div>
+                <div style="font-weight:600;margin-bottom:4px">24/7 음성 개인 비서</div>
+                <p style="font-size:13px;margin:0;color:var(--muted)">운전·출퇴근 중에도 음성 메시지로 질문 → AI가 일정·예산·벤더 정보 브리핑</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 데모 -->
+    <section id="demo">
+      <div class="container">
+        <div class="section-title">
+          <h2>빠른 데모</h2>
+          <span class="hint">실제 데이터 연결 전 시나리오 미리보기</span>
+        </div>
+        <div class="card">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+            <button class="btn" onclick="openDemo('board')">📋 게시판</button>
+            <button class="btn" onclick="openDemo('chat')">🤖 챗봇</button>
+            <button class="btn" onclick="openDemo('calendar')">📅 일정관리</button>
+            <button class="btn" onclick="openDemo('budget')">💰 예산서</button>
+            <button class="btn" onclick="openDemo('voice')">🎤 음성비서</button>
+          </div>
+          <div id="demo-box" style="background:#0e1320;border:1px dashed rgba(255,255,255,.1);padding:18px;border-radius:12px">
+            <small style="color:var(--muted)">버튼을 눌러 데모를 확인하세요.</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 컨택트 -->
+    <section id="contact">
+      <div class="container">
+        <div class="section-title">
+          <h2>컨택트</h2>
+        <span class="hint">콜라보/테스트 유저/벤더 제휴</span>
+        </div>
+        <div class="card">
+          <form onsubmit="event.preventDefault();showToast('메시지를 전달했습니다. 감사합니다!');this.reset();">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <input required placeholder="이름" class="in">
+              <input required placeholder="이메일" type="email" class="in">
+            </div>
+            <textarea required placeholder="요청/협업 내용을 적어주세요" class="in" style="margin-top:12px;height:120px"></textarea>
+            <div style="display:flex;gap:10px;margin-top:10px">
+              <button class="btn primary" type="submit">보내기</button>
+              <button class="btn" type="button" onclick="prefill()">샘플 채우기</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 문의하기 모달 -->
+  <div class="modal-overlay" id="contactModalOverlay" onclick="handleContactModalOverlayClick(event)">
+    <div class="login-modal" onclick="event.stopPropagation()">
+      <div class="login-modal-header">
+        <h3>문의하기</h3>
+        <button class="modal-close" type="button" onclick="closeContactModal()" aria-label="닫기">×</button>
+      </div>
+      <div class="login-modal-body">
+        <form id="contactForm" class="login-form" onsubmit="event.preventDefault();handleContact()">
+          <div class="form-group">
+            <label>이름</label>
+            <input type="text" id="contactName" required placeholder="이름을 입력하세요">
+          </div>
+          <div class="form-group">
+            <label>이메일</label>
+            <input type="email" id="contactEmail" required placeholder="example@email.com">
+          </div>
+          <div class="form-group">
+            <label>문의 내용</label>
+            <textarea id="contactMessage" required placeholder="문의 내용을 입력하세요" style="min-height:120px;resize:vertical" class="form-group input"></textarea>
+          </div>
+          <button type="submit" class="btn primary" style="width:100%;margin-top:8px" id="contactSubmitBtn">문의하기</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 로그인/회원가입 모달 -->
+  <div class="modal-overlay" id="loginModalOverlay" onclick="handleLoginModalOverlayClick(event)">
+    <div class="login-modal" onclick="event.stopPropagation()">
+      <div class="login-modal-header">
+        <h3>로그인 / 회원가입</h3>
+        <button class="modal-close" type="button" onclick="closeLoginModal()" aria-label="닫기">×</button>
+      </div>
+      <div class="login-modal-body">
+        <div class="login-tabs">
+          <button class="login-tab active" onclick="switchLoginTab('login')">로그인</button>
+          <button class="login-tab" onclick="switchLoginTab('signup')">회원가입</button>
+        </div>
+        <div id="loginError" class="login-error"></div>
+        <form id="loginForm" class="login-form" onsubmit="event.preventDefault();handleLogin()">
+          <div class="form-group">
+            <label>이메일</label>
+            <input type="email" id="loginEmail" required placeholder="example@email.com">
+          </div>
+          <div class="form-group">
+            <label>비밀번호</label>
+            <input type="password" id="loginPassword" required placeholder="비밀번호를 입력하세요">
+          </div>
+          <button type="submit" class="btn primary" style="width:100%;margin-top:8px">로그인</button>
+        </form>
+        <form id="signupForm" class="login-form" style="display:none" onsubmit="event.preventDefault();handleSignup()">
+          <div class="form-group">
+            <label>이메일</label>
+            <input type="email" id="signupEmail" required placeholder="example@email.com">
+          </div>
+          <div class="form-group">
+            <label>비밀번호</label>
+            <input type="password" id="signupPassword" required placeholder="비밀번호를 입력하세요 (8자 이상, 대소문자/특수문자 포함)">
+          </div>
+          <div class="form-group">
+            <label>비밀번호 확인</label>
+            <input type="password" id="signupPasswordCheck" required placeholder="비밀번호를 다시 입력하세요">
+          </div>
+          <div class="form-group">
+            <label>닉네임</label>
+            <input type="text" id="signupNickname" required placeholder="닉네임을 입력하세요 (최대 10자, 띄어쓰기 없음)">
+          </div>
+          <div class="form-group">
+            <label>프로필 이미지</label>
+            <input type="file" id="signupProfileImage" accept="image/*" onchange="handleProfileImageChange(event)">
+            <div id="profileImagePreview" style="margin-top:8px;display:none">
+              <img id="profilePreviewImg" src="" alt="프로필 미리보기" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,0.1)">
+            </div>
+            <small style="color:var(--muted);font-size:12px;margin-top:4px;display:block">선택하지 않으면 기본 이미지가 사용됩니다</small>
+          </div>
+          <button type="submit" class="btn primary" style="width:100%;margin-top:8px" id="signupSubmitBtn">회원가입</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 기능 상세 모달 -->
+  <div class="modal-overlay" id="featureModalOverlay" onclick="handleModalOverlayClick(event)">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="featureModalTitle" aria-describedby="featureModalBody" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <div class="modal-tag" id="featureModalTag" style="display:none"></div>
+          <h3 id="featureModalTitle"></h3>
+        </div>
+        <button class="modal-close" type="button" onclick="closeFeatureModal()" aria-label="닫기">×</button>
+      </div>
+      <div class="modal-body" id="featureModalBody"></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>© <span id="year"></span> AI Wedding Planner OS</div>
+      <div>v0.2 • 핵심 AI 4 정렬 • 디자인은 추후 고도화</div>
+    </div>
+  </footer>
+
+  <!-- Toast -->
+  <div id="toast" style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;transition:.25s;padding:12px 16px;border-radius:12px;background:var(--soft);border:1px solid rgba(255,255,255,.08);color:#fff;z-index:50;">토스트</div>
+
+  <!-- 로그인 필요 팝업 -->
+  <div class="login-required-toast" id="loginRequiredToast">
+    <div class="icon">🔒</div>
+    <h3>로그인이 필요합니다</h3>
+    <p>이 기능을 사용하려면 로그인이 필요합니다.<br>로그인하시겠습니까?</p>
+    <div class="actions">
+      <button class="btn" onclick="closeLoginRequiredToast()">취소</button>
+      <button class="btn primary" onclick="closeLoginRequiredToast();openLoginModal()">로그인</button>
+    </div>
+  </div>
+
+  <script>
+    // API 설정
+    const API_CONFIG = {
+      backend: 'http://localhost:8001/api',
+      model: 'http://localhost:8502/api'
+    };
+
+    // 세션 관리
+    let currentUser = null;
+    const authToken = localStorage.getItem('authToken');
+    const userId = localStorage.getItem('userId');
+    const nickname = localStorage.getItem('nickname');
+    
+    if (authToken && userId && nickname) {
+      currentUser = { id: userId, nickname: nickname, token: authToken };
+    }
+    const yearEl=document.getElementById('year');yearEl.textContent=new Date().getFullYear();
+
+    const featureDetails={
+      auditor:{
+        title:'덤탱이 방지 (Verbal Cost Auditor)',
+        tag:'AI 핵심 4 • 실시간 견적 감사',
+        body:`
+          <p>Verbal Cost Auditor는 음성(STT)·사진(OCR)으로 들어온 견적서를 즉시 구조화하고, 시장 가격 데이터와 비교하여 과다 청구를 탐지합니다.</p>
+          <div class="modal-section">
+            <h4>핵심 기능</h4>
+            <ul class="modal-list">
+              <li>견적 항목을 자동 추출하고, 카테고리·수량·단가를 정규화</li>
+              <li>웨딩홀/스드메/플라워 등 카테고리별 시장가 지수와 비교해 과다 비율 계산</li>
+              <li>과다 항목에 대해 협상용 멘트, 대체 옵션, 추가 확인 체크리스트 생성</li>
+              <li>음성 브리핑 또는 PDF 리포트 형태로 결과 공유</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h4>데이터 흐름</h4>
+            <div class="modal-highlight">
+              ① STT/PaddleOCR → ② 항목 정규화 파이프라인 → ③ 가격 지수 RAG 조회 → ④ 과다/정상 판별 → ⑤ 협상 스크립트 생성 및 Budget Planner로 싱크
+            </div>
+          </div>
+          <div class="modal-section">
+            <h4>연동 모듈</h4>
+            <div class="modal-chip-row">
+              <span class="chip">Budget Planner</span>
+              <span class="chip">Vendor Matcher</span>
+              <span class="chip">AI Planner Chat</span>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" type="button" onclick="closeFeatureModal();openDemo('auditor')">샘플 데모 열기</button>
+            <button class="btn" type="button" onclick="closeFeatureModal();openFeatureModal('budget')">Budget Planner 보기</button>
+          </div>
+        `
+      },
+      emotional:{
+        title:'감정 분석 코칭 (Emotional Planner)',
+        tag:'AI 핵심 4 • 갈등 케어',
+        body:`
+          <p>Emotional Planner는 커플의 음성 대화를 분석해 스트레스 지수와 감정 패턴을 파악하고, 상황 맞춤형 코칭 스크립트를 제안합니다.</p>
+          <div class="modal-section">
+            <h4>AI 파이프라인</h4>
+            <ul class="modal-list">
+              <li>음성 톤, 발화 속도, 단어 선택을 기반으로 정서·긴장도 분석</li>
+              <li>갈등 유형(우선순위/소통/재무 등) 분류 모델을 통해 문제 맥락 식별</li>
+              <li>LLM이 중립적 화법, 대화 가이드, 진정 질문 리스트 제공</li>
+              <li>필요 시 전문 상담 리소스나 휴식 일정 추천</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h4>사용 시나리오</h4>
+            <div class="modal-grid">
+              <div class="card">
+                <strong>웨딩홀 협의 갈등</strong>
+                <p style="color:var(--muted);font-size:13px">선호 스타일이 다른 경우, 공통 우선순위 3가지를 정리하는 질문 세트 추천</p>
+              </div>
+              <div class="card">
+                <strong>예산 압박</strong>
+                <p style="color:var(--muted);font-size:13px">예산 초과 감지 시, 대체 플랜과 휴식 미션을 제안</p>
+              </div>
+            </div>
+          </div>
+          <div class="modal-section">
+            <h4>연동 모듈</h4>
+            <div class="modal-chip-row">
+              <span class="chip">Voice Assistant</span>
+              <span class="chip">Timeline Generator</span>
+              <span class="chip">AI Planner Chat</span>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" type="button" onclick="closeFeatureModal();openDemo('emotional')">샘플 데모 열기</button>
+          </div>
+        `
+      },
+      rag:{
+        title:'Q&A + 추천 (RAG Assistant)',
+        tag:'AI 핵심 4 • 지식 탐색',
+        body:`
+          <p>RAG Assistant는 웨딩 데이터베이스, 리뷰, 벤더 PDF를 벡터화하여 자연어 질의에 맞는 추천과 근거를 제공합니다.</p>
+          <div class="modal-section">
+            <h4>핵심 기능</h4>
+            <ul class="modal-list">
+              <li>지역·예산·규모 조건에 맞춘 상위 3개 후보 추천</li>
+              <li>각 후보별 장단점, 후기 스니펫, 예상 비용 범위 제공</li>
+              <li>추천 결과를 Budget Planner, Timeline Generator에 바로 반영</li>
+              <li>음성 요약(TTS) 또는 PDF 브리핑 생성</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h4>데이터 소스</h4>
+            <div class="modal-chip-row">
+              <span class="chip">웨딩홀 DB</span>
+              <span class="chip">스드메 패키지</span>
+              <span class="chip">사용자 리뷰</span>
+              <span class="chip">가격 트렌드</span>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" type="button" onclick="closeFeatureModal();openDemo('rag')">샘플 데모 열기</button>
+          </div>
+        `
+      },
+      voice:{
+        title:'24/7 음성 비서 (Voice Assistant)',
+        tag:'AI 핵심 4 • 음성 워크플로',
+        body:`
+          <p>Voice Assistant는 카카오톡/WhatsApp 스타일의 비동기 음성 메시지를 처리해 일정·예산·벤더 상태를 즉시 브리핑합니다.</p>
+          <div class="modal-section">
+            <h4>핵심 기능</h4>
+            <ul class="modal-list">
+              <li>운전 중에도 녹음만 하면 AI가 텍스트 요약 + 일정 브리핑 전송</li>
+              <li>Budget Planner, Timeline Generator의 상태 변화를 음성으로 재공유</li>
+              <li>긴급 항목은 푸시 알림과 SMS를 함께 발송</li>
+              <li>다국어 TTS 지원으로 부모님 공유까지 고려</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h4>연동 모듈</h4>
+            <div class="modal-chip-row">
+              <span class="chip">Budget Planner</span>
+              <span class="chip">Timeline Generator</span>
+              <span class="chip">Guest Manager</span>
+              <span class="chip">AI Planner Chat</span>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" type="button" onclick="closeFeatureModal();openDemo('voice')">샘플 데모 열기</button>
+          </div>
+        `
+      },
+      budget:{
+        title:'Budget Planner',
+        tag:'일반 기능 • 재무 관리',
+        body:`
+          <p>Budget Planner는 계약금·잔금·할인·분담 비율까지 세부적으로 추적하여 예산 초과를 선제적으로 막습니다.</p>
+          <div class="modal-section">
+            <h4>핵심 기능</h4>
+            <ul class="modal-list">
+              <li>총 예산, 항목별 배분, 분담 비율 설정 및 결제자 지정</li>
+              <li>계약금/중도금/잔금 일정 자동 생성 + 알림</li>
+              <li>영수증 OCR 업로드 → 항목 매칭 및 세금계산서 보관</li>
+              <li>가계부/엑셀 내보내기, 커플별 보기/부모님 보기 분리</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h4>AI 연동</h4>
+            <p class="modal-section-text">Verbal Cost Auditor가 탐지한 과다 항목을 빨간 플래그로 표시하고, Voice Assistant가 잔금 일정을 음성으로 브리핑합니다.</p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" type="button" onclick="closeFeatureModal();openFeatureModal('auditor')">덤탱이 방지와 함께 보기</button>
+          </div>
+        `
+      },
+      timeline:{
+        title:'Timeline Generator',
+        tag:'일반 기능 • 일정 자동화',
+        body:`
+          <p>Timeline Generator는 결혼일까지 남은 기간을 기준으로 해야 할 업무를 자동으로 생성하고 담당자에게 배정합니다.</p>
+          <div class="modal-section">
+            <h4>주요 기능</h4>
+            <ul class="modal-list">
+              <li>D-기반 체크리스트 템플릿 자동 생성</li>
+              <li>업무 우선순위, 담당자(파트너/가족/플래너) 지정</li>
+              <li>Google/Apple 캘린더 양방향 연동, 리마인더 발송</li>
+              <li>Voice Assistant 음성 명령으로 일정 생성/변경</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h4>추천 워크플로</h4>
+            <div class="modal-highlight">
+              온보딩 → 결혼일 입력 → 자동 체크리스트 생성 → 담당자 지정 → 주간 음성 브리핑 (Voice Assistant)
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" type="button" onclick="closeFeatureModal();openFeatureModal('voice')">음성 비서 연동 보기</button>
+          </div>
+        `
+      },
+      vendor:{
+        title:'Vendor Matcher',
+        tag:'일반 기능 • 벤더 추천',
+        body:`
+          <p>Vendor Matcher는 조건 기반 후보군 추천과 점수화를 통해 빠른 의사결정을 돕습니다.</p>
+          <div class="modal-section">
+            <h4>스코어링 요소</h4>
+            <ul class="modal-list">
+              <li>가격, 리뷰 평점, 거리/접근성, 일정 호환성</li>
+              <li>RAG Assistant가 제공하는 후기 스니펫 자동 첨부</li>
+              <li>예산 초과 시 자동 경고 및 대체 벤더 제안</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h4>파이프라인</h4>
+            <p class="modal-section-text">RAG Assistant → 후보 추천 → Budget Planner와 가격 검증 → Timeline Generator와 예약 일정 동기화.</p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" type="button" onclick="closeFeatureModal();openFeatureModal('rag')">추천 엔진 살펴보기</button>
+          </div>
+        `
+      },
+      document:{
+        title:'Document Vault',
+        tag:'일반 기능 • 문서 관리',
+        body:`
+          <p>Document Vault는 견적서, 계약서, 촬영 컷 샘플을 안전하게 보관하고 버전 비교까지 지원합니다.</p>
+          <div class="modal-section">
+            <h4>핵심 기능</h4>
+            <ul class="modal-list">
+              <li>벤더별 폴더 구조, 버전 히스토리, 변경 diff 하이라이트</li>
+              <li>OCR로 추출한 핵심 조항을 태그로 저장, 검색 가능</li>
+              <li>권한 관리(커플/가족/벤더 공유 링크)</li>
+              <li>AI Planner Chat으로 문서 요약/리뷰 요청</li>
+            </ul>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" type="button" onclick="closeFeatureModal();openFeatureModal('auditor')">견적 감사와 연결</button>
+          </div>
+        `
+      },
+      guest:{
+        title:'Guest Manager',
+        tag:'일반 기능 • 하객 운영',
+        body:`
+          <p>Guest Manager는 초대장 발송부터 좌석 배치, 답례 품목까지 하객 관련 업무를 자동화합니다.</p>
+          <div class="modal-section">
+            <h4>핵심 기능</h4>
+            <ul class="modal-list">
+              <li>연락처 가져오기 및 그룹 태깅 (가족/직장/지인)</li>
+              <li>RSVP 폼/QR 초대장 생성 및 응답 실시간 집계</li>
+              <li>좌석 배치 시뮬레이터, 음식 옵션/알레르기 기록</li>
+              <li>Voice Assistant가 RSVP 변동을 음성으로 브리핑</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h4>로드맵</h4>
+            <p class="modal-section-text">AI가 하객 유형별 축사 초안과 답례품 추천까지 제안하는 기능을 준비 중입니다.</p>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" type="button" onclick="closeFeatureModal();openFeatureModal('voice')">음성 비서 연동 보기</button>
+          </div>
+        `
+      },
+      plannerChat:{
+        title:'AI Planner Chat',
+        tag:'일반 기능 • 대화형 운영센터',
+        body:`
+          <p>AI Planner Chat은 상황별 프롬프트 킷과 액션 버튼으로 일정/예산/벤더 업무를 하나의 대화형 허브에서 관리합니다.</p>
+          <div class="modal-section">
+            <h4>대화 내 액션</h4>
+            <ul class="modal-list">
+              <li>"이번 주 예산 요약 보여줘" → Budget Planner 스냅샷 전송</li>
+              <li>"벤더 A랑 B 비교해줘" → Vendor Matcher 점수 카드 생성</li>
+              <li>"이번 주 체크리스트 업데이트" → Timeline Generator 연동</li>
+              <li>대화 중 버튼으로 문서 열람, 할 일 생성, 음성 브리핑 요청</li>
+            </ul>
+          </div>
+          <div class="modal-section">
+            <h4>AI 스택</h4>
+            <div class="modal-chip-row">
+              <span class="chip">GPT-4.1 Turbo</span>
+              <span class="chip">Function Calling</span>
+              <span class="chip">RAG</span>
+              <span class="chip">실행 로그</span>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" type="button" onclick="closeFeatureModal();openFeatureModal('rag')">추천 엔진 연계 보기</button>
+          </div>
+        `
+      }
+    };
+
+    // 모바일 메뉴
+    function toggleMobileMenu(){
+      const menu=document.getElementById('mobileMenu');
+      const icon=document.getElementById('menuIcon');
+      menu.classList.toggle('active');
+      icon.textContent=menu.classList.contains('active')?'×':'☰';
+    }
+
+    function closeMobileMenu(){
+      const menu=document.getElementById('mobileMenu');
+      const icon=document.getElementById('menuIcon');
+      menu.classList.remove('active');
+      icon.textContent='☰';
+    }
+
+    // 사이드바 펼치기/접기
+    function toggleSidebarExpand(){
+      const sidebar=document.getElementById('sidebar');
+      const mainContent=document.querySelector('.main-content');
+      
+      sidebar.classList.toggle('collapsed');
+      if(sidebar.classList.contains('collapsed')){
+        if(mainContent)mainContent.classList.add('sidebar-collapsed');
+        if(mainContent)mainContent.classList.remove('sidebar-expanded');
+      }else{
+        if(mainContent)mainContent.classList.remove('sidebar-collapsed');
+        if(mainContent)mainContent.classList.add('sidebar-expanded');
+      }
+    }
+
+
+    // 사이드바 메뉴 클릭 처리
+    function handleSidebarClick(event, target){
+      event.preventDefault();
+      const element=document.querySelector(target);
+      if(element){
+        element.scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    }
+
+    // 기능 페이지 클릭 처리 (로그인 체크)
+    function handleFeatureClick(event, feature){
+      event.preventDefault();
+      if(!currentUser){
+        showLoginRequiredToast();
+        return;
+      }
+      navigateToFeature(feature);
+    }
+
+    // 로그인 필요 팝업
+    function showLoginRequiredToast(){
+      const toast=document.getElementById('loginRequiredToast');
+      toast.classList.add('active');
+      document.body.style.overflow='hidden';
+    }
+
+    function closeLoginRequiredToast(){
+      const toast=document.getElementById('loginRequiredToast');
+      toast.classList.remove('active');
+      document.body.style.overflow='';
+    }
+
+    // 로그인 체크 함수
+    function checkLogin(redirectTo){
+      if(!currentUser){
+        showLoginRequiredToast();
+        return false;
+      }
+      if(redirectTo){
+        window.location.href=redirectTo;
+      }
+      return true;
+    }
+
+    // 기능 페이지로 이동 (로그인 체크)
+    function navigateToFeature(feature){
+      const featurePages={
+        'board':'board.html',
+        'calendar':'calendar.html',
+        'budget':'budget.html',
+        'chat':'chat.html',
+        'voice':'voice.html'
+      };
+      const page=featurePages[feature];
+      if(page&&checkLogin(page)){
+        window.location.href=page;
+      }
+    }
+
+    // 문의하기 모달
+    function openContactModal(){
+      const overlay=document.getElementById('contactModalOverlay');
+      overlay.classList.add('active');
+      document.body.classList.add('modal-open');
+    }
+
+    function closeContactModal(){
+      const overlay=document.getElementById('contactModalOverlay');
+      overlay.classList.remove('active');
+      document.body.classList.remove('modal-open');
+      document.getElementById('contactForm').reset();
+    }
+
+    function handleContactModalOverlayClick(event){
+      if(event.target.id==='contactModalOverlay'){
+        closeContactModal();
+      }
+    }
+
+    async function handleContact(){
+      const name=document.getElementById('contactName').value.trim();
+      const email=document.getElementById('contactEmail').value.trim();
+      const message=document.getElementById('contactMessage').value.trim();
+      const submitBtn=document.getElementById('contactSubmitBtn');
+      
+      if(!name||!email||!message){
+        showToast('모든 필드를 입력해주세요.');
+        return;
+      }
+      
+      submitBtn.disabled=true;
+      submitBtn.textContent='전송 중...';
+      
+      try{
+        await new Promise(resolve=>setTimeout(resolve,1000));
+        showToast('문의가 전송되었습니다. 감사합니다!');
+        closeContactModal();
+      }catch(error){
+        console.error('문의 전송 오류:',error);
+        showToast('문의 전송 중 오류가 발생했습니다.');
+      }finally{
+        submitBtn.disabled=false;
+        submitBtn.textContent='문의하기';
+      }
+    }
+
+    // 로그인/회원가입 기능
+    function switchLoginTab(tab){
+      const loginForm=document.getElementById('loginForm');
+      const signupForm=document.getElementById('signupForm');
+      const tabs=document.querySelectorAll('.login-tab');
+      const errorEl=document.getElementById('loginError');
+      
+      tabs.forEach(t=>t.classList.remove('active'));
+      errorEl.classList.remove('show');
+      errorEl.textContent='';
+      
+      if(tab==='login'){
+        tabs[0].classList.add('active');
+        loginForm.style.display='flex';
+        signupForm.style.display='none';
+      }else{
+        tabs[1].classList.add('active');
+        loginForm.style.display='none';
+        signupForm.style.display='flex';
+      }
+    }
+
+    function openLoginModal(){
+      const overlay=document.getElementById('loginModalOverlay');
+      overlay.classList.add('active');
+      document.body.classList.add('modal-open');
+      switchLoginTab('login');
+    }
+
+    function closeLoginModal(){
+      const overlay=document.getElementById('loginModalOverlay');
+      overlay.classList.remove('active');
+      document.body.classList.remove('modal-open');
+      const errorEl=document.getElementById('loginError');
+      errorEl.classList.remove('show');
+      errorEl.textContent='';
+    }
+
+    function handleLoginModalOverlayClick(event){
+      if(event.target.id==='loginModalOverlay'){
+        closeLoginModal();
+      }
+    }
+
+    async function handleLogin(){
+      const email=document.getElementById('loginEmail').value.trim();
+      const password=document.getElementById('loginPassword').value;
+      const errorEl=document.getElementById('loginError');
+      const submitBtn=document.querySelector('#loginForm button[type="submit"]');
+      
+      if(!email||!password){
+        errorEl.textContent='이메일과 비밀번호를 입력해주세요.';
+        errorEl.classList.add('show');
+        return;
+      }
+      
+      submitBtn.disabled=true;
+      submitBtn.textContent='로그인 중...';
+      errorEl.classList.remove('show');
+      
+      try{
+        const response=await fetch(`${API_CONFIG.backend}/auth/login`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({email,password})
+        });
+        
+        const data=await response.json();
+        
+        if(response.ok&&data.data){
+          currentUser={
+            id:data.data.user_id,
+            nickname:data.data.nickname,
+            profileImageUrl:data.data.profile_image_url||''
+          };
+          localStorage.setItem('userId',currentUser.id);
+          localStorage.setItem('nickname',currentUser.nickname);
+          if(currentUser.profileImageUrl)localStorage.setItem('profileImageUrl',currentUser.profileImageUrl);
+          
+          updateAuthUI();
+          closeLoginModal();
+          showToast('로그인 성공!');
+        }else{
+          const errorMsg=translateErrorMessage(data.message||'login_failed');
+          errorEl.textContent=errorMsg;
+          errorEl.classList.add('show');
+        }
+      }catch(error){
+        console.error('로그인 오류:',error);
+        errorEl.textContent='서버 연결 오류가 발생했습니다. 서버가 실행 중인지 확인해주세요.';
+        errorEl.classList.add('show');
+      }finally{
+        submitBtn.disabled=false;
+        submitBtn.textContent='로그인';
+      }
+    }
+
+    async function handleSignup(){
+      const email=document.getElementById('signupEmail').value.trim();
+      const password=document.getElementById('signupPassword').value;
+      const passwordCheck=document.getElementById('signupPasswordCheck').value;
+      const nickname=document.getElementById('signupNickname').value.trim();
+      const profileImageFile=document.getElementById('signupProfileImage').files[0];
+      const errorEl=document.getElementById('loginError');
+      const submitBtn=document.getElementById('signupSubmitBtn');
+      
+      if(!email||!password||!passwordCheck||!nickname){
+        errorEl.textContent='모든 필드를 입력해주세요.';
+        errorEl.classList.add('show');
+        return;
+      }
+      
+      if(password!==passwordCheck){
+        errorEl.textContent='비밀번호가 일치하지 않습니다.';
+        errorEl.classList.add('show');
+        return;
+      }
+      
+      submitBtn.disabled=true;
+      submitBtn.textContent='회원가입 중...';
+      errorEl.classList.remove('show');
+      
+      try{
+        let profileImageUrl='https://via.placeholder.com/150';
+        if(profileImageFile){
+          try{
+            const uploadedUrl=await Promise.race([
+              uploadProfileImage(profileImageFile),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('타임아웃')), 5000))
+            ]);
+            if(uploadedUrl){
+              profileImageUrl=uploadedUrl;
+            }
+          }catch(uploadError){
+            console.warn('프로필 이미지 업로드 실패, 기본 이미지 사용:', uploadError);
+            // 기본 이미지로 계속 진행
+          }
+        }
+        
+        const response=await fetch(`${API_CONFIG.backend}/auth/signup`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            email,
+            password,
+            password_check:passwordCheck,
+            nickname,
+            profile_image_url:profileImageUrl
+          })
+        });
+        
+        const data=await response.json();
+        
+        if(response.ok&&data.data){
+          showToast('회원가입 성공! 로그인해주세요.');
+          switchLoginTab('login');
+          document.getElementById('loginEmail').value=email;
+          document.getElementById('signupForm').reset();
+          document.getElementById('profileImagePreview').style.display='none';
+        }else{
+          const errorMsg=translateErrorMessage(data.message||'signup_failed');
+          errorEl.textContent=errorMsg;
+          errorEl.classList.add('show');
+        }
+      }catch(error){
+        console.error('회원가입 오류:',error);
+        errorEl.textContent='서버 연결 오류가 발생했습니다. 서버가 실행 중인지 확인해주세요.';
+        errorEl.classList.add('show');
+      }finally{
+        submitBtn.disabled=false;
+        submitBtn.textContent='회원가입';
+      }
+    }
+
+    function logout(){
+      currentUser=null;
+      localStorage.removeItem('userId');
+      localStorage.removeItem('nickname');
+      localStorage.removeItem('authToken');
+      updateAuthUI();
+      showToast('로그아웃되었습니다.');
+    }
+
+    function updateAuthUI(){
+      const headerUserInfo=document.getElementById('headerUserInfo');
+      const headerUserNickname=document.getElementById('headerUserNickname');
+      const headerAuthButtons=document.getElementById('headerAuthButtons');
+      const sidebarUserInfo=document.getElementById('sidebarUserInfo');
+      const sidebarUserNickname=document.getElementById('sidebarUserNickname');
+      
+      if(currentUser){
+        headerUserInfo.style.display='flex';
+        headerUserInfo.style.alignItems='center';
+        headerUserInfo.style.gap='12px';
+        headerUserNickname.textContent=`${currentUser.nickname}님`;
+        headerAuthButtons.style.display='none';
+        
+        sidebarUserInfo.style.display='flex';
+        sidebarUserNickname.textContent=`${currentUser.nickname}님`;
+      }else{
+        headerUserInfo.style.display='none';
+        headerAuthButtons.style.display='flex';
+        sidebarUserInfo.style.display='none';
+      }
+    }
+
+    // 에러 메시지 한글 변환
+    function translateErrorMessage(message){
+      const errorMessages={
+        'invalid_credentials':'아이디 또는 비밀번호를 확인해주세요',
+        'invalid_email_format':'올바른 이메일 주소 형식을 입력해주세요',
+        'email_required':'이메일을 입력해주세요',
+        'password_required':'비밀번호를 입력해주세요',
+        'invalid_password_format':'비밀번호는 8자 이상, 20자 이하이며 대문자, 소문자, 특수문자를 각각 1개 포함해야 합니다',
+        'password_check_required':'비밀번호를 한번 더 입력해주세요',
+        'password_mismatch':'비밀번호가 일치하지 않습니다',
+        'nickname_required':'닉네임을 입력해주세요',
+        'nickname_contains_space':'닉네임에 띄어쓰기를 사용할 수 없습니다',
+        'nickname_too_long':'닉네임은 최대 10자까지 작성 가능합니다',
+        'duplicate_email':'이미 사용 중인 이메일입니다',
+        'duplicate_nickname':'이미 사용 중인 닉네임입니다',
+        'profile_image_url_required':'프로필 이미지를 업로드해주세요',
+        'internal_server_error':'서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요',
+        'invalid_request':'잘못된 요청입니다'
+      };
+      return errorMessages[message]||message;
+    }
+
+    // 프로필 이미지 미리보기
+    function handleProfileImageChange(event){
+      const file=event.target.files[0];
+      const preview=document.getElementById('profileImagePreview');
+      const previewImg=document.getElementById('profilePreviewImg');
+      
+      if(file){
+        const reader=new FileReader();
+        reader.onload=function(e){
+          previewImg.src=e.target.result;
+          preview.style.display='block';
+        };
+        reader.readAsDataURL(file);
+      }else{
+        preview.style.display='none';
+      }
+    }
+
+    // 프로필 이미지 업로드
+    async function uploadProfileImage(file){
+      if(!file)return null;
+      
+      const formData=new FormData();
+      formData.append('file',file);
+      
+      try{
+        const controller=new AbortController();
+        const timeoutId=setTimeout(()=>controller.abort(),5000);
+        
+        const response=await fetch(`${API_CONFIG.backend}/users/profile/upload`,{
+          method:'POST',
+          body:formData,
+          signal:controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if(!response.ok){
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data=await response.json();
+        
+        if(data.data&&data.data.image_url){
+          return data.data.image_url;
+        }else{
+          console.error('이미지 업로드 실패:',data);
+          return null;
+        }
+      }catch(error){
+        console.error('이미지 업로드 오류:',error);
+        return null;
+      }
+    }
+
+    function showToast(msg){
+      const t=document.getElementById('toast');
+      t.textContent=msg;t.style.opacity=1;
+      t.style.transform='translateX(-50%) translateY(0)';
+      setTimeout(()=>{t.style.opacity=0;t.style.transform='translateX(-50%) translateY(20px)';},2200)
+    }
+
+    function prefill(){
+      document.querySelectorAll('.in')[0].value='홍길동';
+      document.querySelectorAll('.in')[1].value='test@example.com';
+      document.querySelector('textarea.in').value='AI 핵심 4 기능(견적 감사 / RAG / 스타일 / 베뉴) 협업 문의드립니다.'
+    }
+
+    function openDemo(kind){
+      const box=document.getElementById('demo-box');
+
+      if(kind==='board'){
+        box.innerHTML=`
+          <div class="card" style="background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.06)">
+            <div class="title">📋 게시판/지식 허브 <span class="badge ok">샘플</span></div>
+            <p style="color:var(--muted);margin-bottom:12px"><strong>🎯 목적:</strong> 실제 사용자의 경험·후기를 수집해 "웨딩 지식 데이터베이스" 구축, 플래너 리뷰로 신뢰도 강화, 커플 전용 공간 제공</p>
+            
+            <div style="background:#0e1320;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;margin-top:12px">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <!-- 탭 메뉴 -->
+                <div style="display:flex;gap:8px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px">
+                  <button style="padding:6px 12px;background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.3);border-radius:6px;color:var(--accent);font-size:12px;cursor:pointer">예비부부 게시판</button>
+                  <button style="padding:6px 12px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--muted);font-size:12px;cursor:pointer">플래너 리뷰</button>
+                  <button style="padding:6px 12px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--muted);font-size:12px;cursor:pointer">커플 전용 공간</button>
+                </div>
+                
+                <!-- 게시글 목록 -->
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06)">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
+                      <div style="font-weight:600;font-size:14px">강남 A 웨딩홀 후기 (자연광 최고!)</div>
+                      <span style="font-size:11px;color:var(--muted)">2일 전</span>
+                    </div>
+                    <p style="font-size:12px;color:var(--muted);margin:4px 0;line-height:1.5">자연광이 정말 좋고, 직원분들 서비스도 친절하셨어요. 다만 주차 공간이 좀 협소했고, 평일 대관료가 800만원이었습니다.</p>
+                    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+                      <span style="font-size:10px;padding:4px 8px;background:rgba(139,92,246,0.1);border-radius:4px;color:var(--accent)">#강남</span>
+                      <span style="font-size:10px;padding:4px 8px;background:rgba(139,92,246,0.1);border-radius:4px;color:var(--accent)">#웨딩홀</span>
+                      <span style="font-size:10px;padding:4px 8px;background:rgba(139,92,246,0.1);border-radius:4px;color:var(--accent)">#자연광</span>
+                    </div>
+                  </div>
+                  
+                  <div style="padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06)">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
+                      <div style="font-weight:600;font-size:14px">드레스샵 B 후기 - 가성비 좋아요</div>
+                      <span style="font-size:11px;color:var(--muted)">5일 전</span>
+                    </div>
+                    <p style="font-size:12px;color:var(--muted);margin:4px 0;line-height:1.5">150만원에 대여했는데 퀄리티가 정말 좋았어요. 피팅도 꼼꼼하게 해주셨고요.</p>
+                    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+                      <span style="font-size:10px;padding:4px 8px;background:rgba(139,92,246,0.1);border-radius:4px;color:var(--accent)">#드레스</span>
+                      <span style="font-size:10px;padding:4px 8px;background:rgba(139,92,246,0.1);border-radius:4px;color:var(--accent)">#가성비</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 리뷰 자동 요약 기능 -->
+                <div style="margin-top:12px;padding:12px;background:rgba(139,92,246,0.1);border-radius:8px;border:1px solid rgba(139,92,246,0.2)">
+                  <div style="font-size:13px;font-weight:600;margin-bottom:8px">🔍 리뷰 자동 요약 기능 (LLM Summarization)</div>
+                  <p style="font-size:12px;color:var(--muted);margin:4px 0 8px">"이 웨딩홀 10개 리뷰 요약해줘" → 한 문단으로 정리</p>
+                  <div style="padding:10px;background:rgba(0,0,0,0.2);border-radius:6px;font-size:12px;line-height:1.6">
+                    <strong>요약 결과:</strong> A 웨딩홀은 자연광이 우수하고 서비스가 친절하다는 긍정적 평가가 많습니다. 다만 주차 공간이 협소하다는 지적이 있으며, 평균 대관료는 800만원 수준입니다.
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+                    <span style="font-size:11px;padding:4px 8px;background:rgba(16,185,129,0.1);border-radius:4px;color:#a7f3d0">✅ 긍정: 자연광, 친절한 서비스</span>
+                    <span style="font-size:11px;padding:4px 8px;background:rgba(245,158,11,0.1);border-radius:4px;color:#fde68a">⚠️ 개선: 주차 공간 협소</span>
+                    <span style="font-size:11px;padding:4px 8px;background:rgba(139,92,246,0.1);border-radius:4px;color:#c4b5fd">💰 평균 가격: 800만원</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="margin-top:12px;padding:12px;background:rgba(139,92,246,0.1);border-radius:8px;border:1px solid rgba(139,92,246,0.2)">
+              <div style="font-size:13px;margin-bottom:6px"><b>📌 세부 기능:</b></div>
+              <ul style="font-size:12px;margin:4px 0;padding-left:20px;line-height:1.8;color:var(--muted)">
+                <li><strong>예비부부 게시판:</strong> 웨딩홀 리뷰, 드레스 후기, 견적 공유, 지역별 추천, 태그/카테고리 기반 정리</li>
+                <li><strong>플래너 리뷰 게시판:</strong> 전문 플래너들의 경험 공유, 플래너의 포트폴리오 DB와 연결</li>
+                <li><strong>커플 전용 공간:</strong> 둘만의 일기/아이디어/사진 업로드, 비공개 저장 공간</li>
+                <li><strong>리뷰 자동 요약:</strong> 감성 분석(긍정/부정 포인트), 평균 가격, 장단점 자동 추출</li>
+              </ul>
+            </div>
+            
+            <div class="foot" style="margin-top:10px">
+              <span class="chip">예비부부 게시판</span>
+              <span class="chip">플래너 리뷰</span>
+              <span class="chip">커플 전용 공간</span>
+              <span class="chip">리뷰 자동 요약</span>
+            </div>
+          </div>`;
+      }
+
+      if(kind==='chat'){
+        box.innerHTML=`
+          <div class="card" style="background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.06)">
+            <div class="title">🤖 챗봇 (AI Planner Chat) <span class="badge wip">샘플</span></div>
+            <p style="color:var(--muted);margin-bottom:12px"><strong>🎯 목적:</strong> "사람 플래너"처럼 준비 전 과정을 함께하는 AI, 정보를 모아서 정리해주는 Personal Knowledge Manager</p>
+            
+            <div style="background:#0e1320;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;margin-top:12px">
+              <div style="display:flex;flex-direction:column;gap:12px;max-height:400px;overflow-y:auto">
+                <!-- 봇 메시지 -->
+                <div style="display:flex;gap:10px;align-items:start">
+                  <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;flex-shrink:0">🤖</div>
+                  <div style="flex:1;background:var(--soft);padding:12px 16px;border-radius:12px;font-size:14px">
+                    안녕하세요! AI Wedding Planner OS입니다. 무엇을 도와드릴까요? 😊
+                  </div>
+                </div>
+                
+                <!-- 사용자 메시지 -->
+                <div style="display:flex;gap:10px;align-items:start;flex-direction:row-reverse">
+                  <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;flex-shrink:0">👤</div>
+                  <div style="flex:1;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b0d12;padding:12px 16px;border-radius:12px;font-size:14px;font-weight:500">
+                    내 결혼식 날짜 언제였지?
+                  </div>
+                </div>
+                
+                <!-- 봇 응답 (개인 데이터 기반) -->
+                <div style="display:flex;gap:10px;align-items:start">
+                  <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;flex-shrink:0">🤖</div>
+                  <div style="flex:1;background:var(--soft);padding:12px 16px;border-radius:12px;font-size:14px">
+                    <div style="margin-bottom:8px">캘린더를 확인한 결과, 결혼식 날짜는 <strong style="color:var(--accent)">2025년 5월 10일 (토요일)</strong>입니다! 🎉</div>
+                    <div style="padding:10px;background:rgba(139,92,246,0.1);border-radius:8px;border-left:3px solid var(--accent);margin-top:8px;font-size:13px">
+                      <div style="font-weight:600;margin-bottom:6px">📅 현재까지 진행 상황:</div>
+                      <ul style="margin:4px 0;padding-left:20px;line-height:1.8">
+                        <li>D-170일 남았습니다</li>
+                        <li>웨딩홀 계약 완료 (2024년 12월)</li>
+                        <li>스드메 업체 선정 완료</li>
+                        <li>드레스 피팅 예약: 3월 15일</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 사용자 메시지 -->
+                <div style="display:flex;gap:10px;align-items:start;flex-direction:row-reverse">
+                  <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;flex-shrink:0">👤</div>
+                  <div style="flex:1;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b0d12;padding:12px 16px;border-radius:12px;font-size:14px;font-weight:500">
+                    이번 달 예산 상황 알려줘
+                  </div>
+                </div>
+                
+                <!-- 봇 응답 (예산서 데이터 기반) -->
+                <div style="display:flex;gap:10px;align-items:start">
+                  <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;flex-shrink:0">🤖</div>
+                  <div style="flex:1;background:var(--soft);padding:12px 16px;border-radius:12px;font-size:14px">
+                    <div style="margin-bottom:8px">예산서를 분석한 결과입니다:</div>
+                    <div style="padding:10px;background:rgba(139,92,246,0.1);border-radius:8px;margin-top:8px;font-size:13px">
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                        <div><strong>총 예산:</strong> 5,000만원</div>
+                        <div><strong>현재 지출:</strong> 1,850만원</div>
+                        <div><strong>잔여 예산:</strong> 3,150만원</div>
+                        <div><strong>사용률:</strong> 37%</div>
+                      </div>
+                      <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1)">
+                        <div style="font-weight:600;margin-bottom:4px">💸 이번 달 주요 지출:</div>
+                        <ul style="margin:4px 0;padding-left:20px;line-height:1.8">
+                          <li>웨딩홀 계약금: 500만원</li>
+                          <li>스드메 선금: 300만원</li>
+                          <li>드레스 대여비: 150만원</li>
+                        </ul>
+                      </div>
+                      <div style="margin-top:8px;padding:8px;background:rgba(16,185,129,0.1);border-radius:6px;border-left:3px solid var(--ok)">
+                        ✅ 예산 범위 내에서 잘 관리되고 있습니다!
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 사용자 메시지 -->
+                <div style="display:flex;gap:10px;align-items:start;flex-direction:row-reverse">
+                  <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;flex-shrink:0">👤</div>
+                  <div style="flex:1;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b0d12;padding:12px 16px;border-radius:12px;font-size:14px;font-weight:500">
+                    게시판에 올린 웨딩홀 후기 요약해줘
+                  </div>
+                </div>
+                
+                <!-- 봇 응답 (게시판 데이터 기반) -->
+                <div style="display:flex;gap:10px;align-items:start">
+                  <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;flex-shrink:0">🤖</div>
+                  <div style="flex:1;background:var(--soft);padding:12px 16px;border-radius:12px;font-size:14px">
+                    <div style="margin-bottom:8px">커플 게시판에 올리신 웨딩홀 후기를 요약했습니다:</div>
+                    <div style="padding:10px;background:rgba(139,92,246,0.1);border-radius:8px;margin-top:8px;font-size:13px">
+                      <div style="font-weight:600;margin-bottom:6px">📝 작성하신 후기 요약:</div>
+                      <div style="line-height:1.8;margin-bottom:8px">
+                        "A 웨딩홀은 자연광이 정말 좋고, 직원분들 서비스도 친절하셨어요. 다만 주차 공간이 좀 협소했고, 평일 대관료가 800만원이었습니다."
+                      </div>
+                      <div style="padding:8px;background:rgba(16,185,129,0.1);border-radius:6px;border-left:3px solid var(--ok);margin-top:8px">
+                        <div style="font-weight:600;margin-bottom:4px">✅ 긍정 포인트:</div>
+                        <ul style="margin:4px 0;padding-left:20px;line-height:1.8">
+                          <li>자연광 우수</li>
+                          <li>친절한 서비스</li>
+                        </ul>
+                      </div>
+                      <div style="padding:8px;background:rgba(245,158,11,0.1);border-radius:6px;border-left:3px solid var(--warn);margin-top:8px">
+                        <div style="font-weight:600;margin-bottom:4px">⚠️ 개선 포인트:</div>
+                        <ul style="margin:4px 0;padding-left:20px;line-height:1.8">
+                          <li>주차 공간 협소</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="margin-top:12px;padding:12px;background:rgba(139,92,246,0.1);border-radius:8px;border:1px solid rgba(139,92,246,0.2)">
+              <div style="font-size:13px;margin-bottom:6px"><b>📌 세부 기능:</b></div>
+              <ul style="font-size:12px;margin:4px 0;padding-left:20px;line-height:1.8;color:var(--muted)">
+                <li><strong>개인 DB 기반 상담:</strong> 캘린더 일정, 예산서 지출 내역, 커플 게시판 기록 → 모두 읽어서 "개인 맞춤" 조언 제공</li>
+                <li><strong>공유 데이터 기반 정보:</strong> 웨딩홀 평균가, 지역별 견적, 플래너 후기/평점, 드레스샵/스튜디오 정보</li>
+                <li><strong>개인 정보 자동 정리:</strong> 필기/텍스트 → 표/리스트/예산 Category로 정리, "지금까지 준비 상황 요약해줘"</li>
+                <li><strong>웨딩홀 탐색·추천:</strong> 조건(예산/지역/인원/스타일) 입력 → 후보 자동 생성, "리스트로 보여줘 / 비교해줘"</li>
+                <li><strong>게시판/일정/예산 통합 관리:</strong> 리뷰 요약, 일정 자동 조정, 예산 초과 시 경고, 플래너/홀/아이템 추천</li>
+              </ul>
+            </div>
+            
+            <div class="foot" style="margin-top:10px">
+              <span class="chip">개인 DB 기반</span>
+              <span class="chip">공유 데이터</span>
+              <span class="chip">자동 정리</span>
+              <span class="chip">웨딩홀 추천</span>
+              <span class="chip">통합 관리</span>
+            </div>
+          </div>`;
+      }
+
+      if(kind==='calendar'){
+        box.innerHTML=`
+          <div class="card" style="background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.06)">
+            <div class="title">📅 개인화 일정 관리(캘린더) <span class="badge wip">샘플</span></div>
+            <p style="color:var(--muted);margin-bottom:12px"><strong>🎯 목적:</strong> 결혼식까지 남은 기간을 기준으로 자동으로 할 일을 배치하고 개인 맞춤형 타임라인을 만들어주는 기능</p>
+            
+            <div style="background:#0e1320;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;margin-top:12px">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <!-- D-Day 정보 -->
+                <div style="padding:12px;background:rgba(139,92,246,0.1);border-radius:8px;border-left:3px solid var(--accent)">
+                  <div style="font-weight:600;font-size:14px;margin-bottom:4px">📅 D-Day 기반 타임라인</div>
+                  <div style="font-size:24px;font-weight:700;color:var(--accent);margin:8px 0">D-170</div>
+                  <div style="font-size:12px;color:var(--muted)">결혼식: 2025년 5월 10일 (토요일)</div>
+                </div>
+                
+                <!-- Todo 리스트 -->
+                <div>
+                  <div style="font-weight:600;font-size:13px;margin-bottom:8px">📋 이번 주 할 일</div>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <div style="padding:10px;background:rgba(255,255,255,0.03);border-radius:6px;border-left:3px solid var(--ok);display:flex;justify-content:space-between;align-items:center">
+                      <div>
+                        <div style="font-size:13px;font-weight:500">웨딩홀 계약금 결제</div>
+                        <div style="font-size:11px;color:var(--muted);margin-top:2px">담당: 공동 • 우선순위: 높음</div>
+                      </div>
+                      <span style="font-size:11px;color:var(--ok)">완료</span>
+                    </div>
+                    <div style="padding:10px;background:rgba(255,255,255,0.03);border-radius:6px;border-left:3px solid var(--warn);display:flex;justify-content:space-between;align-items:center">
+                      <div>
+                        <div style="font-size:13px;font-weight:500">청첩장 초안 확정</div>
+                        <div style="font-size:11px;color:var(--muted);margin-top:2px">담당: 신부 • 우선순위: 중간</div>
+                      </div>
+                      <span style="font-size:11px;color:var(--warn)">진행중</span>
+                    </div>
+                    <div style="padding:10px;background:rgba(255,255,255,0.03);border-radius:6px;border-left:3px solid var(--muted);display:flex;justify-content:space-between;align-items:center">
+                      <div>
+                        <div style="font-size:13px;font-weight:500">하객 명단 1차 작성</div>
+                        <div style="font-size:11px;color:var(--muted);margin-top:2px">담당: 공동 • 우선순위: 낮음</div>
+                      </div>
+                      <span style="font-size:11px;color:var(--muted)">대기</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 알림 -->
+                <div style="padding:10px;background:rgba(245,158,11,0.1);border-radius:8px;border:1px solid rgba(245,158,11,0.2)">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:4px">🔔 알림</div>
+                  <div style="font-size:12px;color:var(--muted)">3월 15일 - 드레스 피팅 예약</div>
+                  <div style="font-size:12px;color:var(--muted)">3월 20일 - 스드메 잔금 납부</div>
+                </div>
+                
+                <!-- 챗봇 연동 -->
+                <div style="padding:10px;background:rgba(139,92,246,0.1);border-radius:8px">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:4px">💬 챗봇 연동</div>
+                  <div style="font-size:11px;color:var(--muted);line-height:1.6">"다음 주 해야 할 일 알려줘" • "홀 계약 일정 앞으로 당겨줘"</div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="margin-top:12px;padding:12px;background:rgba(139,92,246,0.1);border-radius:8px;border:1px solid rgba(139,92,246,0.2)">
+              <div style="font-size:13px;margin-bottom:6px"><b>📌 세부 기능:</b></div>
+              <ul style="font-size:12px;margin:4px 0;padding-left:20px;line-height:1.8;color:var(--muted)">
+                <li><strong>D-Day 기반 타임라인 자동 생성:</strong> 예식일 입력 → 1년치 체크리스트 자동 구성</li>
+                <li><strong>Todo 리스트 & 세부 작업:</strong> 우선순위, 맡은 사람(신랑/신부/공동), 진행률</li>
+                <li><strong>알림 기능:</strong> 중요한 일정 리마인드, 예산 결제일/계약금 납부일 알림</li>
+                <li><strong>챗봇 연동:</strong> "다음 주 해야 할 일 알려줘", "홀 계약 일정 앞으로 당겨줘"</li>
+              </ul>
+            </div>
+            
+            <div class="foot" style="margin-top:10px">
+              <span class="chip">D-Day 타임라인</span>
+              <span class="chip">Todo 리스트</span>
+              <span class="chip">알림 기능</span>
+              <span class="chip">챗봇 연동</span>
+            </div>
+          </div>`;
+      }
+
+      if(kind==='budget'){
+        box.innerHTML=`
+          <div class="card" style="background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.06)">
+            <div class="title">💰 Excel 형식의 예산서 <span class="badge ok">샘플</span></div>
+            <p style="color:var(--muted);margin-bottom:12px"><strong>🎯 목적:</strong> 헬 같은 예산 관리(홀/드레스/스냅/혼수…)를 "1개의 대시보드"에 정리해주는 UI</p>
+            
+            <div style="background:#0e1320;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;margin-top:12px">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <!-- 예산 요약 -->
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+                  <div style="padding:12px;background:rgba(139,92,246,0.1);border-radius:8px;text-align:center">
+                    <div style="font-size:11px;color:var(--muted);margin-bottom:4px">총 예산</div>
+                    <div style="font-size:20px;font-weight:700;color:var(--accent)">5,000만원</div>
+                  </div>
+                  <div style="padding:12px;background:rgba(16,185,129,0.1);border-radius:8px;text-align:center">
+                    <div style="font-size:11px;color:var(--muted);margin-bottom:4px">현재 지출</div>
+                    <div style="font-size:20px;font-weight:700;color:var(--ok)">1,850만원</div>
+                  </div>
+                  <div style="padding:12px;background:rgba(34,211,238,0.1);border-radius:8px;text-align:center">
+                    <div style="font-size:11px;color:var(--muted);margin-bottom:4px">잔여 예산</div>
+                    <div style="font-size:20px;font-weight:700;color:var(--accent-2)">3,150만원</div>
+                  </div>
+                  <div style="padding:12px;background:rgba(245,158,11,0.1);border-radius:8px;text-align:center">
+                    <div style="font-size:11px;color:var(--muted);margin-bottom:4px">사용률</div>
+                    <div style="font-size:20px;font-weight:700;color:var(--warn)">37%</div>
+                  </div>
+                </div>
+                
+                <!-- 예산 테이블 -->
+                <div>
+                  <div style="font-weight:600;font-size:13px;margin-bottom:8px">📊 예산 항목별 현황</div>
+                  <table style="width:100%;border-collapse:collapse;font-size:12px">
+                    <thead>
+                      <tr style="border-bottom:1px solid rgba(255,255,255,0.1)">
+                        <th style="text-align:left;padding:8px 4px;color:var(--muted);font-weight:500">항목</th>
+                        <th style="text-align:right;padding:8px 4px;color:var(--muted);font-weight:500">예산</th>
+                        <th style="text-align:right;padding:8px 4px;color:var(--muted);font-weight:500">지출</th>
+                        <th style="text-align:center;padding:8px 4px;color:var(--muted);font-weight:500">비율</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+                        <td style="padding:8px 4px">웨딩홀</td>
+                        <td style="text-align:right;padding:8px 4px">1,500만원</td>
+                        <td style="text-align:right;padding:8px 4px;color:var(--ok)">500만원</td>
+                        <td style="text-align:center;padding:8px 4px;color:var(--ok)">33%</td>
+                      </tr>
+                      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+                        <td style="padding:8px 4px">스드메</td>
+                        <td style="text-align:right;padding:8px 4px">800만원</td>
+                        <td style="text-align:right;padding:8px 4px;color:var(--ok)">300만원</td>
+                        <td style="text-align:center;padding:8px 4px;color:var(--ok)">38%</td>
+                      </tr>
+                      <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+                        <td style="padding:8px 4px">드레스</td>
+                        <td style="text-align:right;padding:8px 4px">200만원</td>
+                        <td style="text-align:right;padding:8px 4px;color:var(--ok)">150만원</td>
+                        <td style="text-align:center;padding:8px 4px;color:var(--warn)">75%</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                <!-- 항목 추천 -->
+                <div style="padding:10px;background:rgba(139,92,246,0.1);border-radius:8px">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:4px">💡 AI Budget Advisor - 항목 추천</div>
+                  <div style="font-size:11px;color:var(--muted);line-height:1.6">예산 대비 적절한 배분률 자동 제안 • 지역/규모/스타일 기반 평균값 추천</div>
+                </div>
+                
+                <!-- 챗봇 연동 -->
+                <div style="padding:10px;background:rgba(34,211,238,0.1);border-radius:8px">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:4px">💬 챗봇 연동</div>
+                  <div style="font-size:11px;color:var(--muted);line-height:1.6">"이번 달 예산 상황 요약해줘" • "웨딩홀 항목에 80만 원 추가해줘" • 초과 항목 자동 경고</div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="margin-top:12px;padding:12px;background:rgba(139,92,246,0.1);border-radius:8px;border:1px solid rgba(139,92,246,0.2)">
+              <div style="font-size:13px;margin-bottom:6px"><b>📌 세부 기능:</b></div>
+              <ul style="font-size:12px;margin:4px 0;padding-left:20px;line-height:1.8;color:var(--muted)">
+                <li><strong>직접 입력 가능한 예산 테이블:</strong> 항목/예산/실제 지출/비고 입력, 자동 합계 / 카테고리별 통계</li>
+                <li><strong>항목 추천 기능 (AI Budget Advisor):</strong> 예산 대비 적절한 배분률 자동 제안, "지역/규모/스타일 기반 평균값" 추천</li>
+                <li><strong>CSV/XLSX 다운로드:</strong> 실제 excel처럼 다운로드/업로드</li>
+                <li><strong>챗봇 연동:</strong> "이번 달 예산 상황 요약해줘", "웨딩홀 항목에 80만 원 추가해줘", 초과 항목 자동 경고</li>
+              </ul>
+            </div>
+            
+            <div class="foot" style="margin-top:10px">
+              <span class="chip">직접 입력 테이블</span>
+              <span class="chip">항목 추천</span>
+              <span class="chip">CSV/XLSX 다운로드</span>
+              <span class="chip">챗봇 연동</span>
+            </div>
+          </div>`;
+      }
+
+
+      if(kind==='voice'){
+        box.innerHTML=`
+          <div class="card">
+            <div class="title">🎤 24/7 음성 비서 (Voice Personal Assistant) <span class="badge wip">샘플</span></div>
+            <p style="color:var(--muted);font-size:13px">🚗 <b>상황:</b> 사용자가 출근 중 운전하면서 음성 메시지로 질문</p>
+            <div style="margin-top:12px;padding:12px;background:rgba(34,211,238,0.1);border-radius:8px;border:1px solid rgba(34,211,238,0.2)">
+              <div style="font-size:13px;margin-bottom:8px"><b>🎤 사용자 음성 메시지 (08:30):</b></div>
+              <p style="font-size:13px;margin:0">"오늘 할 일이 뭐가 있었지? 그리고 이번 주말까지 해야 할 것도 알려줘. 드레스 예약은 어떻게 됐어?"</p>
+            </div>
+            <div style="margin-top:12px;padding:12px;background:rgba(139,92,246,0.1);border-radius:8px">
+              <div style="font-size:13px;margin-bottom:6px"><b>🔊 AI 브리핑 (1분 후):</b></div>
+              <p style="font-size:13px;margin:0">"오늘은 오후 7시에 스드메 업체와 상담 예정입니다. 이번 주말까지는 웨딩홀 계약금 결제, 청첩장 초안 확정, 하객 명단 1차 작성이 필요합니다. 드레스는 A업체에서 3벌 추린 상태이고, 이번 주 토요일 오후 2시 피팅 예약되어 있습니다."</p>
+            </div>
+            <div style="margin-top:12px;padding:12px;background:rgba(16,185,129,0.1);border-radius:8px;border:1px solid rgba(16,185,129,0.2)">
+              <div style="font-size:13px;margin-bottom:8px"><b>📋 오늘 할 일:</b></div>
+              <ul style="font-size:13px;margin:6px 0;padding-left:20px">
+                <li>19:00 - 스드메 업체 상담 (강남점)</li>
+                <li>허니문 패키지 견적 3곳 비교</li>
+              </ul>
+            </div>
+            <div style="margin-top:12px;padding:12px;background:rgba(245,158,11,0.1);border-radius:8px;border:1px solid rgba(245,158,11,0.2)">
+              <div style="font-size:13px;margin-bottom:8px"><b>⚠️ 주말까지 마감:</b></div>
+              <ul style="font-size:13px;margin:6px 0;padding-left:20px">
+                <li>웨딩홀 계약금 결제 (D-90)</li>
+                <li>청첩장 초안 확정</li>
+                <li>하객 명단 1차 작성</li>
+              </ul>
+            </div>
+            <div class="foot" style="margin-top:10px"><span class="chip">STT</span><span class="chip">TTS</span><span class="chip">LLM</span><span class="chip">비동기 메시지</span></div>
+            <p style="font-size:12px;margin-top:10px;color:var(--muted)">💡 <i>핸즈프리로 언제든 질문하고, AI가 정리된 브리핑을 음성으로 전달</i></p>
+          </div>`;
+      }
+    }
+    // 히어로 카드 클릭 시 데모 열기
+    document.addEventListener('DOMContentLoaded',()=>{
+      document.querySelectorAll('.hero-card .col').forEach((el)=>{
+        el.classList.add('clickable');
+        el.addEventListener('click',()=>{
+          const text=el.textContent.toLowerCase();
+          if(text.includes('덤탱이')||text.includes('auditor')){
+            openDemo('board');
+          }else if(text.includes('음성')||text.includes('voice')){
+            openDemo('voice');
+          }else if(text.includes('감정')||text.includes('emotional')){
+            openDemo('chat');
+          }else if(text.includes('q&a')||text.includes('rag')){
+            openDemo('calendar');
+          }
+        });
+      });
+    });
+
+    function openFeatureModal(key){
+      const data=featureDetails[key];
+      if(!data)return;
+      const overlay=document.getElementById('featureModalOverlay');
+      const titleEl=document.getElementById('featureModalTitle');
+      const tagEl=document.getElementById('featureModalTag');
+      const bodyEl=document.getElementById('featureModalBody');
+      titleEl.textContent=data.title;
+      if(data.tag){
+        tagEl.textContent=data.tag;
+        tagEl.style.display='inline-flex';
+      }else{
+        tagEl.style.display='none';
+      }
+      bodyEl.innerHTML=data.body;
+      overlay.classList.add('active');
+      document.body.classList.add('modal-open');
+      bodyEl.scrollTop=0;
+      setTimeout(()=>{
+        const closeBtn=document.querySelector('.modal-close');
+        if(closeBtn)closeBtn.focus();
+      },50);
+    }
+
+    function closeFeatureModal(){
+      const overlay=document.getElementById('featureModalOverlay');
+      if(!overlay.classList.contains('active'))return;
+      overlay.classList.remove('active');
+      document.body.classList.remove('modal-open');
+    }
+
+    function handleModalOverlayClick(event){
+      if(event.target.id==='featureModalOverlay'){
+        closeFeatureModal();
+      }
+    }
+
+    document.addEventListener('keydown',event=>{
+      if(event.key==='Escape'){
+        const overlay=document.getElementById('featureModalOverlay');
+        if(overlay.classList.contains('active'))closeFeatureModal();
+        const loginOverlay=document.getElementById('loginModalOverlay');
+        if(loginOverlay.classList.contains('active'))closeLoginModal();
+        const contactOverlay=document.getElementById('contactModalOverlay');
+        if(contactOverlay.classList.contains('active'))closeContactModal();
+      }
+    });
+
+    // 페이지 로드 시 인증 상태 확인
+    document.addEventListener('DOMContentLoaded',()=>{
+      updateAuthUI();
+      // 사이드바는 기본적으로 펼쳐진 상태로 시작
+      const sidebar=document.getElementById('sidebar');
+      const mainContent=document.querySelector('.main-content');
+      if(sidebar&&!sidebar.classList.contains('collapsed')){
+        if(mainContent)mainContent.classList.add('sidebar-expanded');
+      }
+    });
+  </script>
+</body>
+</html>

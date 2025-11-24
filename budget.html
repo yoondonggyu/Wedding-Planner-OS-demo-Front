@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>예산서 - AI Wedding Planner OS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b0d12;--card:#141517;--soft:#1a1f2e;--text:#e8ecf3;--muted:#a7b0c0;--accent:#8b5cf6;--accent-2:#22d3ee;--ok:#10b981;--warn:#f59e0b;--danger:#ef4444;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:linear-gradient(180deg,#0a0c11 0%,#0d111a 60%,#0b0d12 100%);color:var(--text);font-family:'Pretendard',system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;min-height:100vh}
+    .container{width:min(1160px,92%);margin:0 auto;padding:20px 0}
+    header{position:sticky;top:0;backdrop-filter:blur(10px);background-color:rgba(11,13,18,0.6);border-bottom:1px solid rgba(255,255,255,0.06);z-index:30}
+    .nav{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+    .brand{display:flex;gap:10px;align-items:center}
+    .logo{width:28px;height:28px;border-radius:8px;background:conic-gradient(from 180deg,var(--accent),var(--accent-2));box-shadow:0 0 24px rgba(139,92,246,.4)}
+    .nav .links{display:flex;gap:18px;align-items:center}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--soft);border:1px solid rgba(255,255,255,0.15);color:#ffffff;font-weight:500;transition:.2s ease;text-decoration:none;cursor:pointer;font-size:14px}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.25);background:rgba(139,92,246,0.2);border-color:rgba(139,92,246,0.4)}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b0d12;border:0;font-weight:700}
+    .page-title{margin:40px 0 30px}
+    .page-title h1{font-size:32px;margin:0 0 8px}
+    .page-title p{color:var(--muted);font-size:16px;margin:0}
+    .card{background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;margin-bottom:20px}
+    .budget-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+    .summary-item{background:var(--soft);border-radius:12px;padding:16px;text-align:center}
+    .summary-item .label{font-size:12px;color:var(--muted);margin-bottom:8px}
+    .summary-item .value{font-size:24px;font-weight:700;color:var(--accent)}
+    .table-container{overflow-x:auto}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px;text-align:left;border-bottom:1px solid rgba(255,255,255,.1)}
+    th{background:var(--soft);font-weight:600;font-size:14px}
+    td{font-size:14px}
+    input,select{width:100%;padding:8px;border-radius:6px;background:var(--soft);border:1px solid rgba(255,255,255,.1);color:var(--text);font-size:14px;font-family:inherit}
+    .modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center}
+    .modal.active{display:flex}
+    .modal-content{background:var(--card);border-radius:16px;padding:24px;max-width:500px;width:90%;max-height:90vh;overflow-y:auto}
+    .form-group{margin-bottom:16px}
+    .form-group label{display:block;margin-bottom:6px;font-size:14px;color:var(--muted)}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px;border-radius:8px;background:var(--soft);border:1px solid rgba(255,255,255,.1);color:var(--text);font-size:14px;font-family:inherit}
+    .form-group textarea{min-height:80px;resize:vertical}
+    .file-upload-area{border:2px dashed rgba(255,255,255,.2);border-radius:12px;padding:40px;text-align:center;cursor:pointer;transition:.2s}
+    .file-upload-area:hover{border-color:var(--accent);background:rgba(139,92,246,0.1)}
+    .file-upload-area.dragover{border-color:var(--accent-2);background:rgba(34,211,238,0.1)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <strong><a href="index.html" style="color:inherit;text-decoration:none">AI Wedding Planner OS</a></strong>
+      </div>
+      <nav class="links">
+        <a href="index.html" class="btn">홈</a>
+        <a href="board.html" class="btn">게시판</a>
+        <a href="calendar.html" class="btn">캘린더</a>
+        <a href="chat.html" class="btn">AI 플래너</a>
+        <a href="voice.html" class="btn">음성 비서</a>
+        <span id="userInfo" style="display:none">
+          <span style="color:var(--muted);font-size:14px" id="userNickname"></span>
+          <a href="#" class="btn" onclick="event.preventDefault();logout()">로그아웃</a>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="page-title">
+        <h1>💰 Excel 형식의 예산서</h1>
+        <p>OCR + LLM 구조화 + Excel/CSV Export</p>
+      </div>
+
+      <!-- 예산 요약 -->
+      <div class="card">
+        <div class="budget-summary" id="budgetSummary">
+          <div class="summary-item">
+            <div class="label">총 예산</div>
+            <div class="value" id="totalBudget">0원</div>
+          </div>
+          <div class="summary-item">
+            <div class="label">예상 지출</div>
+            <div class="value" id="totalEstimated">0원</div>
+          </div>
+          <div class="summary-item">
+            <div class="label">실제 지출</div>
+            <div class="value" id="totalActual">0원</div>
+          </div>
+          <div class="summary-item">
+            <div class="label">잔액</div>
+            <div class="value" id="remaining">0원</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="number" id="totalBudgetInput" placeholder="총 예산 입력" style="flex:1;min-width:200px" />
+          <button class="btn primary" onclick="setTotalBudget()">총 예산 설정</button>
+          <button class="btn" onclick="exportExcel()">Excel 다운로드</button>
+          <button class="btn" onclick="exportCSV()">CSV 다운로드</button>
+          <button class="btn" onclick="showImportModal()">파일 업로드</button>
+          <button class="btn" onclick="showOCRModal()">영수증 OCR</button>
+          <button class="btn primary" onclick="showItemModal()">항목 추가</button>
+        </div>
+      </div>
+
+      <!-- 예산 테이블 -->
+      <div class="card">
+        <h2 style="margin-top:0">예산 항목</h2>
+        <div class="table-container">
+          <table id="budgetTable">
+            <thead>
+              <tr>
+                <th>항목명</th>
+                <th>카테고리</th>
+                <th>예상 예산</th>
+                <th>실제 지출</th>
+                <th>수량</th>
+                <th>단위</th>
+                <th>담당자</th>
+                <th>비고</th>
+                <th>작업</th>
+              </tr>
+            </thead>
+            <tbody id="budgetTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 항목 추가 모달 -->
+  <div class="modal" id="itemModal">
+    <div class="modal-content">
+      <h3 style="margin-top:0">예산 항목 추가</h3>
+      <div class="form-group">
+        <label>항목명</label>
+        <input type="text" id="itemName" required />
+      </div>
+      <div class="form-group">
+        <label>카테고리</label>
+        <select id="itemCategory">
+          <option value="hall">웨딩홀</option>
+          <option value="dress">드레스</option>
+          <option value="studio">스튜디오</option>
+          <option value="snap">스냅</option>
+          <option value="honeymoon">혼수/신혼여행</option>
+          <option value="etc">기타</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>예상 예산</label>
+        <input type="number" id="itemEstimated" step="0.01" required />
+      </div>
+      <div class="form-group">
+        <label>실제 지출</label>
+        <input type="number" id="itemActual" step="0.01" value="0" />
+      </div>
+      <div class="form-group">
+        <label>수량</label>
+        <input type="number" id="itemQuantity" step="0.01" value="1" />
+      </div>
+      <div class="form-group">
+        <label>단위</label>
+        <input type="text" id="itemUnit" placeholder="인원, 시간 등" />
+      </div>
+      <div class="form-group">
+        <label>담당자</label>
+        <select id="itemPayer">
+          <option value="both">공동</option>
+          <option value="groom">신랑</option>
+          <option value="bride">신부</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>비고</label>
+        <textarea id="itemNotes"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+        <button class="btn" onclick="closeItemModal()">취소</button>
+        <button class="btn primary" onclick="createItem()">추가</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 파일 업로드 모달 -->
+  <div class="modal" id="importModal">
+    <div class="modal-content">
+      <h3 style="margin-top:0">파일 업로드</h3>
+      <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('fileInput').click()">
+        <p>Excel 또는 CSV 파일을 드래그하거나 클릭하여 업로드</p>
+        <input type="file" id="fileInput" accept=".xlsx,.csv" style="display:none" onchange="handleFileUpload(event)" />
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+        <button class="btn" onclick="closeImportModal()">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OCR 모달 -->
+  <div class="modal" id="ocrModal">
+    <div class="modal-content">
+      <h3 style="margin-top:0">영수증/견적서 OCR</h3>
+      <div class="file-upload-area" id="ocrUploadArea" onclick="document.getElementById('ocrInput').click()">
+        <p>이미지 파일을 드래그하거나 클릭하여 업로드</p>
+        <input type="file" id="ocrInput" accept="image/*" style="display:none" onchange="handleOCRUpload(event)" />
+      </div>
+      <div id="ocrResult" style="margin-top:16px;padding:12px;background:var(--soft);border-radius:8px;display:none"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+        <button class="btn" onclick="closeOCRModal()">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'http://localhost:8001/api';
+    let currentUser = null;
+    const userId = localStorage.getItem('userId');
+    const nickname = localStorage.getItem('nickname');
+    let budgetItems = [];
+    let totalBudget = 0;
+
+    if (userId && nickname) {
+      currentUser = { id: parseInt(userId), nickname: nickname };
+      updateAuthUI();
+      loadData();
+    } else {
+      alert('로그인이 필요합니다.');
+      window.location.href = 'index.html';
+    }
+
+    function updateAuthUI(){
+      const userInfo = document.getElementById('userInfo');
+      const userNickname = document.getElementById('userNickname');
+      if(currentUser){
+        userInfo.style.display = 'flex';
+        userInfo.style.alignItems = 'center';
+        userInfo.style.gap = '12px';
+        userNickname.textContent = `${currentUser.nickname}님`;
+      }
+    }
+
+    function logout(){
+      currentUser = null;
+      localStorage.removeItem('userId');
+      localStorage.removeItem('nickname');
+      localStorage.removeItem('authToken');
+      window.location.href = 'index.html';
+    }
+
+    async function loadData(){
+      await Promise.all([
+        loadBudgetItems(),
+        loadBudgetSummary()
+      ]);
+      renderTable();
+      updateSummary();
+    }
+
+    async function loadBudgetItems(){
+      try {
+        const response = await fetch(`${API_BASE_URL}/budget/items?user_id=${currentUser.id}`);
+        const data = await response.json();
+        if(data.message === 'budget_items_retrieved'){
+          budgetItems = data.data.items;
+        }
+      } catch(e){
+        console.error('예산 항목 로드 실패:', e);
+      }
+    }
+
+    async function loadBudgetSummary(){
+      try {
+        const response = await fetch(`${API_BASE_URL}/budget/summary?user_id=${currentUser.id}`);
+        const data = await response.json();
+        if(data.message === 'budget_summary_retrieved'){
+          totalBudget = data.data.total_budget || 0;
+          updateSummaryDisplay(data.data);
+        }
+      } catch(e){
+        console.error('예산 요약 로드 실패:', e);
+      }
+    }
+
+    function updateSummaryDisplay(summary){
+      document.getElementById('totalBudget').textContent = formatCurrency(totalBudget);
+      document.getElementById('totalEstimated').textContent = formatCurrency(summary.total_estimated);
+      document.getElementById('totalActual').textContent = formatCurrency(summary.total_actual);
+      document.getElementById('remaining').textContent = formatCurrency(summary.remaining);
+    }
+
+    function formatCurrency(amount){
+      return new Intl.NumberFormat('ko-KR', {style: 'currency', currency: 'KRW'}).format(amount);
+    }
+
+    function renderTable(){
+      const tbody = document.getElementById('budgetTableBody');
+      tbody.innerHTML = '';
+      
+      if(budgetItems.length === 0){
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted)">예산 항목이 없습니다.</td></tr>';
+        return;
+      }
+      
+      budgetItems.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.item_name}</td>
+          <td>${getCategoryName(item.category)}</td>
+          <td>${formatCurrency(item.estimated_budget)}</td>
+          <td>${formatCurrency(item.actual_expense)}</td>
+          <td>${item.quantity}</td>
+          <td>${item.unit || '-'}</td>
+          <td>${getPayerName(item.payer)}</td>
+          <td>${item.notes || '-'}</td>
+          <td>
+            <button class="btn" onclick="deleteItem(${item.id})" style="padding:4px 8px;font-size:12px">삭제</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function getCategoryName(category){
+      const names = {
+        'hall': '웨딩홀',
+        'dress': '드레스',
+        'studio': '스튜디오',
+        'snap': '스냅',
+        'honeymoon': '혼수/신혼여행',
+        'etc': '기타'
+      };
+      return names[category] || category;
+    }
+
+    function getPayerName(payer){
+      const names = {
+        'both': '공동',
+        'groom': '신랑',
+        'bride': '신부'
+      };
+      return names[payer] || payer;
+    }
+
+    function updateSummary(){
+      const totalEstimated = budgetItems.reduce((sum, item) => sum + item.estimated_budget, 0);
+      const totalActual = budgetItems.reduce((sum, item) => sum + item.actual_expense, 0);
+      
+      document.getElementById('totalEstimated').textContent = formatCurrency(totalEstimated);
+      document.getElementById('totalActual').textContent = formatCurrency(totalActual);
+      document.getElementById('remaining').textContent = formatCurrency(totalBudget - totalActual);
+    }
+
+    async function setTotalBudget(){
+      const budget = parseFloat(document.getElementById('totalBudgetInput').value);
+      if(isNaN(budget) || budget < 0) return alert('올바른 예산을 입력해주세요.');
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/budget/total?user_id=${currentUser.id}`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({total_budget: budget})
+        });
+        if(response.ok){
+          totalBudget = budget;
+          document.getElementById('totalBudgetInput').value = '';
+          await loadBudgetSummary();
+        }
+      } catch(e){
+        console.error(e);
+        alert('총 예산 설정에 실패했습니다.');
+      }
+    }
+
+    function showItemModal(){
+      document.getElementById('itemModal').classList.add('active');
+    }
+
+    function closeItemModal(){
+      document.getElementById('itemModal').classList.remove('active');
+    }
+
+    async function createItem(){
+      const itemName = document.getElementById('itemName').value;
+      const estimated = parseFloat(document.getElementById('itemEstimated').value);
+      if(!itemName || isNaN(estimated)) return alert('항목명과 예상 예산을 입력해주세요.');
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/budget/items?user_id=${currentUser.id}`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            item_name: itemName,
+            category: document.getElementById('itemCategory').value,
+            estimated_budget: estimated,
+            actual_expense: parseFloat(document.getElementById('itemActual').value) || 0,
+            quantity: parseFloat(document.getElementById('itemQuantity').value) || 1,
+            unit: document.getElementById('itemUnit').value || null,
+            payer: document.getElementById('itemPayer').value,
+            notes: document.getElementById('itemNotes').value || null
+          })
+        });
+        if(response.ok){
+          closeItemModal();
+          await loadData();
+        }
+      } catch(e){
+        console.error(e);
+        alert('항목 추가에 실패했습니다.');
+      }
+    }
+
+    async function deleteItem(itemId){
+      if(!confirm('정말 삭제하시겠습니까?')) return;
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/budget/items/${itemId}?user_id=${currentUser.id}`, {
+          method: 'DELETE'
+        });
+        if(response.ok){
+          await loadData();
+        }
+      } catch(e){
+        console.error(e);
+        alert('항목 삭제에 실패했습니다.');
+      }
+    }
+
+    function exportExcel(){
+      window.open(`${API_BASE_URL}/budget/export/excel?user_id=${currentUser.id}`, '_blank');
+    }
+
+    function exportCSV(){
+      window.open(`${API_BASE_URL}/budget/export/csv?user_id=${currentUser.id}`, '_blank');
+    }
+
+    function showImportModal(){
+      document.getElementById('importModal').classList.add('active');
+    }
+
+    function closeImportModal(){
+      document.getElementById('importModal').classList.remove('active');
+    }
+
+    async function handleFileUpload(event){
+      const file = event.target.files[0];
+      if(!file) return;
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      try {
+        const fileType = file.name.endsWith('.xlsx') ? 'excel' : 'csv';
+        const endpoint = fileType === 'excel' ? 'import/excel' : 'import/csv';
+        
+        const response = await fetch(`${API_BASE_URL}/budget/${endpoint}?user_id=${currentUser.id}`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        if(data.message === 'budget_imported'){
+          alert(`${data.data.items_imported}개의 항목이 추가되었습니다.`);
+          closeImportModal();
+          await loadData();
+        }
+      } catch(e){
+        console.error(e);
+        alert('파일 업로드에 실패했습니다.');
+      }
+    }
+
+    function showOCRModal(){
+      document.getElementById('ocrModal').classList.add('active');
+    }
+
+    function closeOCRModal(){
+      document.getElementById('ocrModal').classList.remove('active');
+      document.getElementById('ocrResult').style.display = 'none';
+    }
+
+    async function handleOCRUpload(event){
+      const file = event.target.files[0];
+      if(!file) return;
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const resultDiv = document.getElementById('ocrResult');
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = '<p>OCR 처리 중...</p>';
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/budget/process-receipt?user_id=${currentUser.id}`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        if(data.message === 'receipt_processed'){
+          resultDiv.innerHTML = `
+            <p><strong>처리 완료!</strong></p>
+            <p>${data.data.items_created}개의 항목이 추가되었습니다.</p>
+            <ul style="margin-top:8px;padding-left:20px">
+              ${data.data.items.map(item => `<li>${item.item_name} - ${formatCurrency(item.estimated_budget)}</li>`).join('')}
+            </ul>
+          `;
+          await loadData();
+        }
+      } catch(e){
+        console.error(e);
+        resultDiv.innerHTML = '<p style="color:var(--danger)">OCR 처리에 실패했습니다.</p>';
+      }
+    }
+
+    // 모달 외부 클릭 시 닫기
+    document.getElementById('itemModal').addEventListener('click', (e) => {
+      if(e.target.id === 'itemModal') closeItemModal();
+    });
+    document.getElementById('importModal').addEventListener('click', (e) => {
+      if(e.target.id === 'importModal') closeImportModal();
+    });
+    document.getElementById('ocrModal').addEventListener('click', (e) => {
+      if(e.target.id === 'ocrModal') closeOCRModal();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>게시판/지식 허브 - AI Wedding Planner OS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --card: #141517;
+      --soft: #1a1f2e;
+      --text: #e8ecf3;
+      --muted: #a7b0c0;
+      --accent: #8b5cf6;
+      --accent-2: #22d3ee;
+      --ok: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(180deg, #0a0c11 0%, #0d111a 60%, #0b0d12 100%);
+      color: var(--text);
+      font-family: 'Pretendard', system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh
+    }
+
+    .container {
+      width: min(1160px, 92%);
+      margin: 0 auto;
+      padding: 20px 0
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(10px);
+      background-color: rgba(11, 13, 18, 0.6);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      z-index: 30
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0
+    }
+
+    .brand {
+      display: flex;
+      gap: 10px;
+      align-items: center
+    }
+
+    .logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: conic-gradient(from 180deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 24px rgba(139, 92, 246, .4)
+    }
+
+    .nav .links {
+      display: flex;
+      gap: 18px;
+      align-items: center
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: var(--soft);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-weight: 500;
+      transition: .2s ease;
+      text-decoration: none
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, .25);
+      background: rgba(139, 92, 246, 0.2);
+      border-color: rgba(139, 92, 246, 0.4)
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #0b0d12;
+      border: 0;
+      font-weight: 700
+    }
+
+    .page-title {
+      margin: 40px 0 30px
+    }
+
+    .page-title h1 {
+      font-size: 32px;
+      margin: 0 0 8px
+    }
+
+    .page-title p {
+      color: var(--muted);
+      font-size: 16px;
+      margin: 0
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 24px
+    }
+
+    .tab {
+      padding: 12px 20px;
+      background: none;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: .2s
+    }
+
+    .tab.active {
+      color: var(--text);
+      border-bottom-color: var(--accent)
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, .06);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px
+    }
+
+    .card h3 {
+      margin: 0 0 12px;
+      font-size: 18px
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0;
+      line-height: 1.6
+    }
+
+    .coming-soon {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted)
+    }
+
+    .coming-soon h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+      color: var(--text)
+    }
+
+    .tab-content {
+      display: block
+    }
+
+    .card h4 {
+      font-size: 16px;
+      margin: 16px 0 8px;
+      color: var(--text)
+    }
+
+    .card ul {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.8
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <strong><a href="index.html" style="color:inherit;text-decoration:none">AI Wedding Planner OS</a></strong>
+      </div>
+      <nav class="links">
+        <a href="index.html" class="btn">홈</a>
+        <a href="calendar.html" class="btn">캘린더</a>
+        <a href="budget.html" class="btn">예산서</a>
+        <a href="chat.html" class="btn">AI 플래너</a>
+        <a href="voice.html" class="btn">음성 비서</a>
+        <span id="userInfo" style="display:none">
+          <span style="color:var(--muted);font-size:14px" id="userNickname"></span>
+          <a href="#" class="btn" onclick="event.preventDefault();logout()">로그아웃</a>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="page-title">
+        <h1>📋 게시판 : 웨딩 경험 데이터베이스</h1>
+        <p style="max-width:800px;line-height:1.6;margin-top:12px">
+          <span style="color:var(--accent-2);font-weight:600">"웨딩 지식 그래프(Knowledge Graph)의 시작"</span><br>
+          실사용자의 웨딩 준비 경험을 수집하여 <strong>Personalized Wedding Insights</strong>를 제공하고,<br>
+          향후 챗봇·예산서·캘린더 등 OS 전 기능의 기반 데이터 레이어 역할을 수행하는 핵심 모듈입니다.
+        </p>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+        <div class="tabs" style="margin-bottom:0;border-bottom:0">
+          <button class="tab active" onclick="switchTab('couple')">예비부부 게시판</button>
+          <button class="tab" onclick="switchTab('planner')">플래너 리뷰</button>
+          <button class="tab" onclick="switchTab('private')">커플 전용 공간</button>
+          <button class="tab" onclick="switchTab('vault')">Document Vault</button>
+        </div>
+        <button class="btn primary" onclick="openWriteModal()">✏️ 글쓰기</button>
+      </div>
+
+      <div id="tabContent">
+        <!-- Couple Tab -->
+        <div id="coupleTab" class="tab-content">
+          <div class="card" style="background:linear-gradient(145deg, var(--card) 0%, rgba(139,92,246,0.05) 100%)">
+            <div style="display:flex;justify-content:space-between;align-items:start">
+              <div>
+                <h3>🤵👰 예비부부 게시판</h3>
+                <p>웨딩홀/스튜디오/드레스/메이크업/본식스냅 후기 및 견적 공유</p>
+              </div>
+              <span
+                style="background:var(--accent);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold">Core
+                Data Layer</span>
+            </div>
+            <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+              <div>
+                <h4 style="color:var(--accent-2)">📌 주요 기능</h4>
+                <ul style="color:var(--muted);line-height:1.8">
+                  <li><strong>후기 공유:</strong> 실제 커플들의 생생한 시공/계약 후기</li>
+                  <li><strong>견적 자동화:</strong> 엑셀/사진 업로드 → OCR로 비용 항목 자동 정리</li>
+                  <li><strong>자동 태깅:</strong> 지역/예산/스타일 기반 태그 생성 (NLP)</li>
+                  <li><strong>추천 연결:</strong> "비슷한 커플 후기" 자동 추천 알고리즘</li>
+                </ul>
+              </div>
+              <div
+                style="background:rgba(0,0,0,0.3);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.05)">
+                <h4 style="margin-top:0;font-size:14px;color:var(--muted)">👀 Preview: AI 견적 분석</h4>
+                <div style="display:flex;gap:8px;margin-top:10px">
+                  <span
+                    style="background:rgba(34,211,238,0.1);color:var(--accent-2);padding:4px 8px;border-radius:4px;font-size:12px">#강남웨딩홀</span>
+                  <span
+                    style="background:rgba(34,211,238,0.1);color:var(--accent-2);padding:4px 8px;border-radius:4px;font-size:12px">#500-1000만원</span>
+                </div>
+                <p style="font-size:13px;margin-top:10px;color:var(--text)">"업로드하신 견적서를 분석한 결과, 식대는 평균 대비 <strong>10%
+                    저렴</strong>하며, 대관료는 <strong>평균 수준</strong>입니다."</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Static Demo Post List (Visible when no backend) -->
+          <div id="staticPostList" style="display:flex;flex-direction:column;gap:16px;margin-top:24px">
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
+                <h3 style="margin:0;font-size:18px">강남 S 웨딩홀 솔직 후기 (견적 포함)</h3>
+                <span style="font-size:12px;color:var(--muted)">user_123 • 10분 전</span>
+              </div>
+              <div style="margin-bottom:12px">
+                <span
+                  style="display:inline-block;padding:4px 8px;border-radius:4px;background:rgba(255,255,255,0.1);font-size:12px;color:var(--accent-2);margin-right:4px">#웨딩홀</span>
+                <span
+                  style="display:inline-block;padding:4px 8px;border-radius:4px;background:rgba(255,255,255,0.1);font-size:12px;color:var(--accent-2);margin-right:4px">#강남</span>
+                <span
+                  style="display:inline-block;padding:4px 8px;border-radius:4px;background:rgba(255,255,255,0.1);font-size:12px;color:var(--accent-2);margin-right:4px">#식사맛있는</span>
+                <span style="color:var(--ok);font-size:12px;font-weight:bold;margin-left:8px">(POSITIVE)</span>
+              </div>
+              <p style="margin-bottom:16px;white-space:pre-wrap;color:var(--muted)">상담 받고 왔는데 홀이 너무 예뻤어요. 버진로드도 길고 층고도
+                높아서 웅장한 느낌... (더보기)</p>
+              <div
+                style="margin-top:12px;padding:12px;background:rgba(139,92,246,0.1);border-radius:8px;border-left:3px solid var(--accent)">
+                <p style="margin:0;font-size:13px;color:var(--text)"><strong>🤖 AI 요약:</strong> 홀 분위기와 식사에 대한 만족도가 높으나,
+                  주차 공간에 대한 우려가 있음. 견적은 예산 범위 내로 합리적임.</p>
+              </div>
+            </div>
+          </div>
+          <div id="postList"></div> <!-- Dynamic posts go here -->
+        </div>
+
+        <!-- Planner Tab -->
+        <div id="plannerTab" class="tab-content" style="display:none">
+          <div class="card">
+            <h3>👔 플래너 리뷰 게시판</h3>
+            <p>실제 플래너들의 시공 경험과 문제 해결 노하우를 아카이빙하여 <strong>신뢰 지표</strong>를 제공합니다.</p>
+            <div style="margin-top:16px">
+              <ul style="padding-left:20px;line-height:1.8;color:var(--muted)">
+                <li><strong>경험 아카이빙:</strong> 플래너들의 실제 시공 사례 및 돌발 상황 대처법</li>
+                <li><strong>포트폴리오 연동:</strong> 프로필 페이지와 연결되어 실력 검증 가능</li>
+                <li><strong>데이터셋 활용:</strong> 플래너 검증용 내부 데이터셋으로 활용</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Private Tab -->
+        <div id="privateTab" class="tab-content" style="display:none">
+          <div class="card">
+            <h3>💑 커플 전용 공간 (Private Couple Space)</h3>
+            <p>둘만의 기록이 모여 <strong>"개인화 메모리 베이스"</strong>가 되고, AI가 이를 정리해줍니다.</p>
+            <div style="margin-top:16px">
+              <ul style="padding-left:20px;line-height:1.8;color:var(--muted)">
+                <li><strong>프라이빗 기록:</strong> 둘만의 아이디어, 이미지, 음성 업로드</li>
+                <li><strong>음성 비서 연동:</strong> 음성으로 남긴 기록이 자동으로 텍스트화되어 저장</li>
+                <li><strong>AI 웨딩 노트:</strong> 챗봇이 기록을 분석하여 "결혼식 컨셉" 자동 도출</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vault Tab -->
+        <div id="vaultTab" class="tab-content" style="display:none">
+          <div class="card">
+            <h3>📁 Document Vault & LLM Summarization</h3>
+            <p>모든 문서를 벡터화하여 검색 가능하게 만들고, LLM이 핵심을 요약해줍니다.</p>
+            <div style="margin-top:16px">
+              <h4 style="color:var(--accent-2);margin-bottom:8px">🚀 리뷰/문서 자동 요약 기능</h4>
+              <ul style="padding-left:20px;line-height:1.8;color:var(--muted)">
+                <li><strong>대량 리뷰 요약:</strong> 10~100개 리뷰를 분석해 장점/단점/가격/불만 요소 자동 분리</li>
+                <li><strong>감성/신뢰도 분석:</strong> 긍정/중립/부정 비율 분석 및 "실제 평균 만족도" 계산</li>
+                <li><strong>RAG 검색:</strong> "강남 웨딩홀 견적 비교해줘" 질문에 문서 기반 답변</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Write Post Modal -->
+  <div id="writeModal"
+    style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:100;justify-content:center;align-items:center">
+    <div class="card" style="width:min(600px, 90%);max-height:90vh;overflow-y:auto">
+      <h3 style="margin-bottom:20px">글쓰기</h3>
+      <form id="writeForm" onsubmit="submitPost(event)">
+        <div style="margin-bottom:16px">
+          <label style="display:block;margin-bottom:8px;color:var(--muted)">제목</label>
+          <input type="text" id="postTitle" required
+            style="width:100%;padding:12px;background:var(--soft);border:1px solid rgba(255,255,255,0.1);color:var(--text);border-radius:8px">
+        </div>
+        <div style="margin-bottom:16px">
+          <label style="display:block;margin-bottom:8px;color:var(--muted)">내용 (AI가 자동으로 태그와 요약을 생성합니다)</label>
+          <textarea id="postContent" required rows="10"
+            style="width:100%;padding:12px;background:var(--soft);border:1px solid rgba(255,255,255,0.1);color:var(--text);border-radius:8px;resize:vertical"></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:12px">
+          <button type="button" class="btn" onclick="closeWriteModal()">취소</button>
+          <button type="submit" class="btn primary">등록</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  </main>
+
+  <script>
+    let currentUser = null;
+    const userId = localStorage.getItem('userId');
+    const nickname = localStorage.getItem('nickname');
+
+    if (userId && nickname) {
+      currentUser = { id: userId, nickname: nickname };
+      updateAuthUI();
+    } else {
+      alert('로그인이 필요합니다.');
+      window.location.href = 'index.html';
+    }
+
+    function updateAuthUI() {
+      const userInfo = document.getElementById('userInfo');
+      const userNickname = document.getElementById('userNickname');
+      if (currentUser) {
+        userInfo.style.display = 'flex';
+        userInfo.style.alignItems = 'center';
+        userInfo.style.gap = '12px';
+        userNickname.textContent = `${currentUser.nickname}님`;
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem('userId');
+      localStorage.removeItem('nickname');
+      localStorage.removeItem('authToken');
+      window.location.href = 'index.html';
+    }
+
+    let currentBoardType = 'couple';
+    const API_BASE_URL = 'http://localhost:8001/api';
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      currentBoardType = tab;
+
+      // Toggle Tab Content Visibility
+      document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+      if (tab === 'couple') {
+        document.getElementById('coupleTab').style.display = 'block';
+      } else if (tab === 'planner') {
+        document.getElementById('plannerTab').style.display = 'block';
+      } else if (tab === 'private') {
+        document.getElementById('privateTab').style.display = 'block';
+      } else if (tab === 'vault') {
+        document.getElementById('vaultTab').style.display = 'block';
+      }
+
+      // Load dynamic posts (optional)
+      loadPosts();
+    }
+
+    function openWriteModal() {
+      document.getElementById('writeModal').style.display = 'flex';
+    }
+
+    function closeWriteModal() {
+      document.getElementById('writeModal').style.display = 'none';
+      document.getElementById('writeForm').reset();
+    }
+
+    async function loadPosts() {
+      const postList = document.getElementById('postList');
+      const staticPostList = document.getElementById('staticPostList');
+
+      // Only try to load dynamic posts if backend is expected to be running
+      // For design preview, we might just show static content
+
+      try {
+        const token = localStorage.getItem('authToken');
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        if (currentUser) headers['x-user-id'] = currentUser.id;
+
+        // Short timeout to fallback to static content quickly if server is down
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1000);
+
+        const response = await fetch(`${API_BASE_URL}/posts?board_type=${currentBoardType}`, {
+          headers,
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        const result = await response.json();
+
+        if (result.data && result.data.posts && result.data.posts.length > 0) {
+          if (staticPostList) staticPostList.style.display = 'none'; // Hide static if dynamic exists
+          renderPosts(result.data.posts);
+        } else {
+          // Keep static or show empty message
+          // postList.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">게시글이 없습니다.</div>';
+        }
+      } catch (error) {
+        console.log('Backend not available or timeout, showing static design preview.');
+        // Do nothing, let static content show
+      }
+    }
+
+    function renderPosts(posts) {
+      const postList = document.getElementById('postList');
+      if (posts.length === 0) {
+        postList.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">게시글이 없습니다.</div>';
+        return;
+      }
+
+      postList.innerHTML = posts.map(post => {
+        const tagsHtml = post.tags.map(tag => `<span style="display:inline-block;padding:4px 8px;border-radius:4px;background:rgba(255,255,255,0.1);font-size:12px;color:var(--accent-2);margin-right:4px">#${tag}</span>`).join('');
+
+        let sentimentHtml = '';
+        if (post.sentiment_label) {
+          const color = post.sentiment_label === 'POSITIVE' ? 'var(--ok)' : (post.sentiment_label === 'NEGATIVE' ? 'var(--danger)' : 'var(--muted)');
+          sentimentHtml = `<span style="color:${color};font-size:12px;font-weight:bold;margin-left:8px">(${post.sentiment_label})</span>`;
+        }
+
+        let summaryHtml = '';
+        if (post.summary) {
+          summaryHtml = `<div style="margin-top:12px;padding:12px;background:rgba(139,92,246,0.1);border-radius:8px;border-left:3px solid var(--accent)">
+            <p style="margin:0;font-size:13px;color:var(--text)"><strong>🤖 AI 요약:</strong> ${post.summary}</p>
+          </div>`;
+        }
+
+        return `
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
+              <h3 style="margin:0;font-size:18px">${post.title}</h3>
+              <span style="font-size:12px;color:var(--muted)">${post.nickname}</span>
+            </div>
+            <div style="margin-bottom:12px">
+              ${tagsHtml}
+              ${sentimentHtml}
+            </div>
+            <p style="margin-bottom:16px;white-space:pre-wrap">${post.content}</p>
+            ${summaryHtml}
+            <div style="margin-top:16px;display:flex;gap:16px;font-size:13px;color:var(--muted)">
+              <span>❤️ ${post.like_count}</span>
+              <span>👁️ ${post.view_count}</span>
+              <span>💬 ${post.comment_count}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function submitPost(event) {
+      event.preventDefault();
+
+      if (!currentUser) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
+      const title = document.getElementById('postTitle').value;
+      const content = document.getElementById('postContent').value;
+      const btn = event.target.querySelector('button[type="submit"]');
+
+      btn.disabled = true;
+      btn.textContent = 'AI 분석 중...';
+
+      try {
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`${API_BASE_URL}/posts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            title,
+            content,
+            board_type: currentBoardType
+          })
+        });
+
+        if (response.ok) {
+          closeWriteModal();
+          loadPosts();
+        } else {
+          const err = await response.json();
+          alert('글 작성 실패: ' + (err.detail || '알 수 없는 오류'));
+        }
+      } catch (error) {
+        console.error('Error submitting post:', error);
+        alert('서버 오류가 발생했습니다.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '등록';
+      }
+    }
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadPosts();
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>음성 비서 - AI Wedding Planner OS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b0d12;--card:#141517;--soft:#1a1f2e;--text:#e8ecf3;--muted:#a7b0c0;--accent:#8b5cf6;--accent-2:#22d3ee;--ok:#10b981;--warn:#f59e0b;--danger:#ef4444;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:linear-gradient(180deg,#0a0c11 0%,#0d111a 60%,#0b0d12 100%);color:var(--text);font-family:'Pretendard',system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;min-height:100vh}
+    .container{width:min(1160px,92%);margin:0 auto;padding:20px 0}
+    header{position:sticky;top:0;backdrop-filter:blur(10px);background-color:rgba(11,13,18,0.6);border-bottom:1px solid rgba(255,255,255,0.06);z-index:30}
+    .nav{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+    .brand{display:flex;gap:10px;align-items:center}
+    .logo{width:28px;height:28px;border-radius:8px;background:conic-gradient(from 180deg,var(--accent),var(--accent-2));box-shadow:0 0 24px rgba(139,92,246,.4)}
+    .nav .links{display:flex;gap:18px;align-items:center}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:var(--soft);border:1px solid rgba(255,255,255,0.15);color:#ffffff;font-weight:500;transition:.2s ease;text-decoration:none;cursor:pointer;font-size:14px}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.25);background:rgba(139,92,246,0.2);border-color:rgba(139,92,246,0.4)}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b0d12;border:0;font-weight:700}
+    .page-title{margin:40px 0 30px;text-align:center}
+    .page-title h1{font-size:32px;margin:0 0 8px}
+    .page-title p{color:var(--muted);font-size:16px;margin:0}
+    .card{background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;margin-bottom:20px}
+    .voice-interface{max-width:600px;margin:0 auto;text-align:center}
+    .record-button-container{position:relative;margin:40px 0}
+    .record-button{width:140px;height:140px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));border:0;color:#0b0d12;font-size:56px;cursor:pointer;transition:.2s;box-shadow:0 8px 32px rgba(139,92,246,0.4);margin:0 auto;display:flex;align-items:center;justify-content:center;position:relative}
+    .record-button:hover{transform:scale(1.05)}
+    .record-button.recording{background:var(--danger);animation:pulse 1.5s infinite;box-shadow:0 8px 32px rgba(239,68,68,0.5)}
+    .record-button.recording::before{content:'';position:absolute;width:100%;height:100%;border-radius:50%;border:4px solid rgba(255,255,255,0.3);animation:ripple 1.5s infinite}
+    @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.1);opacity:0.9}}
+    @keyframes ripple{0%{transform:scale(1);opacity:1}100%{transform:scale(1.5);opacity:0}}
+    .record-status{margin-top:24px;font-size:18px;font-weight:600;color:var(--muted);min-height:28px}
+    .record-status.recording{color:var(--danger)}
+    .record-status.processing{color:var(--accent)}
+    .text-input-section{margin-top:32px;padding-top:32px;border-top:1px solid rgba(255,255,255,.1)}
+    .text-input-area{display:flex;gap:8px;margin-top:16px}
+    .text-input{flex:1;padding:12px 16px;border-radius:12px;background:var(--soft);border:1px solid rgba(255,255,255,.1);color:var(--text);font-size:14px;font-family:inherit}
+    .text-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,0.1)}
+    .result-section{margin-top:32px;text-align:left}
+    .result-card{background:var(--soft);border-radius:12px;padding:20px;margin-bottom:16px}
+    .result-card h4{margin:0 0 12px;font-size:16px;color:var(--accent)}
+    .result-text{font-size:15px;line-height:1.6;color:var(--text);white-space:pre-wrap}
+    .organized-items{margin-top:16px}
+    .organized-item{background:var(--card);border-radius:8px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;border:1px solid rgba(255,255,255,.05)}
+    .organized-item-icon{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .organized-item-content{flex:1}
+    .organized-item-title{font-weight:600;margin-bottom:4px}
+    .organized-item-desc{font-size:12px;color:var(--muted)}
+    .example-commands{margin-top:32px;padding:20px;background:rgba(139,92,246,0.1);border-radius:12px;border:1px solid rgba(139,92,246,0.2)}
+    .example-commands h4{margin:0 0 12px;font-size:14px;color:var(--accent)}
+    .example-list{list-style:none;padding:0;margin:0;text-align:left}
+    .example-list li{padding:8px 0;font-size:13px;color:var(--muted);border-bottom:1px solid rgba(255,255,255,.05)}
+    .example-list li:last-child{border-bottom:0}
+    .example-list li::before{content:'💬 ';margin-right:8px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <strong><a href="index.html" style="color:inherit;text-decoration:none">AI Wedding Planner OS</a></strong>
+      </div>
+      <nav class="links">
+        <a href="index.html" class="btn">홈</a>
+        <a href="board.html" class="btn">게시판</a>
+        <a href="calendar.html" class="btn">캘린더</a>
+        <a href="budget.html" class="btn">예산서</a>
+        <a href="chat.html" class="btn">AI 플래너</a>
+        <span id="userInfo" style="display:none">
+          <span style="color:var(--muted);font-size:14px" id="userNickname"></span>
+          <a href="#" class="btn" onclick="event.preventDefault();logout()">로그아웃</a>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="page-title">
+        <h1>🎤 음성 비서</h1>
+        <p>STT + LLM + 자동 정리 파이프라인 - 핸즈프리 웨딩 플래너</p>
+      </div>
+
+      <div class="card">
+        <div class="voice-interface">
+          <!-- 음성 녹음 버튼 -->
+          <div class="record-button-container">
+            <button class="record-button" id="recordButton" onclick="toggleRecording()" title="마이크 버튼을 눌러 음성을 입력하세요">
+              🎤
+            </button>
+          </div>
+          <div class="record-status" id="recordStatus">마이크 버튼을 눌러 음성을 입력하세요</div>
+
+          <!-- 텍스트 직접 입력 -->
+          <div class="text-input-section">
+            <div style="font-size:14px;color:var(--muted);margin-bottom:8px">또는 직접 텍스트로 입력</div>
+            <div class="text-input-area">
+              <input type="text" class="text-input" id="textInput" placeholder="예: 다음 주 토요일에 스튜디오 투어 일정 잡아줘" onkeypress="if(event.key==='Enter')processText()" />
+              <button class="btn primary" onclick="processText()">처리</button>
+            </div>
+          </div>
+
+          <!-- 결과 표시 영역 -->
+          <div class="result-section" id="resultSection" style="display:none">
+            <!-- 전사 결과 -->
+            <div class="result-card" id="transcriptionCard">
+              <h4>📝 전사 결과</h4>
+              <div class="result-text" id="transcriptionText"></div>
+            </div>
+
+            <!-- 자동 정리 결과 -->
+            <div class="result-card" id="organizedCard" style="display:none">
+              <h4>✨ 자동 정리 결과</h4>
+              <div class="organized-items" id="organizedItems"></div>
+            </div>
+
+            <!-- 답변 -->
+            <div class="result-card" id="responseCard" style="display:none">
+              <h4>💬 답변</h4>
+              <div class="result-text" id="responseText"></div>
+            </div>
+          </div>
+
+          <!-- 예시 명령어 -->
+          <div class="example-commands">
+            <h4>💡 사용 예시</h4>
+            <ul class="example-list">
+              <li>"다음 주 토요일에 스튜디오 투어 일정 잡아줘"</li>
+              <li>"3월 둘째 주에 스튜디오 상담 일정 잡아줘"</li>
+              <li>"스드메 290만 원으로 예산 잡아줘"</li>
+              <li>"웨딩홀 비용 조금 늘릴게"</li>
+              <li>"이번 달 예산 상황 말해줘"</li>
+              <li>"오늘 촬영 컨셉 아이디어 떠올랐어"</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE_URL = 'http://localhost:8001/api';
+    let currentUser = null;
+    const userId = localStorage.getItem('userId');
+    const nickname = localStorage.getItem('nickname');
+    let isRecording = false;
+    let mediaRecorder = null;
+    let audioChunks = [];
+
+    if (userId && nickname) {
+      currentUser = { id: parseInt(userId), nickname: nickname };
+      updateAuthUI();
+    } else {
+      alert('로그인이 필요합니다.');
+      window.location.href = 'index.html';
+    }
+
+    function updateAuthUI(){
+      const userInfo = document.getElementById('userInfo');
+      const userNickname = document.getElementById('userNickname');
+      if(currentUser){
+        userInfo.style.display = 'flex';
+        userInfo.style.alignItems = 'center';
+        userInfo.style.gap = '12px';
+        userNickname.textContent = `${currentUser.nickname}님`;
+      }
+    }
+
+    function logout(){
+      currentUser = null;
+      localStorage.removeItem('userId');
+      localStorage.removeItem('nickname');
+      localStorage.removeItem('authToken');
+      window.location.href = 'index.html';
+    }
+
+    async function toggleRecording(){
+      if(!isRecording){
+        await startRecording();
+      }else{
+        stopRecording();
+      }
+    }
+
+    async function startRecording(){
+      try{
+        const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if(event.data.size > 0){
+            audioChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, {type:'audio/webm'});
+          await processAudio(audioBlob);
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        document.getElementById('recordButton').classList.add('recording');
+        document.getElementById('recordStatus').textContent = '🎙️ 녹음 중... (다시 클릭하여 중지)';
+        document.getElementById('recordStatus').classList.add('recording');
+      }catch(error){
+        console.error('마이크 접근 실패:', error);
+        alert('마이크 접근 권한이 필요합니다. 브라우저 설정에서 마이크 권한을 허용해주세요.');
+      }
+    }
+
+    function stopRecording(){
+      if(mediaRecorder && isRecording){
+        mediaRecorder.stop();
+        isRecording = false;
+        document.getElementById('recordButton').classList.remove('recording');
+        document.getElementById('recordStatus').textContent = '⏳ 처리 중...';
+        document.getElementById('recordStatus').classList.remove('recording');
+        document.getElementById('recordStatus').classList.add('processing');
+      }
+    }
+
+    async function processAudio(audioBlob){
+      try{
+        // 오디오를 base64로 변환
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64Audio = reader.result.split(',')[1];
+          await processVoice(base64Audio, null);
+        };
+        reader.readAsDataURL(audioBlob);
+      }catch(error){
+        console.error('오디오 처리 실패:', error);
+        alert('오디오 처리에 실패했습니다.');
+        resetRecordingState();
+      }
+    }
+
+    async function processText(){
+      const text = document.getElementById('textInput').value.trim();
+      if(!text) return;
+      
+      document.getElementById('recordStatus').textContent = '⏳ 처리 중...';
+      document.getElementById('recordStatus').classList.add('processing');
+      document.getElementById('textInput').disabled = true;
+      
+      await processVoice(null, text);
+    }
+
+    async function processVoice(audioData, text){
+      try{
+        const response = await fetch(`${API_BASE_URL}/voice/process`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            audio_data: audioData,
+            text: text,
+            user_id: currentUser.id,
+            auto_organize: true
+          })
+        });
+
+        if(!response.ok){
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if(data.message === 'voice_processed' || data.message === 'voice_transcribed'){
+          const transcribed = data.data.transcribed_text;
+          
+          // 전사 결과 표시
+          document.getElementById('transcriptionText').textContent = transcribed || '(전사 실패)';
+          document.getElementById('transcriptionCard').style.display = 'block';
+          
+          // 자동 정리 결과 표시
+          if(data.data.organized_items && data.data.organized_items.length > 0){
+            renderOrganizedItems(data.data.organized_items);
+            document.getElementById('organizedCard').style.display = 'block';
+          }else{
+            document.getElementById('organizedCard').style.display = 'none';
+          }
+          
+          // 질문인 경우 답변 생성
+          if(data.data.intent === 'query'){
+            await generateResponse(transcribed);
+          }else{
+            document.getElementById('responseCard').style.display = 'none';
+          }
+          
+          // 결과 영역 표시
+          document.getElementById('resultSection').style.display = 'block';
+          
+          // 상태 초기화
+          resetRecordingState();
+          
+          // 텍스트 입력 초기화
+          document.getElementById('textInput').value = '';
+          document.getElementById('textInput').disabled = false;
+        }else{
+          throw new Error(data.data?.error || '처리 실패');
+        }
+      }catch(error){
+        console.error('음성 처리 오류:', error);
+        alert('음성 처리 중 오류가 발생했습니다: ' + error.message);
+        resetRecordingState();
+        document.getElementById('textInput').disabled = false;
+      }
+    }
+
+    function resetRecordingState(){
+      document.getElementById('recordStatus').textContent = '✅ 처리 완료! 다시 녹음하려면 버튼을 클릭하세요.';
+      document.getElementById('recordStatus').classList.remove('recording', 'processing');
+    }
+
+    function renderOrganizedItems(items){
+      const container = document.getElementById('organizedItems');
+      container.innerHTML = '';
+      
+      if(items.length === 0) return;
+      
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'organized-item';
+        
+        let icon = '📅';
+        let typeName = '일정';
+        let description = '';
+        
+        if(item.type === 'budget_item'){
+          icon = '💰';
+          typeName = '예산 항목';
+          description = `${item.title || item.item_name || '항목'} - ${formatCurrency(item.amount || 0)}`;
+        }else if(item.type === 'todo'){
+          icon = '✅';
+          typeName = '할일';
+          description = item.title || '할일';
+        }else if(item.type === 'post'){
+          icon = '📝';
+          typeName = '게시글';
+          description = item.title || '게시글';
+        }else if(item.type === 'calendar_event'){
+          icon = '📅';
+          typeName = '캘린더 일정';
+          description = `${item.title || '일정'} - ${item.date || ''}`;
+        }
+        
+        div.innerHTML = `
+          <div class="organized-item-icon">${icon}</div>
+          <div class="organized-item-content">
+            <div class="organized-item-title">${typeName} 생성됨</div>
+            <div class="organized-item-desc">${description}</div>
+          </div>
+        `;
+        
+        container.appendChild(div);
+      });
+    }
+
+    function formatCurrency(amount){
+      return new Intl.NumberFormat('ko-KR', {style: 'currency', currency: 'KRW'}).format(amount);
+    }
+
+    async function generateResponse(query){
+      try{
+        const response = await fetch(`${API_BASE_URL}/voice/response?query=${encodeURIComponent(query)}&user_id=${currentUser.id}`);
+        
+        if(!response.ok){
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if(data.message === 'voice_response_generated'){
+          document.getElementById('responseText').textContent = data.data.response;
+          document.getElementById('responseCard').style.display = 'block';
+        }
+      }catch(error){
+        console.error('답변 생성 오류:', error);
+        document.getElementById('responseCard').style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>
