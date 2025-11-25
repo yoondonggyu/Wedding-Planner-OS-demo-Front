@@ -772,7 +772,36 @@
     const nickname = localStorage.getItem('nickname');
     
     if (authToken && userId && nickname) {
-      currentUser = { id: userId, nickname: nickname, token: authToken };
+      currentUser = { id: parseInt(userId), nickname: nickname, token: authToken };
+    }
+
+    // API 요청 헬퍼 함수 (JWT 토큰 자동 포함)
+    async function apiFetch(url, options = {}) {
+      const token = localStorage.getItem('authToken');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      return fetch(url, {
+        ...options,
+        headers
+      });
+    }
+
+    // 로그아웃 함수
+    function logout() {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('nickname');
+      localStorage.removeItem('profileImageUrl');
+      currentUser = null;
+      updateAuthUI();
+      showToast('로그아웃되었습니다.');
     }
     const yearEl=document.getElementById('year');yearEl.textContent=new Date().getFullYear();
 
@@ -1256,10 +1285,17 @@
         const data=await response.json();
         
         if(response.ok&&data.data){
+          // JWT 토큰 저장
+          const accessToken = data.data.access_token;
+          if(accessToken){
+            localStorage.setItem('authToken',accessToken);
+          }
+          
           currentUser={
             id:data.data.user_id,
             nickname:data.data.nickname,
-            profileImageUrl:data.data.profile_image_url||''
+            profileImageUrl:data.data.profile_image_url||'',
+            token:accessToken
           };
           localStorage.setItem('userId',currentUser.id);
           localStorage.setItem('nickname',currentUser.nickname);
