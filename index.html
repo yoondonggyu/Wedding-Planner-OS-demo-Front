@@ -121,14 +121,10 @@
     .sidebar-header .logo{width:32px;height:32px;flex-shrink:0}
     .sidebar-header strong{font-size:14px;font-weight:600;white-space:nowrap;transition:opacity .3s ease}
     .sidebar.collapsed .sidebar-header strong{opacity:0;width:0;overflow:hidden}
-    .sidebar-expand-btn{position:absolute;right:8px;width:28px;height:28px;border-radius:6px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--text);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;opacity:0.7;flex-shrink:0}
-    .sidebar-expand-btn:hover{background:var(--soft);opacity:1}
-    .sidebar-expand-btn .icon{width:16px;height:16px;display:flex;align-items:center;justify-content:center;position:relative}
-    .sidebar-expand-btn .icon::before,.sidebar-expand-btn .icon::after{content:'';position:absolute;background:transparent;border:1.5px solid currentColor;border-radius:2px}
-    .sidebar-expand-btn .icon::before{width:6px;height:10px;left:1px}
-    .sidebar-expand-btn .icon::after{width:6px;height:10px;right:1px;margin-left:2px}
-    .sidebar.collapsed .sidebar-expand-btn .icon::before{left:3px}
-    .sidebar.collapsed .sidebar-expand-btn .icon::after{right:3px}
+    .sidebar-expand-btn{position:absolute;right:8px;top:0;width:34px;height:28px;border-radius:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--text);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;opacity:0.85;flex-shrink:0}
+    .sidebar-expand-btn:hover{background:rgba(255,255,255,0.08);opacity:1}
+    .sidebar-expand-btn .arrow{display:flex;align-items:center;justify-content:center;width:100%;height:100%;transition:transform .25s ease}
+    .sidebar.collapsed .sidebar-expand-btn{right:-42px;box-shadow:0 6px 18px rgba(0,0,0,0.4)}
     .sidebar-menu{display:flex;flex-direction:column;gap:2px;flex:1;padding:0 8px}
     .sidebar-menu-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:var(--text);text-decoration:none;transition:.2s;cursor:pointer;justify-content:flex-start;font-size:14px}
     .sidebar-menu-item:hover{background:rgba(255,255,255,0.05)}
@@ -226,8 +222,8 @@
     <div class="sidebar-header">
       <div class="logo" aria-hidden="true"></div>
       <strong>AI Wedding Planner</strong>
-      <button class="sidebar-expand-btn" onclick="toggleSidebarExpand()" aria-label="사이드바 펼치기/접기" title="사이드바 펼치기/접기">
-        <span class="icon"></span>
+      <button class="sidebar-expand-btn" id="sidebarToggleBtn" onclick="toggleSidebarExpand()" aria-label="사이드바 접기" title="사이드바 접기">
+        <span class="arrow" aria-hidden="true">&laquo;</span>
       </button>
     </div>
     <nav class="sidebar-menu">
@@ -1106,6 +1102,19 @@
         if(mainContent)mainContent.classList.remove('sidebar-collapsed');
         if(mainContent)mainContent.classList.add('sidebar-expanded');
       }
+      updateSidebarToggleButton();
+    }
+
+    function updateSidebarToggleButton(){
+      const sidebar=document.getElementById('sidebar');
+      const toggleBtn=document.getElementById('sidebarToggleBtn');
+      if(!sidebar||!toggleBtn)return;
+      const isCollapsed=sidebar.classList.contains('collapsed');
+      const label=isCollapsed?'사이드바 펼치기':'사이드바 접기';
+      toggleBtn.setAttribute('aria-label',label);
+      toggleBtn.setAttribute('title',label);
+      const arrow=toggleBtn.querySelector('.arrow');
+      if(arrow)arrow.textContent=isCollapsed?'»':'«';
     }
 
 
@@ -2016,6 +2025,7 @@
       if(sidebar&&!sidebar.classList.contains('collapsed')){
         if(mainContent)mainContent.classList.add('sidebar-expanded');
       }
+      updateSidebarToggleButton();
     });
   </script>
 </body>
