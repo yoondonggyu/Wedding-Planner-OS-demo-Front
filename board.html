@@ -356,7 +356,8 @@
   <!-- Write Post Modal -->
   <div id="writeModal"
     style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:100;justify-content:center;align-items:center">
-    <div class="card" style="width:min(600px, 90%);max-height:90vh;overflow-y:auto;position:relative;padding-bottom:80px">
+    <div class="card"
+      style="width:min(600px, 90%);max-height:90vh;overflow-y:auto;position:relative;padding-bottom:80px">
       <h3 style="margin-bottom:20px">글쓰기</h3>
       <form id="writeForm">
         <div style="margin-bottom:16px">
@@ -371,9 +372,11 @@
         </div>
       </form>
       <!-- 하단 고정 버튼 영역 -->
-      <div style="position:absolute;bottom:0;left:0;right:0;padding:16px;background:var(--card);border-top:1px solid rgba(255,255,255,0.1);display:flex;justify-content:flex-end;gap:12px">
+      <div
+        style="position:absolute;bottom:0;left:0;right:0;padding:16px;background:var(--card);border-top:1px solid rgba(255,255,255,0.1);display:flex;justify-content:flex-end;gap:12px">
         <button type="button" class="btn" onclick="closeWriteModal()">취소</button>
-        <button type="button" class="btn" id="aiAnalyzeBtn" onclick="analyzeWithAI()" style="background:linear-gradient(135deg, #8b5cf6, #22d3ee);color:#0b0d12;border:none">🤖 AI 기능</button>
+        <button type="button" class="btn" id="aiAnalyzeBtn" onclick="analyzeWithAI()"
+          style="background:linear-gradient(135deg, #8b5cf6, #22d3ee);color:#0b0d12;border:none">🤖 AI 기능</button>
         <button type="button" class="btn primary" onclick="submitPost(false)">게시</button>
       </div>
     </div>
@@ -570,7 +573,7 @@
 
       const submitBtn = document.querySelector('#writeModal .btn.primary');
       const aiBtn = document.getElementById('aiAnalyzeBtn');
-      
+
       submitBtn.disabled = true;
       aiBtn.disabled = true;
       submitBtn.textContent = '게시 중...';
