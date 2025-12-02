@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useApi } from '@/composables/useApi'
 
@@ -9,8 +10,10 @@ const emit = defineEmits<{
 
 const authStore = useAuthStore()
 const { request } = useApi()
+const route = useRoute()
 
 const activeTab = ref<'login' | 'signup'>('login')
+const inviteCode = ref<string | null>(null)
 
 // 로그인 폼
 const loginEmail = ref('')
@@ -23,9 +26,52 @@ const signupPasswordCheck = ref('')
 const signupNickname = ref('')
 const signupProfileImage = ref<File | null>(null)
 const profileImagePreview = ref<string | null>(null)
+const signupGender = ref<'BRIDE' | 'GROOM' | null>(null)
+const signupIsVendor = ref(false)
+
+// 커플 등록 팝업
+const showCoupleModal = ref(false)
+const coupleKey = ref('')
+const partnerCoupleKey = ref('')
+const signupResult = ref<{ 
+  couple_key?: string
+  gender?: string
+  vendor_approval_pending?: boolean
+  auto_connected?: boolean
+  partner_nickname?: string
+} | null>(null)
+
+const inviteLink = computed(() => {
+  if (!coupleKey.value) return ''
+  const baseUrl = window.location.origin
+  return `${baseUrl}?invite=${coupleKey.value}`
+})
+
+function copyCoupleKey() {
+  if (coupleKey.value) {
+    navigator.clipboard.writeText(coupleKey.value)
+    showToast('커플 키가 복사되었습니다!')
+  }
+}
+
+function copyInviteLink() {
+  if (inviteLink.value) {
+    navigator.clipboard.writeText(inviteLink.value)
+    showToast('초대 링크가 복사되었습니다!')
+  }
+}
 
 const isLoading = computed(() => authStore.loading)
 const errorMessage = ref<string | null>(null)
+
+// URL에서 초대 코드 읽기
+onMounted(() => {
+  const invite = route.query.invite as string | undefined
+  if (invite) {
+    inviteCode.value = invite
+    activeTab.value = 'signup'
+  }
+})
 
 function switchTab(tab: 'login' | 'signup') {
   activeTab.value = tab
@@ -126,7 +172,17 @@ async function handleSignup() {
     }
 
     // 회원가입 요청
-    await request('/auth/signup', {
+    const signupRes = await request<{ 
+      message: string
+      data: { 
+        user_id: number
+        couple_key?: string
+        gender?: string
+        vendor_approval_pending?: boolean
+        auto_connected?: boolean
+        partner_nickname?: string
+      } 
+    }>('/auth/signup', {
       method: 'POST',
       body: {
         email: signupEmail.value,
@@ -134,20 +190,44 @@ async function handleSignup() {
         password_check: signupPasswordCheck.value,
         nickname: signupNickname.value,
         profile_image_url: profileImageUrl,
+        gender: signupGender.value,
+        is_partner_vendor: signupIsVendor.value,
+        invite_code: inviteCode.value || null,
       },
       skipAuthHeader: true,
     })
 
-    // 회원가입 성공 후 로그인 탭으로 전환
-    showToast('회원가입 성공! 로그인해주세요.')
-    loginEmail.value = signupEmail.value
-    signupEmail.value = ''
-    signupPassword.value = ''
-    signupPasswordCheck.value = ''
-    signupNickname.value = ''
-    signupProfileImage.value = null
-    profileImagePreview.value = null
-    switchTab('login')
+    signupResult.value = signupRes.data
+
+    // 제휴 업체 가입인 경우 승인 대기 메시지
+    if (signupRes.data.vendor_approval_pending) {
+      showToast('회원가입이 완료되었습니다. 제휴 업체 승인을 기다려주세요.')
+      loginEmail.value = signupEmail.value
+      resetSignupForm()
+      switchTab('login')
+      return
+    }
+
+    // 초대 링크로 자동 연결된 경우
+    if (signupRes.data.auto_connected && signupRes.data.partner_nickname) {
+      showToast(`회원가입 완료! ${signupRes.data.partner_nickname}님과 자동으로 연결되었습니다.`)
+      loginEmail.value = signupEmail.value
+      resetSignupForm()
+      switchTab('login')
+      return
+    }
+
+    // 성별이 선택된 경우 커플 등록 팝업 표시
+    if (signupRes.data.couple_key && signupRes.data.gender) {
+      coupleKey.value = signupRes.data.couple_key
+      showCoupleModal.value = true
+    } else {
+      // 성별이 선택되지 않은 경우 바로 로그인 탭으로
+      showToast('회원가입 성공! 로그인해주세요.')
+      loginEmail.value = signupEmail.value
+      resetSignupForm()
+      switchTab('login')
+    }
   } catch (error: any) {
     console.error('회원가입 오류:', error)
     if (error?.data?.message) {
@@ -177,6 +257,61 @@ function translateErrorMessage(message: string): string {
     signup_failed: '회원가입에 실패했습니다.',
   }
   return messages[message] || message
+}
+
+function resetSignupForm() {
+  signupEmail.value = ''
+  signupPassword.value = ''
+  signupPasswordCheck.value = ''
+  signupNickname.value = ''
+  signupProfileImage.value = null
+  profileImagePreview.value = null
+  signupGender.value = null
+  signupIsVendor.value = false
+  signupResult.value = null
+}
+
+async function connectCouple() {
+  if (!partnerCoupleKey.value.trim()) {
+    errorMessage.value = '상대방의 커플 키를 입력해주세요.'
+    return
+  }
+
+  // 회원가입 직후이므로 먼저 로그인
+  try {
+    await authStore.login({ email: signupEmail.value, password: signupPassword.value })
+    
+    // 로그인 성공 후 커플 연결
+    await request('/couple/connect', {
+      method: 'POST',
+      body: {
+        partner_couple_key: partnerCoupleKey.value.trim(),
+      },
+    })
+
+    showToast('커플 연결이 완료되었습니다!')
+    loginEmail.value = signupEmail.value
+    resetSignupForm()
+    showCoupleModal.value = false
+    emit('close')
+  } catch (error: any) {
+    console.error('커플 연결 오류:', error)
+    if (error?.data?.error) {
+      errorMessage.value = error.data.error
+    } else if (error?.data?.message) {
+      errorMessage.value = translateErrorMessage(error.data.message)
+    } else {
+      errorMessage.value = '커플 연결 중 오류가 발생했습니다.'
+    }
+  }
+}
+
+function skipCoupleRegistration() {
+  showToast('회원가입 성공! 나중에 커플을 등록할 수 있습니다.')
+  loginEmail.value = signupEmail.value
+  resetSignupForm()
+  showCoupleModal.value = false
+  switchTab('login')
 }
 
 function showToast(message: string) {
@@ -259,6 +394,12 @@ function handleOverlayClick(event: MouseEvent) {
           class="login-form"
           @submit.prevent="handleSignup"
         >
+          <!-- 초대 링크로 접근한 경우 안내 -->
+          <div v-if="inviteCode" style="padding: 12px; background: rgba(102, 126, 234, 0.1); border-radius: 8px; margin-bottom: 16px; border: 1px solid rgba(102, 126, 234, 0.3);">
+            <p style="margin: 0; font-size: 13px; color: var(--text);">
+              💕 초대 링크로 접근하셨습니다. 회원가입 시 자동으로 커플이 연결됩니다!
+            </p>
+          </div>
           <div class="form-group">
             <label for="signup-email">이메일</label>
             <input
@@ -324,6 +465,44 @@ function handleOverlayClick(event: MouseEvent) {
               선택하지 않으면 기본 이미지가 사용됩니다
             </small>
           </div>
+          
+          <div class="form-group">
+            <label>성별 선택 (선택사항)</label>
+            <div style="display: flex; gap: 8px;">
+              <button
+                type="button"
+                :class="['btn', 'gender-btn', { active: signupGender === 'BRIDE' }]"
+                @click="signupGender = 'BRIDE'"
+              >
+                👰 신부
+              </button>
+              <button
+                type="button"
+                :class="['btn', 'gender-btn', { active: signupGender === 'GROOM' }]"
+                @click="signupGender = 'GROOM'"
+              >
+                🤵 신랑
+              </button>
+            </div>
+            <small style="color: var(--muted); font-size: 12px; margin-top: 4px; display: block">
+              성별을 선택하면 커플 연결 기능을 사용할 수 있습니다
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label style="display: flex; align-items: center; gap: 8px;">
+              <input
+                type="checkbox"
+                v-model="signupIsVendor"
+                style="width: auto;"
+              />
+              <span>제휴 업체로 가입하기</span>
+            </label>
+            <small style="color: var(--muted); font-size: 12px; margin-top: 4px; display: block">
+              제휴 업체 가입은 시스템 관리자 승인이 필요합니다
+            </small>
+          </div>
+
           <button
             class="btn primary"
             type="submit"
@@ -333,6 +512,87 @@ function handleOverlayClick(event: MouseEvent) {
             {{ isLoading ? '회원가입 중...' : '회원가입' }}
           </button>
         </form>
+      </div>
+    </div>
+
+    <!-- 커플 등록 팝업 -->
+    <div v-if="showCoupleModal" class="modal-overlay" @click.self="skipCoupleRegistration">
+      <div class="couple-modal" @click.stop>
+        <div class="couple-modal-header">
+          <h3>{{ signupResult?.gender === 'BRIDE' ? '신부' : '신랑' }}로 가입하셨습니다!</h3>
+        </div>
+        <div class="couple-modal-body">
+          <div class="couple-info">
+            <p style="margin-bottom: 16px; color: var(--muted);">
+              {{ signupResult?.gender === 'BRIDE' ? '신랑' : '신부' }}을 등록하시겠습니까?
+            </p>
+            
+            <div class="couple-key-display">
+              <label>나의 커플 키</label>
+              <div class="key-box">
+                <code style="font-size: 18px; letter-spacing: 2px;">{{ coupleKey }}</code>
+                <button
+                  type="button"
+                  class="btn-copy"
+                  @click="copyCoupleKey"
+                >
+                  복사
+                </button>
+              </div>
+              <small style="color: var(--muted); font-size: 12px; margin-top: 4px; display: block">
+                이 키를 상대방에게 공유하세요
+              </small>
+              
+              <div style="margin-top: 16px; padding: 12px; background: rgba(102, 126, 234, 0.1); border-radius: 8px;">
+                <label style="font-size: 12px; color: var(--muted); margin-bottom: 8px; display: block;">초대 링크</label>
+                <div class="key-box" style="margin-bottom: 8px;">
+                  <code style="font-size: 14px; word-break: break-all;">{{ inviteLink }}</code>
+                  <button
+                    type="button"
+                    class="btn-copy"
+                    @click="copyInviteLink"
+                  >
+                    링크 복사
+                  </button>
+                </div>
+                <small style="color: var(--muted); font-size: 11px; display: block">
+                  이 링크를 상대방에게 보내면 자동으로 연결됩니다
+                </small>
+              </div>
+            </div>
+
+            <div class="couple-key-input" style="margin-top: 24px;">
+              <label>상대방의 커플 키 입력</label>
+              <input
+                v-model="partnerCoupleKey"
+                type="text"
+                placeholder="상대방의 커플 키를 입력하세요"
+                style="width: 100%; padding: 10px 12px; border-radius: 10px; background: var(--soft); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text); font-size: 14px; letter-spacing: 2px; text-transform: uppercase;"
+                maxlength="8"
+              />
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 20px;">
+              <button
+                class="btn"
+                type="button"
+                @click="skipCoupleRegistration"
+                style="flex: 1;"
+              >
+                나중에
+              </button>
+              <button
+                class="btn primary"
+                type="button"
+                @click="connectCouple"
+                :disabled="!partnerCoupleKey.trim()"
+                style="flex: 1;"
+              >
+                연결하기
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -472,5 +732,93 @@ function handleOverlayClick(event: MouseEvent) {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.gender-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--soft);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gender-btn.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-color: var(--accent);
+  color: white;
+}
+
+.couple-modal {
+  width: min(480px, 95vw);
+  background: var(--card);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.couple-modal-header {
+  padding: 24px 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.couple-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  text-align: center;
+}
+
+.couple-modal-body {
+  padding: 28px;
+}
+
+.couple-key-display {
+  margin-bottom: 16px;
+}
+
+.couple-key-display label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.key-box {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  background: var(--soft);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.key-box code {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.btn-copy {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.btn-copy:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 </style>

@@ -64,6 +64,59 @@
 
 ---
 
+## 실제 예시: 2.1 프로필 이미지 업로드 (multipart/form-data)
+
+## 2.1 프로필 이미지 업로드
+
+**설명:** Multipart 이미지 업로드, 응답으로 CDN URL 반환
+
+---
+
+### 📋 요청 구조
+
+#### Request Header
+
+| 헤더 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| Content-Type | String | 필수 | multipart/form-data |
+| Authorization | String | 필수 | Bearer {token} - JWT 액세스 토큰 |
+
+#### Request Body (multipart/form-data)
+
+| 필드명 | 타입 | 필수 | 설명 |
+|--------|------|------|------|
+| file | File | 필수 | 업로드할 이미지 파일 (jpg, png, jpeg만 가능, 최대 5MB) |
+
+> 💡 **multipart/form-data 형식:**
+> - Content-Type 헤더는 브라우저가 자동으로 설정합니다 (boundary 포함)
+> - 파일 필드는 `file` 이름으로 전송합니다
+> - 지원 형식: jpg, png, jpeg
+> - 최대 크기: 5MB
+
+**필수 필드:**
+- `file`: File (필수) - 업로드할 이미지 파일 (jpg, png, jpeg만 가능, 최대 5MB)
+
+#### Query Parameters
+
+없음
+
+#### Path Parameters
+
+없음
+
+---
+
+### 📤 응답 코드별 예시
+
+| Status Code | Body | Message |
+|-------------|------|---------|
+| 200 | ```json<br>{<br>  "message": "upload_success",<br>  "data": {<br>    "image_url": "https://cdn.example.com/image.jpg"<br>  }<br>}``` | 이미지 업로드 성공 |
+| 400 | ```json<br>{<br>  "message": "file_required",<br>  "error_code": 4003,<br>  "data": null<br>}``` | 파일을 선택해주세요 |
+| 400 | ```json<br>{<br>  "message": "invalid_file_type",<br>  "error_code": 4004,<br>  "data": {"allowed": ["jpg", "png", "jpeg"]}<br>}``` | 지원하지 않는 파일 형식입니다 |
+| 413 | ```json<br>{<br>  "message": "file_too_large",<br>  "error_code": 4131,<br>  "data": {"max_size": "5MB"}<br>}``` | 파일 크기가 5MB를 초과합니다 |
+
+---
+
 ## 실제 예시: 1.1 로그인
 
 ## 1.1 로그인

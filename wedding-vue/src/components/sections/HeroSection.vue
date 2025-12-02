@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
 const heroTiles = [
   {
     badge: '🧾 견적 덤탱이 방지',
@@ -16,6 +20,34 @@ const heroTiles = [
     description: '음성 대화로 스트레스 수준 파악, 갈등 유형 진단 + 코칭',
   },
 ]
+
+function scrollToSection(anchor: string) {
+  // 현재 경로가 홈이 아니면 홈으로 이동
+  if (router.currentRoute.value.path !== '/') {
+    router.push('/').then(() => {
+      setTimeout(() => {
+        const target = document.querySelector(anchor)
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }, 100)
+    })
+  } else {
+    // 이미 홈에 있으면 바로 스크롤
+    const target = document.querySelector(anchor)
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+}
+
+function scrollToDemo() {
+  scrollToSection('#demo')
+}
+
+function scrollToFeatures() {
+  scrollToSection('#features')
+}
 </script>
 
 <template>
@@ -46,8 +78,8 @@ const heroTiles = [
           웨딩 플래닝 OS.
         </p>
         <div class="cta" style="display: flex; gap: 12px; margin-top: 16px">
-          <button class="btn primary">빠른 데모 보기 ▶</button>
-          <button class="btn">핵심 AI 기능 5가지 보기</button>
+          <button class="btn primary" @click="scrollToDemo">빠른 데모 보기 ▶</button>
+          <button class="btn" @click="scrollToFeatures">핵심 AI 기능 5가지 보기</button>
         </div>
         <div style="margin-top: 18px; display: flex; gap: 18px; flex-wrap: wrap">
           <div class="kpi">
@@ -93,4 +125,6 @@ const heroTiles = [
     </div>
   </section>
 </template>
+
+
 
