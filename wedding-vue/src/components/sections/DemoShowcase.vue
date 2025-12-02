@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-type DemoType = 'board' | 'chat' | 'calendar' | 'budget' | 'voice' | 'vendor' | 'vendor-message' | null
+type DemoType = 'board' | 'chat' | 'calendar' | 'budget' | 'voice' | 'vendor' | 'vendor-message' | 'invitation' | 'private-space' | 'document-vault' | null
 
 const currentDemo = ref<DemoType>(null)
 
@@ -43,7 +43,16 @@ function openDemo(kind: DemoType) {
             💍 업체추천
           </button>
           <button class="btn" type="button" :class="{ active: currentDemo === 'vendor-message' }" @click="openDemo('vendor-message')">
-            💬 벤더메시지
+            💬 제휴 업체 메시지
+          </button>
+          <button class="btn" type="button" :class="{ active: currentDemo === 'invitation' }" @click="openDemo('invitation')">
+            💌 청첩장 디자인
+          </button>
+          <button class="btn" type="button" :class="{ active: currentDemo === 'private-space' }" @click="openDemo('private-space')">
+            💑 우리만의 공간
+          </button>
+          <button class="btn" type="button" :class="{ active: currentDemo === 'document-vault' }" @click="openDemo('document-vault')">
+            📁 문서 보관함
           </button>
         </div>
         <div
@@ -894,7 +903,7 @@ function openDemo(kind: DemoType) {
               💍 업체 매칭 & 추천 <span class="badge ok">샘플</span>
             </div>
             <p style="color: var(--muted); margin-bottom: 12px">
-              <strong>🎯 목적:</strong> 결혼식 프로필(규모·예산·스타일)에 맞춰 아이폰 스냅, 사회자, 축가, 웨딩 사진, 야외 식장을 매칭·추천해 주는 '웨딩 벤더 매칭 엔진'
+              <strong>🎯 목적:</strong> 결혼식 프로필(규모·예산·스타일)에 맞춰 아이폰 스냅, 사회자, 축가, 웨딩 사진, 야외 식장을 매칭·추천해 주는 '웨딩 제휴 업체 매칭 엔진'
             </p>
 
             <div class="demo-inner-box">
@@ -1166,7 +1175,7 @@ function openDemo(kind: DemoType) {
           <!-- 벤더 메시지 & 결제 리마인더 데모 -->
           <div v-else-if="currentDemo === 'vendor-message'" class="demo-content">
             <div class="title">
-              💬 벤더 메시지 & 결제 리마인더 <span class="badge ok">샘플</span>
+              💬 제휴 업체 메시지 & 결제 리마인더 <span class="badge ok">샘플</span>
             </div>
             <p style="color: var(--muted); margin-bottom: 12px">
               <strong>🎯 목적:</strong> 웨딩 업체와의 계약·일정·결제 일정을 한 곳에서 관리하는 소통·리마인더 시스템
@@ -1185,11 +1194,11 @@ function openDemo(kind: DemoType) {
                 >
                   <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">✨ 주요 기능</div>
                   <div style="font-size: 12px; line-height: 1.8">
-                    <div>📨 <strong>벤더별 메시지 쓰레드:</strong> 카메라, 드레스, 본식스냅 등 업체별 대화방</div>
+                    <div>📨 <strong>제휴 업체별 메시지 쓰레드:</strong> 카메라, 드레스, 본식스냅 등 업체별 대화방</div>
                     <div>📄 <strong>견적서·계약서 관리:</strong> 업로드·버전 관리, 서명 상태 확인</div>
                     <div>💰 <strong>결제 일정 관리:</strong> 계약금·중도금·잔금 납부일 자동 알림</div>
                     <div>📅 <strong>일정 자동 캘린더 반영:</strong> 결제 일정이 캘린더에 자동 등록</div>
-                    <div>⚖️ <strong>벤더 비교:</strong> 가격·서비스 범위·후기를 나란히 비교</div>
+                    <div>⚖️ <strong>제휴 업체 비교:</strong> 가격·서비스 범위·후기를 나란히 비교</div>
                   </div>
                 </div>
 
@@ -1279,11 +1288,318 @@ function openDemo(kind: DemoType) {
             </div>
             <div class="foot" style="margin-top: 10px">
               <span class="chip">메시지 쓰레드</span><span class="chip">계약 관리</span><span class="chip">결제 일정</span
-              ><span class="chip">문서 관리</span><span class="chip">벤더 비교</span><span class="chip">캘린더 연동</span>
+              ><span class="chip">문서 관리</span><span class="chip">제휴 업체 비교</span><span class="chip">캘린더 연동</span>
             </div>
             <p style="font-size: 12px; margin-top: 10px; color: var(--muted)">
               💡 <i>여러 업체와의 계약 및 결제 일정을 한 곳에서 관리하고, 결제일·미팅 일정·서류 제출 등 다양한 알림을 자동화하여 누락을 방지</i>
             </p>
+          </div>
+
+          <!-- 청첩장 디자인 데모 -->
+          <div v-else-if="currentDemo === 'invitation'" class="demo-content">
+            <div class="title">
+              💌 청첩장 디자인 <span class="badge ok">샘플</span>
+            </div>
+            <p style="color: var(--muted); margin-bottom: 12px">
+              <strong>🎯 목적:</strong> 미리 디자인된 템플릿을 선택하고 문구·사진을 넣으면 바로 인쇄 가능한 청첩장을 생성하는 서비스
+            </p>
+
+            <div class="demo-inner-box">
+              <div style="display: flex; flex-direction: column; gap: 12px">
+                <!-- 템플릿 선택 예시 -->
+                <div>
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">🎨 템플릿 선택</div>
+                  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px">
+                    <div style="padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center">
+                      <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px">클래식</div>
+                      <div style="width: 100%; aspect-ratio: 3/4; background: #F5F5DC; border-radius: 4px; margin-bottom: 4px"></div>
+                      <div style="font-size: 10px; font-weight: 600">클래식 엘레강스</div>
+                    </div>
+                    <div style="padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center">
+                      <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px">모던</div>
+                      <div style="width: 100%; aspect-ratio: 3/4; background: #FFFFFF; border-radius: 4px; margin-bottom: 4px"></div>
+                      <div style="font-size: 10px; font-weight: 600">모던 미니멀</div>
+                    </div>
+                    <div style="padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center">
+                      <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px">빈티지</div>
+                      <div style="width: 100%; aspect-ratio: 3/4; background: #FFF8E7; border-radius: 4px; margin-bottom: 4px"></div>
+                      <div style="font-size: 10px; font-weight: 600">빈티지 로맨틱</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- AI 문구 추천 -->
+                <div style="padding: 12px; background: rgba(139, 92, 246, 0.1); border-radius: 8px; border-left: 3px solid var(--accent)">
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">🤖 AI 문구 추천</div>
+                  <div style="font-size: 12px; line-height: 1.6; color: var(--muted)">
+                    신랑/신부 이름, 예식일, 장소를 입력하면 AI가 스타일에 맞는 청첩장 문구를 자동으로 추천합니다.
+                  </div>
+                  <div style="margin-top: 8px; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 6px; font-size: 11px">
+                    <div style="margin-bottom: 4px"><strong>추천 문구 예시:</strong></div>
+                    <div>"김민수 · 이지은 두 사람이 하나가 되어 새로운 인생을 시작합니다."</div>
+                  </div>
+                </div>
+
+                <!-- QR 코드 삽입 -->
+                <div style="padding: 12px; background: rgba(34, 211, 238, 0.1); border-radius: 8px; border-left: 3px solid var(--accent-2)">
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">📱 QR 코드 삽입</div>
+                  <div style="font-size: 12px; line-height: 1.6; color: var(--muted)">
+                    디지털 초대장, 축의금 결제, RSVP 링크를 QR 코드로 연결하여 청첩장에 삽입할 수 있습니다.
+                  </div>
+                  <div style="display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap">
+                    <div style="padding: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 6px; text-align: center">
+                      <div style="width: 60px; height: 60px; background: #000; border-radius: 4px; margin: 0 auto 4px; display: flex; align-items: center; justify-content: center; font-size: 24px">📱</div>
+                      <div style="font-size: 10px">QR 코드</div>
+                    </div>
+                    <div style="flex: 1; padding: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 6px; font-size: 11px">
+                      <div style="margin-bottom: 4px"><strong>연결 가능한 링크:</strong></div>
+                      <div>• 디지털 초대장 URL</div>
+                      <div>• 축의금 결제 페이지</div>
+                      <div>• RSVP 응답 폼</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- PDF 다운로드 -->
+                <div style="padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border-left: 3px solid var(--ok)">
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">📄 PDF 다운로드 및 인쇄 지원</div>
+                  <div style="font-size: 12px; line-height: 1.6; color: var(--muted)">
+                    고해상도 PDF/AI 파일을 생성하여 인쇄소에 바로 보낼 수 있습니다. A5, A6 등 다양한 크기 지원.
+                  </div>
+                </div>
+
+                <!-- 커스텀 디자인 -->
+                <div style="padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px">
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">🎨 커스텀 디자인 기능</div>
+                  <div style="font-size: 12px; line-height: 1.8; color: var(--muted)">
+                    <div>• 배경색 및 텍스트 색상 변경</div>
+                    <div>• 폰트 스타일 및 크기 조정</div>
+                    <div>• 커플 사진 또는 아이콘 배치</div>
+                    <div>• 실시간 미리보기</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style="
+                margin-top: 12px;
+                padding: 12px;
+                background: rgba(139, 92, 246, 0.1);
+                border-radius: 8px;
+                border: 1px solid rgba(139, 92, 246, 0.2);
+              "
+            >
+              <div style="font-size: 13px; margin-bottom: 6px"><b>📌 세부 기능:</b></div>
+              <ul style="font-size: 12px; margin: 4px 0; padding-left: 20px; line-height: 1.8; color: var(--muted)">
+                <li><strong>템플릿 선택:</strong> 클래식, 모던, 빈티지, 미니멀, 럭셔리, 자연, 로맨틱 등 다양한 스타일</li>
+                <li><strong>문구 입력 및 AI 추천:</strong> 예식 문구를 AI가 추천하고 사용자가 수정 가능</li>
+                <li><strong>이미지·사진 배치:</strong> 커플 사진 또는 아이콘을 넣어 커스텀 디자인</li>
+                <li><strong>QR 코드 삽입:</strong> 디지털 초대장, 축의금 결제, RSVP 링크 연결</li>
+                <li><strong>PDF 다운로드:</strong> 인쇄소에 바로 보낼 수 있는 고해상도 PDF/AI 파일 제공</li>
+              </ul>
+            </div>
+
+            <div class="foot" style="margin-top: 10px">
+              <span class="chip">템플릿 선택</span>
+              <span class="chip">AI 문구 추천</span>
+              <span class="chip">QR 코드</span>
+              <span class="chip">PDF 다운로드</span>
+              <span class="chip">커스텀 디자인</span>
+            </div>
+          </div>
+
+          <!-- 우리만의 공간 데모 -->
+          <div v-else-if="currentDemo === 'private-space'" class="demo-content">
+            <div class="title">
+              💑 우리만의 공간 <span class="badge ok">샘플</span>
+            </div>
+            <p style="color: var(--muted); margin-bottom: 12px">
+              <strong>🎯 목적:</strong> 커플이 연결된 경우에만 접근 가능한 비공개 공간으로, 둘만의 일기·아이디어·사진을 안전하게 저장
+            </p>
+
+            <div class="demo-inner-box">
+              <div style="display: flex; flex-direction: column; gap: 12px">
+                <!-- 접근 제어 -->
+                <div style="padding: 12px; background: rgba(139, 92, 246, 0.1); border-radius: 8px; border-left: 3px solid var(--accent)">
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">🔒 접근 제어</div>
+                  <div style="font-size: 12px; line-height: 1.6; color: var(--muted)">
+                    커플 등록이 완료된 사용자만 접근 가능합니다. 커플이 연결되지 않은 경우 등록 안내 팝업이 표시됩니다.
+                  </div>
+                </div>
+
+                <!-- 게시글 예시 -->
+                <div>
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">📝 비공개 게시글</div>
+                  <div style="display: flex; flex-direction: column; gap: 8px">
+                    <div style="padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06)">
+                      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px">
+                        <div style="font-weight: 600; font-size: 14px">첫 만남 기념일 💕</div>
+                        <span style="font-size: 11px; color: var(--muted)">3일 전</span>
+                      </div>
+                      <p style="font-size: 12px; color: var(--muted); margin: 4px 0; line-height: 1.5">
+                        오늘은 우리가 처음 만난 날이에요. 벌써 3년이 지났네요. 결혼 준비하면서 힘들 때마다 이 글을 보면 힘이 날 것 같아요.
+                      </p>
+                      <div style="display: flex; gap: 6px; margin-top: 8px">
+                        <span style="font-size: 10px; padding: 4px 8px; background: rgba(139, 92, 246, 0.1); border-radius: 4px; color: var(--accent)">❤️ 2</span>
+                        <span style="font-size: 10px; padding: 4px 8px; background: rgba(139, 92, 246, 0.1); border-radius: 4px; color: var(--accent)">💬 1</span>
+                      </div>
+                    </div>
+                    <div style="padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06)">
+                      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px">
+                        <div style="font-weight: 600; font-size: 14px">웨딩홀 후보 정리 📋</div>
+                        <span style="font-size: 11px; color: var(--muted)">1주 전</span>
+                      </div>
+                      <p style="font-size: 12px; color: var(--muted); margin: 4px 0; line-height: 1.5">
+                        A홀: 자연광 좋음, 주차 협소<br>
+                        B홀: 가격 합리적, 위치 좋음<br>
+                        C홀: 분위기 최고, 예산 초과
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 커플 공유 기능 -->
+                <div style="padding: 12px; background: rgba(34, 211, 238, 0.1); border-radius: 8px; border-left: 3px solid var(--accent-2)">
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">💑 커플 공유</div>
+                  <div style="font-size: 12px; line-height: 1.6; color: var(--muted)">
+                    연결된 커플의 두 사용자가 모두 이 공간의 게시글을 작성하고 조회할 수 있습니다. 파트너와 함께 추억을 쌓아가세요.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style="
+                margin-top: 12px;
+                padding: 12px;
+                background: rgba(139, 92, 246, 0.1);
+                border-radius: 8px;
+                border: 1px solid rgba(139, 92, 246, 0.2);
+              "
+            >
+              <div style="font-size: 13px; margin-bottom: 6px"><b>📌 세부 기능:</b></div>
+              <ul style="font-size: 12px; margin: 4px 0; padding-left: 20px; line-height: 1.8; color: var(--muted)">
+                <li><strong>커플 전용 접근:</strong> 커플 등록이 완료된 사용자만 접근 가능</li>
+                <li><strong>비공개 게시글:</strong> 일반 사용자에게는 보이지 않는 완전 비공개 공간</li>
+                <li><strong>커플 공유:</strong> 연결된 커플의 두 사용자가 모두 작성 및 조회 가능</li>
+                <li><strong>일기·아이디어 저장:</strong> 둘만의 추억과 아이디어를 안전하게 보관</li>
+              </ul>
+            </div>
+
+            <div class="foot" style="margin-top: 10px">
+              <span class="chip">커플 전용</span>
+              <span class="chip">비공개 공간</span>
+              <span class="chip">커플 공유</span>
+              <span class="chip">추억 저장</span>
+            </div>
+          </div>
+
+          <!-- 문서 보관함 데모 -->
+          <div v-else-if="currentDemo === 'document-vault'" class="demo-content">
+            <div class="title">
+              📁 문서 보관함 <span class="badge ok">샘플</span>
+            </div>
+            <p style="color: var(--muted); margin-bottom: 12px">
+              <strong>🎯 목적:</strong> 결혼 준비 중 필요한 문서들을 모아두는 공간. 이미지 문서를 업로드하면 OCR로 텍스트를 자동 추출하고 AI가 요약해 드립니다.
+            </p>
+
+            <div class="demo-inner-box">
+              <div style="display: flex; flex-direction: column; gap: 12px">
+                <!-- OCR 기능 -->
+                <div style="padding: 12px; background: rgba(139, 92, 246, 0.1); border-radius: 8px; border-left: 3px solid var(--accent)">
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">🔍 OCR 자동 텍스트 추출</div>
+                  <div style="font-size: 12px; line-height: 1.6; color: var(--muted)">
+                    이미지 문서(JPG, PNG, WEBP)를 업로드하면 자동으로 텍스트를 추출합니다. PaddleOCR과 Tesseract를 지원합니다.
+                  </div>
+                  <div style="margin-top: 8px; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 6px; font-size: 11px">
+                    <div style="margin-bottom: 4px"><strong>업로드 예시:</strong></div>
+                    <div>• 견적서 이미지 → 자동 텍스트 추출</div>
+                    <div>• 계약서 사진 → OCR 처리</div>
+                    <div>• 영수증 이미지 → 텍스트 변환</div>
+                  </div>
+                </div>
+
+                <!-- AI 요약 및 태깅 -->
+                <div style="padding: 12px; background: rgba(34, 211, 238, 0.1); border-radius: 8px; border-left: 3px solid var(--accent-2)">
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">🤖 AI 요약 및 자동 태깅</div>
+                  <div style="font-size: 12px; line-height: 1.6; color: var(--muted)">
+                    OCR로 추출된 텍스트를 AI가 자동으로 요약하고 관련 태그를 생성합니다.
+                  </div>
+                  <div style="margin-top: 8px; padding: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 6px; font-size: 11px">
+                    <div style="margin-bottom: 4px"><strong>AI 요약 예시:</strong></div>
+                    <div>"웨딩홀 A 견적서: 대관료 800만원, 식대 1인당 15만원, 최소 보증인원 100명..."</div>
+                    <div style="margin-top: 6px; display: flex; gap: 4px; flex-wrap: wrap">
+                      <span style="padding: 4px 8px; background: rgba(139, 92, 246, 0.2); border-radius: 4px; font-size: 10px">#웨딩홀</span>
+                      <span style="padding: 4px 8px; background: rgba(139, 92, 246, 0.2); border-radius: 4px; font-size: 10px">#견적서</span>
+                      <span style="padding: 4px 8px; background: rgba(139, 92, 246, 0.2); border-radius: 4px; font-size: 10px">#계약</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 문서 목록 예시 -->
+                <div>
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">📄 저장된 문서</div>
+                  <div style="display: flex; flex-direction: column; gap: 6px">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 6px">
+                      <div>
+                        <div style="font-weight: 600; font-size: 12px">웨딩홀 A 견적서</div>
+                        <div style="font-size: 11px; color: var(--muted)">2024-12-01 업로드</div>
+                      </div>
+                      <div style="display: flex; gap: 4px; flex-wrap: wrap">
+                        <span style="font-size: 10px; padding: 4px 8px; background: rgba(139, 92, 246, 0.1); border-radius: 4px">#웨딩홀</span>
+                        <span style="font-size: 10px; padding: 4px 8px; background: rgba(139, 92, 246, 0.1); border-radius: 4px">#견적서</span>
+                      </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 6px">
+                      <div>
+                        <div style="font-weight: 600; font-size: 12px">스드메 계약서</div>
+                        <div style="font-size: 11px; color: var(--muted)">2024-11-28 업로드</div>
+                      </div>
+                      <div style="display: flex; gap: 4px; flex-wrap: wrap">
+                        <span style="font-size: 10px; padding: 4px 8px; background: rgba(139, 92, 246, 0.1); border-radius: 4px">#스드메</span>
+                        <span style="font-size: 10px; padding: 4px 8px; background: rgba(139, 92, 246, 0.1); border-radius: 4px">#계약서</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 드래그 앤 드롭 -->
+                <div style="padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border-left: 3px solid var(--ok)">
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">📤 파일 업로드</div>
+                  <div style="font-size: 12px; line-height: 1.6; color: var(--muted)">
+                    클릭하거나 드래그 앤 드롭으로 이미지 파일을 업로드할 수 있습니다. (JPG, PNG, WEBP, 최대 10MB)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style="
+                margin-top: 12px;
+                padding: 12px;
+                background: rgba(139, 92, 246, 0.1);
+                border-radius: 8px;
+                border: 1px solid rgba(139, 92, 246, 0.2);
+              "
+            >
+              <div style="font-size: 13px; margin-bottom: 6px"><b>📌 세부 기능:</b></div>
+              <ul style="font-size: 12px; margin: 4px 0; padding-left: 20px; line-height: 1.8; color: var(--muted)">
+                <li><strong>OCR 텍스트 추출:</strong> 이미지 문서에서 자동으로 텍스트 추출 (PaddleOCR/Tesseract)</li>
+                <li><strong>AI 요약:</strong> 추출된 텍스트를 AI가 자동으로 요약</li>
+                <li><strong>자동 태깅:</strong> 문서 내용을 분석하여 관련 태그 자동 생성</li>
+                <li><strong>드래그 앤 드롭:</strong> 파일을 드래그하여 쉽게 업로드</li>
+                <li><strong>문서 관리:</strong> 업로드한 문서를 태그별로 분류하여 관리</li>
+              </ul>
+            </div>
+
+            <div class="foot" style="margin-top: 10px">
+              <span class="chip">OCR 추출</span>
+              <span class="chip">AI 요약</span>
+              <span class="chip">자동 태깅</span>
+              <span class="chip">드래그 앤 드롭</span>
+              <span class="chip">문서 관리</span>
+            </div>
           </div>
         </div>
       </div>

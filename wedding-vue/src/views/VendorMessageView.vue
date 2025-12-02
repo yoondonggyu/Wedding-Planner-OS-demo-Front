@@ -124,7 +124,7 @@ const newThreadForm = ref({
   title: '',
 })
 
-// 벤더 목록
+// 제휴 업체 목록
 const vendorList = ref<VendorListItem[]>([])
 const selectedVendorCategory = ref<string>('')
 const vendorCategories = [
@@ -182,7 +182,7 @@ const documentForm = ref({
   file_size: null as number | null,
 })
 
-// 벤더 비교
+// 제휴 업체 비교
 const comparingVendorIds = ref<number[]>([])
 const compareResults = ref<any[]>([])
 
@@ -260,7 +260,7 @@ onMounted(() => {
   }
   loadThreads()
   if (!isVendorAccount.value) {
-    // 일반 사용자만 벤더 목록 로드 (벤더 계정은 불필요)
+    // 일반 사용자만 제휴 업체 목록 로드 (제휴 업체 계정은 불필요)
     loadVendors()
   }
 })
@@ -275,7 +275,7 @@ async function loadVendors() {
       vendorList.value = res.data.vendors || []
     }
   } catch (err: any) {
-    console.error('벤더 목록 로드 실패:', err)
+    console.error('제휴 업체 목록 로드 실패:', err)
     let errorMessage = '제휴 업체 목록을 불러오는데 실패했습니다.'
     
     if (err?.status === 0) {
@@ -345,7 +345,7 @@ watch(() => newThreadForm.value.vendor_id, (vendorId) => {
   if (vendorId && vendorList.value.length > 0) {
     const vendor = vendorList.value.find(v => v.id === vendorId)
     if (vendor && !newThreadForm.value.title) {
-      // 벤더 이름으로 제목 자동 생성
+      // 제휴 업체 이름으로 제목 자동 생성
       const categoryLabel = getCategoryLabel(vendor.vendor_type)
       newThreadForm.value.title = `${vendor.name}와의 대화`
     }
@@ -409,7 +409,7 @@ async function createThread() {
 // 메시지가 자신이 보낸 것인지 확인
 function isMyMessage(message: VendorMessage): boolean {
   if (isVendorAccount.value) {
-    // 벤더 계정: sender_type이 'vendor'면 자신이 보낸 메시지
+    // 제휴 업체 계정: sender_type이 'vendor'면 자신이 보낸 메시지
     return message.sender_type === 'vendor'
   } else {
     // 일반 사용자: sender_type이 'user'면 자신이 보낸 메시지
@@ -582,7 +582,7 @@ async function compareVendors() {
       showCompareModal.value = true
     }
   } catch (err: any) {
-    console.error('벤더 비교 실패:', err)
+    console.error('제휴 업체 비교 실패:', err)
     showToast(err?.data?.error || '제휴 업체 비교에 실패했습니다.', 'error')
   }
 }
@@ -689,7 +689,7 @@ function showDemoThread(thread: VendorThread) {
     vendor_id: thread.vendor_id,
     vendor: {
       id: thread.vendor_id,
-      name: thread.vendor_name || '데모 벤더',
+      name: thread.vendor_name || '데모 제휴 업체',
       vendor_type: thread.vendor_type,
       contact_phone: '010-1234-5678',
       contact_link: 'https://example.com',
@@ -1223,7 +1223,7 @@ function showDemoThread(thread: VendorThread) {
       </div>
     </div>
 
-    <!-- 벤더 비교 모달 -->
+    <!-- 제휴 업체 비교 모달 -->
     <div v-if="showCompareModal" class="modal-overlay" @click.self="showCompareModal = false">
       <div class="modal-card xlarge">
         <h3 class="modal-title">제휴 업체 비교</h3>
@@ -1231,7 +1231,7 @@ function showDemoThread(thread: VendorThread) {
           <table>
             <thead>
               <tr>
-                <th>벤더명</th>
+                <th>제휴 업체명</th>
                 <th>타입</th>
                 <th>최소 가격</th>
                 <th>최대 가격</th>
@@ -2252,7 +2252,7 @@ function showDemoThread(thread: VendorThread) {
   border-color: var(--accent);
 }
 
-/* 벤더 아이템 */
+/* 제휴 업체 아이템 */
 .vendor-item {
   padding: 12px;
   margin-bottom: 8px;

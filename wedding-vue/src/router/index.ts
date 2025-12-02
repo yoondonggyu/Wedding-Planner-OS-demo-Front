@@ -10,6 +10,8 @@ const VendorView = () => import('@/views/VendorView.vue')
 const VendorMessageView = () => import('@/views/VendorMessageView.vue')
 const PrivateSpaceView = () => import('@/views/PrivateSpaceView.vue')
 const DocumentVaultView = () => import('@/views/DocumentVaultView.vue')
+const InvitationDesignView = () => import('@/views/InvitationDesignView.vue')
+const DigitalInvitationView = () => import('@/views/DigitalInvitationView.vue')
 
 export const router = createRouter({
   history: createWebHashHistory(),
@@ -24,6 +26,8 @@ export const router = createRouter({
     { path: '/vendor-message', name: 'vendor-message', component: VendorMessageView },
     { path: '/private-space', name: 'private-space', component: PrivateSpaceView },
     { path: '/document-vault', name: 'document-vault', component: DocumentVaultView },
+    { path: '/invitation-design', name: 'invitation-design', component: InvitationDesignView },
+    { path: '/invitation/:url', name: 'digital-invitation', component: DigitalInvitationView },
   ],
   scrollBehavior() {
     return { top: 0, behavior: 'smooth' }

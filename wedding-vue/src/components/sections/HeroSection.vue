@@ -12,7 +12,7 @@ const heroTiles = [
   {
     badge: '🎤 24/7 음성 비서',
     title: 'Voice Personal Assistant',
-    description: '운전 중에도 음성 메시지로 일정·예산·벤더 질문 대응',
+    description: '운전 중에도 음성 메시지로 일정·예산·제휴 업체 질문 대응',
   },
   {
     badge: '💭 감정 분석 코칭',

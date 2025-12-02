@@ -1688,6 +1688,625 @@ API_DATA["sections"].append({
     ]
 })
 
+# 디지털 초대장 + 축의금 결제 시스템 API 추가
+API_DATA["sections"].append({
+    "id": "13",
+    "name": "디지털 초대장 + 축의금 결제 시스템",
+    "apis": [
+        {
+            "id": "13.1",
+            "name": "디지털 초대장 생성",
+            "method": "POST",
+            "path": "/api/digital-invitations",
+            "request": "DigitalInvitationCreateReq",
+            "response": "DigitalInvitationCreateResponse",
+            "auth": True,
+            "description": "디지털 초대장 생성 (청첩장 디자인과 연결)",
+            "query_params": None,
+            "path_params": None,
+            "headers": None,
+            "body": {
+                "invitation_design_id": "integer",
+                "title": "string",
+                "wedding_date": "string (YYYY-MM-DD)",
+                "wedding_time": "string | null",
+                "wedding_venue": "string",
+                "wedding_address": "string | null",
+                "groom_name": "string",
+                "bride_name": "string",
+                "groom_parents": "string | null",
+                "bride_parents": "string | null",
+                "contact_info": "object | null",
+                "bank_info": "object | null",
+                "theme": "string (ELEGANT|MODERN|RUSTIC|MINIMALIST|LUXURY)",
+                "main_image_url": "string | null",
+                "gallery_image_urls": "array[string] | null",
+                "greeting_message": "string | null",
+                "map_url": "string | null",
+                "parking_info": "string | null",
+                "allow_payment": "boolean (기본값: true)",
+                "allow_rsvp": "boolean (기본값: true)",
+                "allow_guest_message": "boolean (기본값: true)"
+            },
+            "body_required": ["invitation_design_id", "title", "wedding_date", "wedding_venue", "groom_name", "bride_name"],
+            "body_optional": ["wedding_time", "wedding_address", "groom_parents", "bride_parents", "contact_info", "bank_info", "theme", "main_image_url", "gallery_image_urls", "greeting_message", "map_url", "parking_info", "allow_payment", "allow_rsvp", "allow_guest_message"],
+            "status_codes": [
+                {"code": 201, "message": "digital_invitation_created", "body": {"message": "digital_invitation_created", "data": {"id": 1, "invitation_url": "abc123xyz", "design_qr_code_url": "https://..."}}, "msg": "디지털 초대장 생성 성공"},
+                {"code": 401, "message": "unauthorized", "body": {"message": "unauthorized", "data": None}, "msg": "인증 필요"},
+                {"code": 404, "message": "invitation_design_not_found", "body": {"message": "invitation_design_not_found", "data": None}, "msg": "청첩장 디자인을 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "13.2",
+            "name": "내 디지털 초대장 목록 조회",
+            "method": "GET",
+            "path": "/api/digital-invitations/my",
+            "request": None,
+            "response": "DigitalInvitationListResponse",
+            "auth": True,
+            "description": "사용자/커플의 디지털 초대장 목록 조회",
+            "query_params": None,
+            "path_params": None,
+            "headers": None,
+            "body": None,
+            "body_required": [],
+            "body_optional": [],
+            "status_codes": [
+                {"code": 200, "message": "digital_invitations_retrieved", "body": {"message": "digital_invitations_retrieved", "data": {"invitations": []}}, "msg": "디지털 초대장 목록 조회 성공"},
+                {"code": 401, "message": "unauthorized", "body": {"message": "unauthorized", "data": None}, "msg": "인증 필요"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "13.3",
+            "name": "디지털 초대장 조회 (공개)",
+            "method": "GET",
+            "path": "/api/digital-invitations/public/{invitation_url}",
+            "request": None,
+            "response": "DigitalInvitationDetailResponse",
+            "auth": False,
+            "description": "공개 디지털 초대장 조회 (하객용, 조회수 자동 증가)",
+            "query_params": None,
+            "path_params": [{"name": "invitation_url", "type": "String", "description": "초대장 고유 URL"}],
+            "headers": None,
+            "body": None,
+            "body_required": [],
+            "body_optional": [],
+            "status_codes": [
+                {"code": 200, "message": "public_digital_invitation_retrieved", "body": {"message": "public_digital_invitation_retrieved", "data": {"invitation": {}}}, "msg": "디지털 초대장 조회 성공"},
+                {"code": 404, "message": "digital_invitation_not_found", "body": {"message": "digital_invitation_not_found", "data": None}, "msg": "초대장을 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "13.4",
+            "name": "디지털 초대장 수정",
+            "method": "PUT",
+            "path": "/api/digital-invitations/{invitation_id}",
+            "request": "DigitalInvitationUpdateReq",
+            "response": "DigitalInvitationUpdateResponse",
+            "auth": True,
+            "description": "디지털 초대장 수정 (소유자만)",
+            "query_params": None,
+            "path_params": [{"name": "invitation_id", "type": "Integer", "description": "초대장 ID"}],
+            "headers": None,
+            "body": {
+                "title": "string | null",
+                "wedding_date": "string (YYYY-MM-DD) | null",
+                "wedding_time": "string | null",
+                "wedding_venue": "string | null",
+                "wedding_address": "string | null",
+                "groom_name": "string | null",
+                "bride_name": "string | null",
+                "groom_parents": "string | null",
+                "bride_parents": "string | null",
+                "contact_info": "object | null",
+                "bank_info": "object | null",
+                "theme": "string | null",
+                "main_image_url": "string | null",
+                "gallery_image_urls": "array[string] | null",
+                "greeting_message": "string | null",
+                "map_url": "string | null",
+                "parking_info": "string | null",
+                "allow_payment": "boolean | null",
+                "allow_rsvp": "boolean | null",
+                "allow_guest_message": "boolean | null"
+            },
+            "body_required": [],
+            "body_optional": ["title", "wedding_date", "wedding_time", "wedding_venue", "wedding_address", "groom_name", "bride_name", "groom_parents", "bride_parents", "contact_info", "bank_info", "theme", "main_image_url", "gallery_image_urls", "greeting_message", "map_url", "parking_info", "allow_payment", "allow_rsvp", "allow_guest_message"],
+            "status_codes": [
+                {"code": 200, "message": "digital_invitation_updated", "body": {"message": "digital_invitation_updated", "data": {"id": 1}}, "msg": "디지털 초대장 수정 성공"},
+                {"code": 401, "message": "unauthorized", "body": {"message": "unauthorized", "data": None}, "msg": "인증 필요"},
+                {"code": 403, "message": "forbidden", "body": {"message": "forbidden", "data": None}, "msg": "권한 없음"},
+                {"code": 404, "message": "digital_invitation_not_found", "body": {"message": "digital_invitation_not_found", "data": None}, "msg": "초대장을 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "13.5",
+            "name": "디지털 초대장 삭제",
+            "method": "DELETE",
+            "path": "/api/digital-invitations/{invitation_id}",
+            "request": None,
+            "response": "BaseResponse",
+            "auth": True,
+            "description": "디지털 초대장 삭제 (소유자만)",
+            "query_params": None,
+            "path_params": [{"name": "invitation_id", "type": "Integer", "description": "초대장 ID"}],
+            "headers": None,
+            "body": None,
+            "body_required": [],
+            "body_optional": [],
+            "status_codes": [
+                {"code": 200, "message": "digital_invitation_deleted", "body": {"message": "digital_invitation_deleted", "data": None}, "msg": "디지털 초대장 삭제 성공"},
+                {"code": 401, "message": "unauthorized", "body": {"message": "unauthorized", "data": None}, "msg": "인증 필요"},
+                {"code": 403, "message": "forbidden", "body": {"message": "forbidden", "data": None}, "msg": "권한 없음"},
+                {"code": 404, "message": "digital_invitation_not_found", "body": {"message": "digital_invitation_not_found", "data": None}, "msg": "초대장을 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "13.6",
+            "name": "RSVP 응답 생성 (공개)",
+            "method": "POST",
+            "path": "/api/digital-invitations/{invitation_id}/rsvps",
+            "request": "RSVPCreateReq",
+            "response": "RSVPCreateResponse",
+            "auth": False,
+            "description": "RSVP 응답 생성 (하객용, 공개 접근)",
+            "query_params": None,
+            "path_params": [{"name": "invitation_id", "type": "Integer", "description": "초대장 ID"}],
+            "headers": None,
+            "body": {
+                "invitation_id": "integer",
+                "guest_name": "string",
+                "guest_phone": "string | null",
+                "guest_email": "string | null",
+                "status": "string (ATTENDING|NOT_ATTENDING|MAYBE|PENDING)",
+                "plus_one": "boolean (기본값: false)",
+                "plus_one_name": "string | null",
+                "dietary_restrictions": "string | null",
+                "special_requests": "string | null"
+            },
+            "body_required": ["invitation_id", "guest_name", "status"],
+            "body_optional": ["guest_phone", "guest_email", "plus_one", "plus_one_name", "dietary_restrictions", "special_requests"],
+            "status_codes": [
+                {"code": 201, "message": "rsvp_created", "body": {"message": "rsvp_created", "data": {"id": 1}}, "msg": "RSVP 응답 생성 성공"},
+                {"code": 404, "message": "digital_invitation_not_found", "body": {"message": "digital_invitation_not_found", "data": None}, "msg": "초대장을 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "13.7",
+            "name": "RSVP 목록 조회",
+            "method": "GET",
+            "path": "/api/digital-invitations/{invitation_id}/rsvps",
+            "request": None,
+            "response": "RSVPListResponse",
+            "auth": True,
+            "description": "RSVP 목록 조회 (초대장 소유자만)",
+            "query_params": None,
+            "path_params": [{"name": "invitation_id", "type": "Integer", "description": "초대장 ID"}],
+            "headers": None,
+            "body": {
+                "guest_name": "string | null",
+                "status": "string (ATTENDING|NOT_ATTENDING|MAYBE) | null",
+                "attending_guests": "integer | null",
+                "dietary_restrictions": "string | null",
+                "contact_phone": "string | null"
+            },
+            "body_required": [],
+            "body_optional": ["guest_name", "status", "attending_guests", "dietary_restrictions", "contact_phone"],
+            "status_codes": [
+                {"code": 200, "message": "rsvp_updated", "body": {"message": "rsvp_updated", "data": {"id": 1}}, "msg": "RSVP 응답 수정 성공"},
+                {"code": 404, "message": "rsvp_not_found", "body": {"message": "rsvp_not_found", "data": None}, "msg": "RSVP를 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "13.8",
+            "name": "축의금 결제 생성 (공개)",
+            "method": "POST",
+            "path": "/api/digital-invitations/{invitation_id}/payments",
+            "request": "PaymentCreateReq",
+            "response": "PaymentCreateResponse",
+            "auth": False,
+            "description": "축의금 결제 생성 (하객용, 공개 접근, 간편 결제 지원)",
+            "query_params": None,
+            "path_params": [{"name": "invitation_id", "type": "Integer", "description": "초대장 ID"}],
+            "headers": None,
+            "body": {
+                "invitation_id": "integer",
+                "payer_name": "string",
+                "payer_phone": "string | null",
+                "payer_message": "string | null",
+                "amount": "float",
+                "payment_method": "string (BANK_TRANSFER|KAKAO_PAY|TOSS|CREDIT_CARD)"
+            },
+            "body_required": ["invitation_id", "payer_name", "amount", "payment_method"],
+            "body_optional": ["payer_phone", "payer_message"],
+            "status_codes": [
+                {"code": 200, "message": "payment_created", "body": {"message": "payment_created", "data": {"id": 1, "amount": 50000.0, "payment_method": "KAKAO_PAY", "payment_status": "PENDING"}}, "msg": "축의금 결제 생성 성공"},
+                {"code": 404, "message": "invitation_not_found", "body": {"message": "invitation_not_found", "data": None}, "msg": "초대장을 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "13.9",
+            "name": "결제 목록 조회",
+            "method": "GET",
+            "path": "/api/digital-invitations/{invitation_id}/payments",
+            "request": None,
+            "response": "PaymentListResponse",
+            "auth": True,
+            "description": "결제 목록 조회 (초대장 소유자만)",
+            "query_params": None,
+            "path_params": [{"name": "invitation_id", "type": "Integer", "description": "초대장 ID"}],
+            "headers": None,
+            "body": None,
+            "body_required": [],
+            "body_optional": [],
+            "status_codes": [
+                {"code": 200, "message": "payments_retrieved", "body": {"message": "payments_retrieved", "data": {"payments": []}}, "msg": "결제 목록 조회 성공"},
+                {"code": 401, "message": "unauthorized", "body": {"message": "unauthorized", "data": None}, "msg": "인증 필요"},
+                {"code": 403, "message": "forbidden", "body": {"message": "forbidden", "data": None}, "msg": "권한 없음"},
+                {"code": 404, "message": "invitation_not_found", "body": {"message": "invitation_not_found", "data": None}, "msg": "초대장을 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "13.10",
+            "name": "하객 메시지 생성 (공개)",
+            "method": "POST",
+            "path": "/api/digital-invitations/{invitation_id}/guest-messages",
+            "request": "GuestMessageCreateReq",
+            "response": "GuestMessageCreateResponse",
+            "auth": False,
+            "description": "하객 메시지 및 사진 생성 (하객용, 공개 접근)",
+            "query_params": None,
+            "path_params": [{"name": "invitation_id", "type": "Integer", "description": "초대장 ID"}],
+            "headers": None,
+            "body": {
+                "invitation_id": "integer",
+                "guest_name": "string",
+                "guest_phone": "string | null",
+                "message": "string | null",
+                "image_url": "string | null"
+            },
+            "body_required": ["invitation_id", "guest_name"],
+            "body_optional": ["guest_phone", "message", "image_url"],
+            "status_codes": [
+                {"code": 200, "message": "guest_message_created", "body": {"message": "guest_message_created", "data": {"id": 1, "guest_name": "테스트 하객", "message": "결혼 축하합니다!", "image_url": None}}, "msg": "하객 메시지 생성 성공"},
+                {"code": 404, "message": "invitation_not_found", "body": {"message": "invitation_not_found", "data": None}, "msg": "초대장을 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "13.11",
+            "name": "하객 메시지 목록 조회",
+            "method": "GET",
+            "path": "/api/digital-invitations/{invitation_id}/guest-messages",
+            "request": None,
+            "response": "GuestMessageListResponse",
+            "auth": False,
+            "description": "하객 메시지 목록 조회 (공개)",
+            "query_params": None,
+            "path_params": [{"name": "invitation_id", "type": "Integer", "description": "초대장 ID"}],
+            "headers": None,
+            "body": None,
+            "body_required": [],
+            "body_optional": [],
+            "status_codes": [
+                {"code": 200, "message": "guest_messages_retrieved", "body": {"message": "guest_messages_retrieved", "data": {"messages": []}}, "msg": "하객 메시지 목록 조회 성공"},
+                {"code": 404, "message": "invitation_not_found", "body": {"message": "invitation_not_found", "data": None}, "msg": "초대장을 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "13.12",
+            "name": "디지털 초대장 통계 조회",
+            "method": "GET",
+            "path": "/api/digital-invitations/{invitation_id}/statistics",
+            "request": None,
+            "response": "InvitationStatisticsResponse",
+            "auth": True,
+            "description": "디지털 초대장 통계 조회 (소유자용: 조회수, RSVP 현황, 결제 현황, 축하 메시지 수)",
+            "query_params": None,
+            "path_params": [{"name": "invitation_id", "type": "Integer", "description": "초대장 ID"}],
+            "headers": None,
+            "body": None,
+            "body_required": [],
+            "body_optional": [],
+            "status_codes": [
+                {"code": 200, "message": "invitation_statistics_retrieved", "body": {"message": "invitation_statistics_retrieved", "data": {"view_count": 100, "rsvp_stats": {"total_responses": 50, "attending_guests_total": 60, "not_attending_count": 5, "maybe_count": 3, "no_response_count": 0}, "payment_stats": {"total_payments_count": 30, "total_amount_collected": 5000000}, "guest_message_count": 25}}, "msg": "통계 조회 성공"},
+                {"code": 401, "message": "unauthorized", "body": {"message": "unauthorized", "data": None}, "msg": "인증 필요"},
+                {"code": 403, "message": "forbidden", "body": {"message": "forbidden", "data": None}, "msg": "권한 없음"},
+                {"code": 404, "message": "digital_invitation_not_found", "body": {"message": "digital_invitation_not_found", "data": None}, "msg": "초대장을 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        }
+    ]
+})
+
+# 청첩장 디자인 서비스 API 추가 (섹션 14)
+API_DATA["sections"].append({
+    "id": "14",
+    "name": "청첩장 디자인 서비스 (Invitation Design)",
+    "apis": [
+        {
+            "id": "14.1",
+            "name": "템플릿 목록 조회",
+            "method": "GET",
+            "path": "/api/invitation-templates",
+            "request": None,
+            "response": "TemplatesResponse",
+            "auth": False,
+            "description": "청첩장 템플릿 목록을 조회합니다. 스타일 필터링 지원.",
+            "query_params": [{"name": "style", "type": "String", "required": False, "default": None, "description": "템플릿 스타일 필터 (CLASSIC, MODERN, VINTAGE, MINIMAL, LUXURY, NATURE, ROMANTIC)"}],
+            "path_params": None,
+            "headers": None,
+            "body": None,
+            "body_required": [],
+            "body_optional": [],
+            "status_codes": [
+                {"code": 200, "message": "templates_retrieved", "body": {"message": "templates_retrieved", "data": {"templates": []}}, "msg": "템플릿 목록 조회 성공"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "14.2",
+            "name": "템플릿 상세 조회",
+            "method": "GET",
+            "path": "/api/invitation-templates/{template_id}",
+            "request": None,
+            "response": "TemplateResponse",
+            "auth": False,
+            "description": "특정 템플릿의 상세 정보를 조회합니다.",
+            "query_params": None,
+            "path_params": [{"name": "template_id", "type": "Integer", "description": "템플릿 ID"}],
+            "headers": None,
+            "body": None,
+            "body_required": [],
+            "body_optional": [],
+            "status_codes": [
+                {"code": 200, "message": "template_retrieved", "body": {"message": "template_retrieved", "data": {"id": 1, "name": "템플릿명", "style": "CLASSIC", "preview_image_url": "https://...", "template_data": {}}}, "msg": "템플릿 조회 성공"},
+                {"code": 404, "message": "template_not_found", "body": {"message": "template_not_found", "data": None}, "msg": "템플릿을 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "14.3",
+            "name": "디자인 생성",
+            "method": "POST",
+            "path": "/api/invitation-designs",
+            "request": "InvitationDesignCreateReq",
+            "response": "DesignCreateResponse",
+            "auth": True,
+            "description": "새로운 청첩장 디자인을 생성합니다. 템플릿 선택 및 QR 코드 생성 지원.",
+            "query_params": None,
+            "path_params": None,
+            "headers": None,
+            "body": {
+                "template_id": "integer | null",
+                "design_data": "object",
+                "qr_code_data": "object | null"
+            },
+            "body_required": ["design_data"],
+            "body_optional": ["template_id", "qr_code_data"],
+            "status_codes": [
+                {"code": 201, "message": "design_created", "body": {"message": "design_created", "data": {"id": 1, "template_id": 1, "design_data": {}, "qr_code_url": "https://...", "status": "DRAFT"}}, "msg": "디자인 생성 성공"},
+                {"code": 401, "message": "unauthorized", "body": {"message": "unauthorized", "data": None}, "msg": "인증 필요"},
+                {"code": 404, "message": "template_not_found", "body": {"message": "template_not_found", "data": None}, "msg": "템플릿을 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "14.4",
+            "name": "디자인 목록 조회",
+            "method": "GET",
+            "path": "/api/invitation-designs",
+            "request": None,
+            "response": "DesignsResponse",
+            "auth": True,
+            "description": "현재 사용자 또는 커플이 생성한 디자인 목록을 조회합니다.",
+            "query_params": None,
+            "path_params": None,
+            "headers": None,
+            "body": None,
+            "body_required": [],
+            "body_optional": [],
+            "status_codes": [
+                {"code": 200, "message": "designs_retrieved", "body": {"message": "designs_retrieved", "data": {"designs": []}}, "msg": "디자인 목록 조회 성공"},
+                {"code": 401, "message": "unauthorized", "body": {"message": "unauthorized", "data": None}, "msg": "인증 필요"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "14.5",
+            "name": "디자인 상세 조회",
+            "method": "GET",
+            "path": "/api/invitation-designs/{design_id}",
+            "request": None,
+            "response": "DesignResponse",
+            "auth": True,
+            "description": "특정 디자인의 상세 정보를 조회합니다. 본인 또는 파트너의 디자인만 조회 가능.",
+            "query_params": None,
+            "path_params": [{"name": "design_id", "type": "Integer", "description": "디자인 ID"}],
+            "headers": None,
+            "body": None,
+            "body_required": [],
+            "body_optional": [],
+            "status_codes": [
+                {"code": 200, "message": "design_retrieved", "body": {"message": "design_retrieved", "data": {"id": 1, "template_id": 1, "design_data": {}, "qr_code_url": "https://...", "qr_code_data": {}, "preview_image_url": "https://...", "pdf_url": "https://...", "status": "DRAFT"}}, "msg": "디자인 조회 성공"},
+                {"code": 401, "message": "unauthorized", "body": {"message": "unauthorized", "data": None}, "msg": "인증 필요"},
+                {"code": 403, "message": "forbidden", "body": {"message": "forbidden", "data": None}, "msg": "권한 없음"},
+                {"code": 404, "message": "design_not_found", "body": {"message": "design_not_found", "data": None}, "msg": "디자인을 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "14.6",
+            "name": "디자인 수정",
+            "method": "PUT",
+            "path": "/api/invitation-designs/{design_id}",
+            "request": "InvitationDesignUpdateReq",
+            "response": "DesignUpdateResponse",
+            "auth": True,
+            "description": "생성된 디자인의 정보를 수정합니다. 디자인 데이터, QR 코드, 상태 변경 지원.",
+            "query_params": None,
+            "path_params": [{"name": "design_id", "type": "Integer", "description": "디자인 ID"}],
+            "headers": None,
+            "body": {
+                "design_data": "object | null",
+                "qr_code_data": "object | null",
+                "status": "string | null (DRAFT, COMPLETED)"
+            },
+            "body_required": [],
+            "body_optional": ["design_data", "qr_code_data", "status"],
+            "status_codes": [
+                {"code": 200, "message": "design_updated", "body": {"message": "design_updated", "data": {"id": 1, "design_data": {}, "qr_code_url": "https://...", "status": "COMPLETED"}}, "msg": "디자인 수정 성공"},
+                {"code": 401, "message": "unauthorized", "body": {"message": "unauthorized", "data": None}, "msg": "인증 필요"},
+                {"code": 403, "message": "forbidden", "body": {"message": "forbidden", "data": None}, "msg": "권한 없음"},
+                {"code": 404, "message": "design_not_found", "body": {"message": "design_not_found", "data": None}, "msg": "디자인을 찾을 수 없습니다"},
+                {"code": 400, "message": "invalid_status", "body": {"message": "invalid_status", "data": None}, "msg": "유효하지 않은 상태입니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "14.7",
+            "name": "AI 문구 추천",
+            "method": "POST",
+            "path": "/api/invitation-text-recommend",
+            "request": "InvitationTextRecommendReq",
+            "response": "TextRecommendResponse",
+            "auth": False,
+            "description": "AI를 활용하여 청첩장 문구를 추천합니다. 신랑/신부 이름, 예식 정보, 스타일을 기반으로 맞춤 문구 생성.",
+            "query_params": None,
+            "path_params": None,
+            "headers": None,
+            "body": {
+                "groom_name": "string",
+                "bride_name": "string",
+                "wedding_date": "string (YYYY-MM-DD)",
+                "wedding_time": "string | null (HH:MM)",
+                "wedding_location": "string | null",
+                "style": "string | null (CLASSIC, MODERN, VINTAGE 등)",
+                "additional_info": "string | null"
+            },
+            "body_required": ["groom_name", "bride_name", "wedding_date"],
+            "body_optional": ["wedding_time", "wedding_location", "style", "additional_info"],
+            "status_codes": [
+                {"code": 200, "message": "text_recommended", "body": {"message": "text_recommended", "data": {"recommended_text": "추천 문구..."}}, "msg": "문구 추천 성공"},
+                {"code": 400, "message": "invalid_request", "body": {"message": "invalid_request", "data": None}, "msg": "잘못된 요청"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "14.8",
+            "name": "QR 코드 생성",
+            "method": "POST",
+            "path": "/api/invitation-qr-code",
+            "request": "InvitationQRCodeGenerateReq",
+            "response": "QRCodeGenerateResponse",
+            "auth": False,
+            "description": "디지털 초대장, 축의금 결제, RSVP 링크를 포함한 QR 코드를 생성합니다.",
+            "query_params": None,
+            "path_params": None,
+            "headers": None,
+            "body": {
+                "digital_invitation_url": "string | null",
+                "payment_url": "string | null",
+                "rsvp_url": "string | null"
+            },
+            "body_required": [],
+            "body_optional": ["digital_invitation_url", "payment_url", "rsvp_url"],
+            "status_codes": [
+                {"code": 200, "message": "qr_code_generated", "body": {"message": "qr_code_generated", "data": {"qr_code_url": "https://...", "qr_code_data": {}}}, "msg": "QR 코드 생성 성공"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "14.9",
+            "name": "PDF 생성 및 다운로드",
+            "method": "POST",
+            "path": "/api/invitation-pdf",
+            "request": "InvitationPDFGenerateReq",
+            "response": "PDFStreamResponse",
+            "auth": True,
+            "description": "디자인을 기반으로 청첩장 PDF를 생성하고 다운로드합니다. QR 코드 포함, 용지 크기 및 DPI 설정 지원.",
+            "query_params": None,
+            "path_params": None,
+            "headers": {"Content-Type": "application/pdf"},
+            "body": {
+                "design_id": "integer",
+                "paper_size": "string (기본값: A5)",
+                "dpi": "integer (기본값: 300)"
+            },
+            "body_required": ["design_id"],
+            "body_optional": ["paper_size", "dpi"],
+            "status_codes": [
+                {"code": 200, "message": "pdf_generated", "body": "PDF 파일 스트림", "msg": "PDF 생성 및 다운로드 성공"},
+                {"code": 401, "message": "unauthorized", "body": {"message": "unauthorized", "data": None}, "msg": "인증 필요"},
+                {"code": 404, "message": "design_not_found", "body": {"message": "design_not_found", "data": None}, "msg": "디자인을 찾을 수 없습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "14.10",
+            "name": "주문 생성",
+            "method": "POST",
+            "path": "/api/invitation-orders",
+            "request": "InvitationOrderCreateReq",
+            "response": "OrderCreateResponse",
+            "auth": True,
+            "description": "완성된 디자인을 기반으로 실물 청첩장 주문을 생성합니다. 수량, 용지 타입, 배송 정보 입력.",
+            "query_params": None,
+            "path_params": None,
+            "headers": None,
+            "body": {
+                "design_id": "integer",
+                "quantity": "integer",
+                "paper_type": "string | null",
+                "paper_size": "string (기본값: A5)",
+                "shipping_address": "string",
+                "shipping_phone": "string",
+                "shipping_name": "string"
+            },
+            "body_required": ["design_id", "quantity", "shipping_address", "shipping_phone", "shipping_name"],
+            "body_optional": ["paper_type", "paper_size"],
+            "status_codes": [
+                {"code": 201, "message": "order_created", "body": {"message": "order_created", "data": {"id": 1, "design_id": 1, "quantity": 100, "order_status": "PENDING"}}, "msg": "주문 생성 성공"},
+                {"code": 401, "message": "unauthorized", "body": {"message": "unauthorized", "data": None}, "msg": "인증 필요"},
+                {"code": 404, "message": "design_not_found", "body": {"message": "design_not_found", "data": None}, "msg": "디자인을 찾을 수 없습니다"},
+                {"code": 400, "message": "design_not_completed", "body": {"message": "design_not_completed", "data": None}, "msg": "디자인이 완성되지 않았습니다"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        },
+        {
+            "id": "14.11",
+            "name": "주문 목록 조회",
+            "method": "GET",
+            "path": "/api/invitation-orders",
+            "request": None,
+            "response": "OrdersResponse",
+            "auth": True,
+            "description": "현재 사용자의 청첩장 주문 목록을 조회합니다.",
+            "query_params": None,
+            "path_params": None,
+            "headers": None,
+            "body": None,
+            "body_required": [],
+            "body_optional": [],
+            "status_codes": [
+                {"code": 200, "message": "orders_retrieved", "body": {"message": "orders_retrieved", "data": {"orders": []}}, "msg": "주문 목록 조회 성공"},
+                {"code": 401, "message": "unauthorized", "body": {"message": "unauthorized", "data": None}, "msg": "인증 필요"},
+                {"code": 500, "message": "internal_server_error", "body": {"message": "internal_server_error", "data": None}, "msg": "서버 오류"}
+            ]
+        }
+    ]
+})
+
 # 커플 API 추가
 API_DATA["sections"].append({
     "id": "11",
@@ -2241,7 +2860,9 @@ def generate_html(api_data):
           <li><strong>커플 기능 추가:</strong> 커플 등록 및 연결 기능 (섹션 11) - 파트너와 데이터 공유 지원</li>
           <li><strong>게시판 구조 개편:</strong> 공개 게시판(예비부부 게시판, 플래너 리뷰, 웨딩홀 리뷰)과 비공개 공간(우리만의 공간, 문서 보관함) 분리</li>
           <li><strong>문서 보관함 OCR 기능:</strong> 이미지 문서 업로드 시 자동 텍스트 추출 및 AI 요약/태깅 지원</li>
-          <li><strong>벤더 메시지 & 결제 리마인더:</strong> 업체와의 메시지, 계약 관리, 결제 일정 관리 기능 추가 (섹션 12)</li>
+          <li><strong>제휴 업체 메시지 & 결제 리마인더:</strong> 업체와의 메시지, 계약 관리, 결제 일정 관리 기능 추가 (섹션 12)</li>
+          <li><strong>디지털 초대장 + 축의금 결제 시스템:</strong> 모바일 초대장 생성, RSVP, 축의금 결제, 하객 메시지 기능 추가 (섹션 13)</li>
+          <li><strong>청첩장 디자인 서비스:</strong> 템플릿 선택, AI 문구 추천, QR 코드 생성, PDF 다운로드, 실물 주문 기능 추가 (섹션 14)</li>
           <li><strong>Vector DB 통합:</strong> 게시글 벡터 검색 및 사용자 메모리 검색 기능 (섹션 10)</li>
           <li><strong>커플 데이터 공유:</strong> 게시판, 캘린더, 예산서, 업체 추천은 자동 공유, 메시지/AI 플래너/음성 비서는 선택적 공유</li>
           <li><strong>접기/펼치기 UI:</strong> Swagger 스타일의 섹션별 접기/펼치기 기능으로 가독성 향상</li>

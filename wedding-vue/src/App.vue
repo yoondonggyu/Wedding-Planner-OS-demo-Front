@@ -48,6 +48,7 @@ const protectedLinks = computed(() => {
     { label: '예산서', icon: '💰', route: '/budget' },
     { label: '업체 추천', icon: '💍', route: '/vendor' },
     { label: '제휴 업체 메시지', icon: '💬', route: '/vendor-message' },
+    { label: '청첩장 디자인', icon: '💌', route: '/invitation-design' },
     { label: 'AI 플래너', icon: '🤖', route: '/chat' },
     { label: '음성 비서', icon: '🎤', route: '/voice' },
   ]
