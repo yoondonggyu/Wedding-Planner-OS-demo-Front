@@ -10,6 +10,7 @@ interface LoginResponse {
     user_id: number
     nickname: string
     profile_image_url?: string | null
+    role?: string
   }
 }
 

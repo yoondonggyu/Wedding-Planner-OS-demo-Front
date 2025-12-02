@@ -4,5 +4,6 @@ export type SidebarLink = {
   href?: string
   route?: string
   active?: boolean
+  external?: boolean
 }
 

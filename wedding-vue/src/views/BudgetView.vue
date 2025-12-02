@@ -182,42 +182,61 @@ async function createItem() {
   try {
     if (editingItemId.value) {
       // 수정
-      await request(`/budget/items/${editingItemId.value}?user_id=${authStore.user!.id}`, {
-        method: 'PUT',
-        body: {
-          item_name: itemForm.value.item_name,
-          category: itemForm.value.category,
-          estimated_budget: itemForm.value.estimated_budget,
-          actual_expense: itemForm.value.actual_expense || 0,
-          quantity: itemForm.value.quantity || 1,
-          unit: itemForm.value.unit || null,
-          payer: itemForm.value.payer,
-          notes: itemForm.value.notes || null,
-        },
-      })
-      alert('항목이 수정되었습니다.')
+      const res = await request<{ message: string; data: { id: number; item_name: string } }>(
+        `/budget/items/${editingItemId.value}?user_id=${authStore.user!.id}`,
+        {
+          method: 'PUT',
+          body: {
+            item_name: itemForm.value.item_name,
+            category: itemForm.value.category,
+            estimated_budget: itemForm.value.estimated_budget,
+            actual_expense: itemForm.value.actual_expense || 0,
+            quantity: itemForm.value.quantity || 1,
+            unit: itemForm.value.unit || null,
+            payer: itemForm.value.payer,
+            notes: itemForm.value.notes || null,
+          },
+        }
+      )
+      
+      if (res.message === 'budget_item_updated') {
+        alert('항목이 수정되었습니다.')
+        closeItemModal()
+        await loadData()
+      } else {
+        alert('항목 수정에 실패했습니다.')
+      }
     } else {
       // 생성
-      await request(`/budget/items?user_id=${authStore.user!.id}`, {
-        method: 'POST',
-        body: {
-          item_name: itemForm.value.item_name,
-          category: itemForm.value.category,
-          estimated_budget: itemForm.value.estimated_budget,
-          actual_expense: itemForm.value.actual_expense || 0,
-          quantity: itemForm.value.quantity || 1,
-          unit: itemForm.value.unit || null,
-          payer: itemForm.value.payer,
-          notes: itemForm.value.notes || null,
-        },
-      })
-      alert('항목이 추가되었습니다.')
+      const res = await request<{ message: string; data: { id: number; item_name: string } }>(
+        `/budget/items?user_id=${authStore.user!.id}`,
+        {
+          method: 'POST',
+          body: {
+            item_name: itemForm.value.item_name,
+            category: itemForm.value.category,
+            estimated_budget: itemForm.value.estimated_budget,
+            actual_expense: itemForm.value.actual_expense || 0,
+            quantity: itemForm.value.quantity || 1,
+            unit: itemForm.value.unit || null,
+            payer: itemForm.value.payer,
+            notes: itemForm.value.notes || null,
+          },
+        }
+      )
+      
+      if (res.message === 'budget_item_created') {
+        alert('항목이 추가되었습니다.')
+        closeItemModal()
+        await loadData()
+      } else {
+        alert('항목 추가에 실패했습니다.')
+      }
     }
-    closeItemModal()
-    await loadData()
-  } catch (err) {
-    console.error(err)
-    alert(editingItemId.value ? '항목 수정에 실패했습니다.' : '항목 추가에 실패했습니다.')
+  } catch (err: any) {
+    console.error('예산 항목 처리 오류:', err)
+    const errorMessage = err?.data?.error || err?.message || '알 수 없는 오류가 발생했습니다.'
+    alert(editingItemId.value ? `항목 수정에 실패했습니다: ${errorMessage}` : `항목 추가에 실패했습니다: ${errorMessage}`)
   }
 }
 

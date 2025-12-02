@@ -7,8 +7,10 @@ import LoginModal from '@/components/modals/LoginModal.vue'
 import ProfileEditModal from '@/components/modals/ProfileEditModal.vue'
 import ContactModal from '@/components/modals/ContactModal.vue'
 import LoginRequiredModal from '@/components/modals/LoginRequiredModal.vue'
+import CoupleInviteModal from '@/components/modals/CoupleInviteModal.vue'
 import Toast from '@/components/common/Toast.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useApi } from '@/composables/useApi'
 import type { SidebarLink } from '@/types/navigation'
 
 const sidebarCollapsed = ref(false)
@@ -34,17 +36,34 @@ const publicLinks = ref<SidebarLink[]>([
   { label: '세부 기능', icon: '⚙️', href: '#features' },
   { label: '업무 흐름', icon: '📊', href: '#flow' },
   { label: '데모', icon: '🎬', href: '#demo' },
+  { label: '게시판', icon: '📋', route: '/board' },
 ])
 
 // 로그인 필요한 메뉴 (주요 기능)
-const protectedLinks = ref<SidebarLink[]>([
-  { label: '게시판', icon: '📋', route: '/board' },
-  { label: '캘린더', icon: '📅', route: '/calendar' },
-  { label: '예산서', icon: '💰', route: '/budget' },
-  { label: '업체 추천', icon: '💍', route: '/vendor' },
-  { label: 'AI 플래너', icon: '🤖', route: '/chat' },
-  { label: '음성 비서', icon: '🎤', route: '/voice' },
-])
+const protectedLinks = computed(() => {
+  const links: SidebarLink[] = [
+    { label: '우리만의 공간', icon: '💑', route: '/private-space' },
+    { label: '문서 보관함', icon: '📁', route: '/document-vault' },
+    { label: '캘린더', icon: '📅', route: '/calendar' },
+    { label: '예산서', icon: '💰', route: '/budget' },
+    { label: '업체 추천', icon: '💍', route: '/vendor' },
+    { label: '제휴 업체 메시지', icon: '💬', route: '/vendor-message' },
+    { label: 'AI 플래너', icon: '🤖', route: '/chat' },
+    { label: '음성 비서', icon: '🎤', route: '/voice' },
+  ]
+  
+  // 관리자 권한이 있는 경우 관리자 페이지 링크 추가
+  if (currentUser.value?.role === 'SYSTEM_ADMIN' || currentUser.value?.role === 'WEB_ADMIN') {
+    links.push({ 
+      label: '관리자 페이지', 
+      icon: '⚙️', 
+      href: 'http://localhost:8101/secret_admin/dashboard',
+      external: true 
+    })
+  }
+  
+  return links
+})
 
 const sidebarLinks = computed(() => [...publicLinks.value, ...protectedLinks.value])
 
@@ -60,6 +79,12 @@ const showProfileModal = ref(false)
 const showContactModal = ref(false)
 const showLoginRequired = ref(false)
 const pendingProtectedLink = ref<SidebarLink | null>(null)
+
+// 커플 초대 팝업
+const showCoupleInviteModal = ref(false)
+const coupleKey = ref<string | null>(null)
+const userGender = ref<'BRIDE' | 'GROOM' | null>(null)
+const { request } = useApi()
 
 const handleToggleTheme = () => {
   theme.value = theme.value === 'dark' ? 'light' : 'dark'
@@ -82,18 +107,7 @@ const recomputeActiveLinks = () => {
     }
     return link
   })
-  protectedLinks.value = protectedLinks.value.map((link) => {
-    if (link.route) {
-      return { ...link, active: link.route === route.path }
-    }
-    if (link.href) {
-      return {
-        ...link,
-        active: route.path === '/' && activeAnchor.value === link.href,
-      }
-    }
-    return link
-  })
+  // protectedLinks는 computed이므로 직접 수정하지 않음
 }
 
 const scrollToAnchor = (anchor: string) => {
@@ -104,6 +118,10 @@ const scrollToAnchor = (anchor: string) => {
 }
 
 const isProtectedRoute = (link: SidebarLink) => {
+  // 게시판은 공개이므로 protected가 아님
+  if (link.route === '/board') {
+    return false
+  }
   return Boolean(link.route && protectedLinks.value.some((item) => item.route === link.route))
 }
 
@@ -113,14 +131,76 @@ const promptLoginRequired = (link: SidebarLink) => {
 }
 
 const handleNavigate = async (link: SidebarLink) => {
+  // 외부 링크인 경우 새 창에서 열기
+  if (link.external && link.href) {
+    // 관리자 페이지인 경우 토큰을 쿼리 파라미터로 전달
+    if (link.href.includes('/secret_admin/')) {
+      const token = authStore.accessToken
+      const url = token ? `${link.href}?token=${encodeURIComponent(token)}` : link.href
+      window.open(url, '_blank')
+    } else {
+      window.open(link.href, '_blank')
+    }
+    return
+  }
+  
   if (link.route) {
     if (isProtectedRoute(link) && !isAuthenticated.value) {
       promptLoginRequired(link)
       return
     }
-    if (route.path !== link.route) {
-      await router.push(link.route)
+    
+    // "우리만의 공간" 메뉴 클릭 시 커플 연결 상태 확인
+    if (link.route === '/private-space' && isAuthenticated.value) {
+      try {
+        const coupleInfo = await request<{
+          message: string
+          data: {
+            is_connected?: boolean
+            couple_key?: string
+            gender?: string
+          }
+        }>('/couple/info')
+        
+        if (coupleInfo.message === 'couple_info_retrieved' && coupleInfo.data?.is_connected) {
+          // 커플이 연결된 경우 페이지 이동
+          if (route.path !== link.route) {
+            await router.push(link.route)
+          }
+        } else {
+          // 커플이 연결되지 않은 경우 커플 키 조회 후 모달 표시
+          const myKey = await request<{
+            message: string
+            data: {
+              couple_key?: string
+              gender?: string
+              is_connected?: boolean
+            }
+          }>('/couple/my-key')
+          
+          if (myKey.data?.couple_key && myKey.data?.gender) {
+            coupleKey.value = myKey.data.couple_key
+            userGender.value = myKey.data.gender as 'BRIDE' | 'GROOM'
+            showCoupleInviteModal.value = true
+          } else {
+            alert('커플 기능을 사용하려면 회원가입 시 성별을 선택해주세요.')
+          }
+          return // 페이지 이동하지 않음
+        }
+      } catch (error) {
+        console.error('커플 연결 상태 확인 실패:', error)
+        // 오류 발생 시에도 페이지 이동 (컴포넌트에서 다시 확인)
+        if (route.path !== link.route) {
+          await router.push(link.route)
+        }
+      }
+    } else {
+      // 다른 메뉴는 그대로 이동
+      if (route.path !== link.route) {
+        await router.push(link.route)
+      }
     }
+    
     activeAnchor.value = null
     recomputeActiveLinks()
     return
@@ -182,8 +262,93 @@ watch(
   { immediate: true }
 )
 
+// 커플 정보 확인 및 초대 팝업 표시
+async function checkCoupleStatus() {
+  if (!isAuthenticated.value || !currentUser.value?.id) {
+    return
+  }
+
+  // 오늘 하루 그만 보기 체크
+  const hiddenDate = localStorage.getItem('couple_invite_hidden_date')
+  if (hiddenDate === new Date().toDateString()) {
+    return
+  }
+
+  try {
+    // 커플 정보 조회
+    const coupleInfo = await request<{
+      message: string
+      data: {
+        is_connected?: boolean
+        couple_id?: number
+        couple_key?: string
+        partner?: {
+          id: number
+          nickname: string
+        } | null
+      } | null
+    }>('/couple/info')
+
+    // 연결되지 않은 경우 (not_in_couple 메시지이거나 is_connected가 false인 경우)
+    if (coupleInfo.message === 'not_in_couple' || !coupleInfo.data?.is_connected) {
+      // 커플 키 조회
+      const myKey = await request<{
+        message: string
+        data: {
+          couple_key?: string
+          gender?: string
+          is_connected?: boolean
+        }
+      }>('/couple/my-key')
+
+      if (myKey.data?.couple_key && myKey.data?.gender && !myKey.data?.is_connected) {
+        coupleKey.value = myKey.data.couple_key
+        userGender.value = myKey.data.gender as 'BRIDE' | 'GROOM'
+        showCoupleInviteModal.value = true
+      }
+    }
+  } catch (error) {
+    // 커플 정보가 없거나 오류가 발생해도 무시 (팝업을 강제로 표시하지 않음)
+    console.log('커플 정보 확인 실패:', error)
+  }
+}
+
+function handleCoupleConnected() {
+  showCoupleInviteModal.value = false
+  // 커플 연결 후 상태 다시 확인
+  setTimeout(() => {
+    checkCoupleStatus()
+    // 우리만의 공간 페이지에 있는 경우 새로고침
+    if (route.path === '/private-space') {
+      window.location.reload()
+    }
+  }, 500)
+}
+
+// 로그인 상태 변경 감지
+watch(
+  () => isAuthenticated.value,
+  (isAuth) => {
+    if (isAuth) {
+      // 로그인 후 약간의 지연을 두고 커플 상태 확인
+      setTimeout(() => {
+        checkCoupleStatus()
+      }, 1000)
+    } else {
+      showCoupleInviteModal.value = false
+    }
+  },
+  { immediate: true }
+)
+
 onMounted(() => {
   document.body.dataset.theme = theme.value
+  // 초기 로드 시에도 확인
+  if (isAuthenticated.value) {
+    setTimeout(() => {
+      checkCoupleStatus()
+    }, 1000)
+  }
 })
 </script>
 
@@ -236,6 +401,15 @@ onMounted(() => {
       v-if="showLoginRequired"
       @cancel="handleLoginPromptCancel"
       @login="handleLoginPromptConfirm"
+    />
+
+    <CoupleInviteModal
+      v-if="showCoupleInviteModal"
+      :show="showCoupleInviteModal"
+      :couple-key="coupleKey"
+      :gender="userGender"
+      @close="showCoupleInviteModal = false"
+      @connected="handleCoupleConnected"
     />
 
     <Toast />

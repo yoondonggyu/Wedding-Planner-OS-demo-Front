@@ -88,6 +88,7 @@ export const useAuthStore = defineStore('auth', {
           id: data.user_id,
           nickname: data.nickname,
           profileImageUrl: data.profile_image_url,
+          role: data.role,
         }
         this.setSession({
           accessToken: data.access_token,

@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useApi } from '@/composables/useApi'
 
-type BoardType = 'couple' | 'planner' | 'private' | 'vault'
+type BoardType = 'couple' | 'planner' | 'venue_review'
 
 interface PostSummary {
   post_id: number
@@ -39,8 +39,7 @@ interface CommentItem {
 const tabs: { label: string; type: BoardType; description: string }[] = [
   { label: '예비부부 게시판', type: 'couple', description: '웨딩홀/스드메 후기·견적 공유' },
   { label: '플래너 리뷰', type: 'planner', description: '플래너 노하우와 시공 기록' },
-  { label: '커플 전용 공간', type: 'private', description: '둘만의 비밀 노트' },
-  { label: 'Document Vault', type: 'vault', description: '문서 업로드 · AI 요약' },
+  { label: '웨딩홀 리뷰', type: 'venue_review', description: '웨딩홀 후기 및 평가' },
 ]
 
 const currentTab = ref<BoardType>('couple')
@@ -272,6 +271,13 @@ const isCommentOwner = (comment: CommentItem) => {
 
 async function fetchPostDetail(postId: number) {
   if (!postId) return
+  
+  // 비회원은 상세 조회 불가
+  if (!authStore.isAuthenticated) {
+    authStore.openLoginModal()
+    return
+  }
+  
   detailLoading.value = true
   detailError.value = null
   try {
@@ -292,9 +298,15 @@ async function fetchPostDetail(postId: number) {
     } catch (err) {
       console.warn('조회수 증가 실패:', err)
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error(err)
-    detailError.value = '게시글을 불러오지 못했습니다.'
+    // 403 Forbidden 에러인 경우 로그인 요청
+    if (err?.status === 403 || err?.data?.error?.includes('로그인')) {
+      authStore.openLoginModal()
+      detailError.value = '로그인이 필요한 기능입니다.'
+    } else {
+      detailError.value = '게시글을 불러오지 못했습니다.'
+    }
     postDetail.value = null
   } finally {
     detailLoading.value = false

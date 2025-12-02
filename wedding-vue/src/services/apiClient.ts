@@ -36,18 +36,45 @@ export async function apiFetch<T = any>(
     finalHeaders.set('Authorization', `Bearer ${token}`)
   }
 
-  const response = await fetch(url, {
-    method,
-    headers: finalHeaders,
-    body:
-      body instanceof FormData
-        ? body
-        : body
-        ? typeof body === 'string'
+  // 디버깅을 위한 로그
+  if (import.meta.env.DEV) {
+    console.log(`[API] ${method} ${url}`, { 
+      hasToken: !!token, 
+      tokenLength: token?.length || 0,
+      body: body instanceof FormData ? '[FormData]' : body 
+    })
+  }
+
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method,
+      headers: finalHeaders,
+      body:
+        body instanceof FormData
           ? body
-          : JSON.stringify(body)
-        : undefined,
-  })
+          : body
+          ? typeof body === 'string'
+            ? body
+            : JSON.stringify(body)
+          : undefined,
+      credentials: 'include', // CORS 쿠키 포함
+    })
+  } catch (error) {
+    // 네트워크 에러 처리
+    console.error('[API Error]', error)
+    if (error instanceof TypeError) {
+      // CORS 에러인지 확인
+      if (error.message.includes('fetch') || error.message.includes('CORS')) {
+        throw new ApiError(
+          '네트워크 연결에 실패했습니다. 서버가 실행 중인지 확인해주세요.',
+          0,
+          { error: 'Failed to fetch', originalError: error.message, url }
+        )
+      }
+    }
+    throw error
+  }
 
   const contentType = response.headers.get('content-type') ?? ''
   const payload = contentType.includes('application/json')

@@ -8,3 +8,5 @@ import BoardSection from '@/components/sections/BoardSection.vue'
   </div>
 </template>
 
+
+

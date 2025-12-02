@@ -200,128 +200,10 @@
     <header>
       <h1>Wedding OS API 명세서</h1>
       <p>노션 템플릿 형식에 맞춘 완성도 높은 API 문서</p>
-      <p style="margin-top: 8px; font-size: 14px;">Base URL: <code>http://localhost:8101</code></p>
+      <p style="margin-top: 8px; font-size: 14px;">Base URL: <code>http://localhost:8101/api</code></p>
     </header>
     
-    <h2 class="section-title">📋 목차</h2>
-    <div class="api-detail" style="margin-bottom: 48px;">
-      <ul style="margin-left: 24px; line-height: 2;">
-        <li><a href="#auth-flow" style="color: var(--accent-2);">인증/인가 흐름</a></li>
-        <li><a href="#request-structure" style="color: var(--accent-2);">요청 구조 가이드</a></li>
-        <li><a href="#api-table" style="color: var(--accent-2);">API 명세서 테이블</a></li>
-        <li><a href="#api-details" style="color: var(--accent-2);">상세 API 설명</a></li>
-      </ul>
-    </div>
-    
-    <h2 class="section-title" id="auth-flow">🔐 인증/인가 흐름</h2>
-    <div class="api-detail" style="margin-bottom: 48px;">
-      <h3>JWT 토큰 기반 인증</h3>
-      <div class="description">
-        Wedding OS API는 JWT(JSON Web Token) 기반의 Bearer 토큰 인증 방식을 사용합니다.
-      </div>
-      
-      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">1. 로그인 및 토큰 발급</h4>
-      <div class="code-block">POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-
-→ Response:
-{
-  "message": "login_success",
-  "data": {
-    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "token_type": "bearer",
-    "user_id": 1,
-    "nickname": "사용자",
-    "profile_image_url": "https://..."
-  }
-}</div>
-      
-      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">2. 토큰 사용 (인증이 필요한 API 호출)</h4>
-      <div class="code-block">GET /api/users/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-Content-Type: application/json</div>
-      
-      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">3. 토큰 검증 과정</h4>
-      <ol style="margin-left: 24px; line-height: 2; color: var(--muted);">
-        <li>클라이언트가 <code>Authorization</code> 헤더에 <code>Bearer {token}</code> 형식으로 토큰 전송</li>
-        <li>서버가 토큰을 파싱하여 <code>user_id</code> 추출</li>
-        <li>토큰 유효성 검증 (만료 여부, 서명 검증)</li>
-        <li>사용자가 해당 기능을 사용할 수 있는지 판단</li>
-        <li>인증 성공 시 요청 처리, 실패 시 401 Unauthorized 반환</li>
-      </ol>
-      
-      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">4. 토큰 만료</h4>
-      <div class="description">
-        <ul style="margin-left: 24px; color: var(--muted);">
-          <li>토큰 만료 시간: <strong>7일</strong> (ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7)</li>
-          <li>만료된 토큰으로 요청 시: <code>401 Unauthorized</code> 응답</li>
-          <li>해결 방법: 다시 로그인하여 새로운 토큰 발급</li>
-        </ul>
-      </div>
-    </div>
-    
-    <h2 class="section-title" id="request-structure">📝 요청 구조 가이드</h2>
-    <div class="api-detail" style="margin-bottom: 48px;">
-      <h3>Request Header / Body / Query Parameter 구분 기준</h3>
-      
-      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">1. Request Header</h4>
-      <div class="description">
-        <strong>필수 헤더:</strong>
-        <ul style="margin-left: 24px; margin-top: 8px; color: var(--muted);">
-          <li><code>Authorization: Bearer {token}</code> - 인증이 필요한 API에서 필수</li>
-          <li><code>Content-Type: application/json</code> - JSON Body를 보낼 때</li>
-          <li><code>Content-Type: multipart/form-data</code> - 파일 업로드 시</li>
-        </ul>
-      </div>
-      
-      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">2. Request Body</h4>
-      <div class="description">
-        <strong>사용 시기:</strong>
-        <ul style="margin-left: 24px; margin-top: 8px; color: var(--muted);">
-          <li>✅ <strong>등록·수정 작업</strong> (POST, PUT, PATCH)</li>
-          <li>✅ 복잡한 데이터 구조 전송</li>
-        </ul>
-        <strong>형식:</strong>
-        <ul style="margin-left: 24px; margin-top: 8px; color: var(--muted);">
-          <li><code>application/json</code> - 일반적인 JSON 데이터</li>
-          <li><code>multipart/form-data</code> - 파일 업로드 (이미지, Excel, CSV 등)</li>
-        </ul>
-      </div>
-      
-      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">3. Query Parameter</h4>
-      <div class="description">
-        <strong>사용 시기:</strong>
-        <ul style="margin-left: 24px; margin-top: 8px; color: var(--muted);">
-          <li>✅ <strong>검색·필터링</strong> (GET 요청)</li>
-          <li>✅ 페이지네이션 (page, limit)</li>
-          <li>✅ 정렬 옵션 (sort, order)</li>
-          <li>✅ 선택적 필터 조건</li>
-        </ul>
-        <strong>예시:</strong>
-        <div class="code-block">GET /api/posts?page=1&limit=10&board_type=couple
-GET /api/vendors/recommend?wedding_profile_id=1&vendor_type=IPHONE_SNAP&min_price=100000</div>
-      </div>
-      
-      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">4. Path Parameter</h4>
-      <div class="description">
-        <strong>사용 시기:</strong>
-        <ul style="margin-left: 24px; margin-top: 8px; color: var(--muted);">
-          <li>✅ 리소스 식별자 (ID 등)</li>
-          <li>✅ URL 경로의 일부</li>
-        </ul>
-        <strong>예시:</strong>
-        <div class="code-block">GET /api/posts/{post_id}
-DELETE /api/posts/{post_id}
-PATCH /api/posts/{post_id}</div>
-      </div>
-    </div>
-    
-    <h2 class="section-title" id="api-table">API 명세서 테이블</h2>
+    <h2 class="section-title">API 명세서 테이블</h2>
     <table class="api-table">
       <thead>
         <tr>
@@ -335,469 +217,3814 @@ PATCH /api/posts/{post_id}</div>
       </thead>
       <tbody>
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-1-1" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">1.1 로그인</a></strong></td>
+          <td><strong>99.1 Root</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>1.1 Login</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/auth/login</code></td>
-          <td><code>LoginRequest</code></td>
-          <td><code>LoginResponse</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
           <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-1-2" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">1.2 회원 가입</a></strong></td>
+          <td><strong>1.2 Signup</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/auth/signup</code></td>
-          <td><code>SignupRequest</code></td>
-          <td><code>SignupResponse</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
           <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-2-1" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">2.1 프로필 이미지 업로드</a></strong></td>
+          <td><strong>2.1 Upload Profile Image</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/users/profile/upload</code></td>
-          <td><code>MultipartFormData</code></td>
-          <td><code>UploadResponse</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
           <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-2-2" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">2.2 프로필 수정</a></strong></td>
+          <td><strong>2.2 Patch Nickname</strong></td>
           <td><span class="method-badge method-patch">PATCH</span></td>
           <td><code>/api/users/profile</code></td>
-          <td><code>NicknamePatchRequest</code></td>
-          <td><code>UpdateProfileResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-2-3" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">2.3 회원 탈퇴</a></strong></td>
+          <td><strong>2.3 Delete User</strong></td>
           <td><span class="method-badge method-delete">DELETE</span></td>
           <td><code>/api/users/profile</code></td>
-          <td><code>None</code></td>
-          <td><code>DeleteUserResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-2-4" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">2.4 비밀번호 변경</a></strong></td>
+          <td><strong>2.4 Update Password</strong></td>
           <td><span class="method-badge method-put">PUT</span></td>
           <td><code>/api/users/password</code></td>
-          <td><code>PasswordUpdateRequest</code></td>
-          <td><code>UpdatePasswordResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-3-1" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">3.1 게시글 목록 조회</a></strong></td>
+          <td><strong>3.1 Get Posts</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/posts</code></td>
-          <td><code>Query: page, limit, board_type</code></td>
-          <td><code>PostListResponse</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
           <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-3-2" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">3.2 게시글 상세 조회</a></strong></td>
-          <td><span class="method-badge method-get">GET</span></td>
-          <td><code>/api/posts/{post_id}</code></td>
-          <td><code>Path: post_id</code></td>
-          <td><code>PostDetailResponse</code></td>
-          <td><span class="auth-badge auth-optional">선택</span></td>
-        </tr>
-        <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-3-3" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">3.3 게시글 작성</a></strong></td>
+          <td><strong>3.2 Create Post</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/posts</code></td>
-          <td><code>PostCreateRequest</code></td>
-          <td><code>PostCreateResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-3-4" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">3.4 게시글 수정</a></strong></td>
+          <td><strong>3.3 Get Post</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/api/posts/{post_id}</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>3.4 Update Post</strong></td>
           <td><span class="method-badge method-patch">PATCH</span></td>
           <td><code>/api/posts/{post_id}</code></td>
-          <td><code>PostUpdateRequest</code></td>
-          <td><code>PostUpdateResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-3-5" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">3.5 게시글 삭제</a></strong></td>
+          <td><strong>3.5 Delete Post</strong></td>
           <td><span class="method-badge method-delete">DELETE</span></td>
           <td><code>/api/posts/{post_id}</code></td>
-          <td><code>Path: post_id</code></td>
-          <td><code>DeletePostResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-3-6" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">3.6 게시글 좋아요 토글</a></strong></td>
+          <td><strong>3.6 Toggle Like</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/posts/{post_id}/like</code></td>
-          <td><code>Path: post_id</code></td>
-          <td><code>LikeToggleResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-3-7" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">3.7 게시글 조회수 증가</a></strong></td>
+          <td><strong>3.7 Inc View</strong></td>
           <td><span class="method-badge method-patch">PATCH</span></td>
           <td><code>/api/posts/{post_id}/view</code></td>
-          <td><code>Path: post_id</code></td>
-          <td><code>ViewIncrementResponse</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
           <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-3-8" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">3.8 게시글 이미지 업로드</a></strong></td>
+          <td><strong>3.8 Upload Post Image</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/posts/upload</code></td>
-          <td><code>MultipartFormData (file)</code></td>
-          <td><code>UploadResponse</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
           <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-4-1" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">4.1 댓글 목록 조회</a></strong></td>
+          <td><strong>3.9 Upload Document With Ocr</strong></td>
+          <td><span class="method-badge method-post">POST</span></td>
+          <td><code>/api/posts/upload-document</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>4.1 Get Comments</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/posts/{post_id}/comments</code></td>
-          <td><code>Path: post_id</code></td>
-          <td><code>CommentListResponse</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
           <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-4-2" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">4.2 댓글 작성</a></strong></td>
+          <td><strong>4.2 Create Comment</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/posts/{post_id}/comments</code></td>
-          <td><code>CommentCreateRequest</code></td>
-          <td><code>CommentCreateResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-4-3" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">4.3 댓글 수정</a></strong></td>
+          <td><strong>4.3 Update Comment</strong></td>
           <td><span class="method-badge method-patch">PATCH</span></td>
           <td><code>/api/posts/{post_id}/comments/{comment_id}</code></td>
-          <td><code>CommentUpdateRequest</code></td>
-          <td><code>CommentUpdateResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-4-4" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">4.4 댓글 삭제</a></strong></td>
+          <td><strong>4.4 Delete Comment</strong></td>
           <td><span class="method-badge method-delete">DELETE</span></td>
           <td><code>/api/posts/{post_id}/comments/{comment_id}</code></td>
-          <td><code>Path: post_id, comment_id</code></td>
-          <td><code>DeleteCommentResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-5-1" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">5.1 챗봇 대화 (스트리밍)</a></strong></td>
+          <td><strong>5.1 Chat Endpoint</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/chat</code></td>
-          <td><code>ChatRequest</code></td>
-          <td><code>StreamingResponse (NDJSON)</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-5-2" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">5.2 챗봇 대화 (단순)</a></strong></td>
+          <td><strong>5.2 Chat Simple</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/chat/simple</code></td>
-          <td><code>ChatRequest</code></td>
-          <td><code>ChatResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-6-1" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">6.1 예식일 설정</a></strong></td>
+          <td><strong>6.1 Set Wedding Date</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/calendar/wedding-date</code></td>
-          <td><code>WeddingDateSetRequest</code></td>
-          <td><code>WeddingDateSetResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-6-2" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">6.2 예식일 조회</a></strong></td>
+          <td><strong>6.2 Get Wedding Date</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/calendar/wedding-date</code></td>
-          <td><code>None</code></td>
-          <td><code>WeddingDateGetResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-6-3" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">6.3 타임라인 자동 생성</a></strong></td>
+          <td><strong>6.3 Generate Timeline</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/calendar/timeline/generate</code></td>
-          <td><code>TimelineGenerateRequest</code></td>
-          <td><code>TimelineGenerateResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-6-4" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">6.4 일정/할일 생성</a></strong></td>
+          <td><strong>6.4 Create Todo</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/calendar/todos</code></td>
-          <td><code>TodoCreateRequest</code></td>
-          <td><code>TodoCreateResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-6-5" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">6.5 일정/할일 조회</a></strong></td>
+          <td><strong>6.5 Get Todos</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/calendar/todos</code></td>
-          <td><code>Query: completed, start_date, end_date, category</code></td>
-          <td><code>TodoListResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-6-6" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">6.6 일정/할일 수정</a></strong></td>
+          <td><strong>6.6 Update Todo</strong></td>
           <td><span class="method-badge method-put">PUT</span></td>
           <td><code>/api/calendar/todos/{todo_id}</code></td>
-          <td><code>TodoUpdateRequest</code></td>
-          <td><code>TodoUpdateResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-6-7" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">6.7 일정/할일 삭제</a></strong></td>
+          <td><strong>6.7 Delete Todo</strong></td>
           <td><span class="method-badge method-delete">DELETE</span></td>
           <td><code>/api/calendar/todos/{todo_id}</code></td>
-          <td><code>Path: todo_id</code></td>
-          <td><code>DeleteTodoResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-6-8" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">6.8 주간 요약 조회</a></strong></td>
+          <td><strong>6.8 Get Week Summary</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/calendar/week-summary</code></td>
-          <td><code>None</code></td>
-          <td><code>WeekSummaryResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-7-1" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">7.1 예산 항목 생성</a></strong></td>
+          <td><strong>7.1 Create Budget Item</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/budget/items</code></td>
-          <td><code>BudgetItemCreateRequest</code></td>
-          <td><code>BudgetItemCreateResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-7-2" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">7.2 예산 항목 조회</a></strong></td>
+          <td><strong>7.2 Get Budget Items</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/budget/items</code></td>
-          <td><code>Query: user_id</code></td>
-          <td><code>BudgetItemListResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-7-3" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">7.3 예산 항목 수정</a></strong></td>
+          <td><strong>7.3 Update Budget Item</strong></td>
           <td><span class="method-badge method-put">PUT</span></td>
           <td><code>/api/budget/items/{item_id}</code></td>
-          <td><code>BudgetItemUpdateRequest</code></td>
-          <td><code>BudgetItemUpdateResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-7-4" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">7.4 예산 항목 삭제</a></strong></td>
+          <td><strong>7.4 Delete Budget Item</strong></td>
           <td><span class="method-badge method-delete">DELETE</span></td>
           <td><code>/api/budget/items/{item_id}</code></td>
-          <td><code>Path: item_id, Query: user_id</code></td>
-          <td><code>DeleteBudgetItemResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-7-5" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">7.5 예산 요약 조회</a></strong></td>
+          <td><strong>7.5 Get Budget Summary</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/budget/summary</code></td>
-          <td><code>Query: user_id</code></td>
-          <td><code>BudgetSummaryResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-7-6" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">7.6 총 예산 설정</a></strong></td>
+          <td><strong>7.6 Set Total Budget</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/budget/total</code></td>
-          <td><code>TotalBudgetSetRequest</code></td>
-          <td><code>TotalBudgetSetResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-7-7" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">7.7 Excel Export</a></strong></td>
+          <td><strong>7.7 Export To Excel</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/budget/export/excel</code></td>
-          <td><code>Query: user_id</code></td>
-          <td><code>File (xlsx)</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-7-8" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">7.8 CSV Export</a></strong></td>
+          <td><strong>7.8 Export To Csv</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/budget/export/csv</code></td>
-          <td><code>Query: user_id</code></td>
-          <td><code>File (csv)</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-7-9" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">7.9 Excel Import</a></strong></td>
+          <td><strong>7.9 Import From Excel</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/budget/import/excel</code></td>
-          <td><code>MultipartFormData (file), Query: user_id</code></td>
-          <td><code>BudgetImportResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-7-10" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">7.10 CSV Import</a></strong></td>
+          <td><strong>7.10 Import From Csv</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/budget/import/csv</code></td>
-          <td><code>MultipartFormData (file), Query: user_id</code></td>
-          <td><code>BudgetImportResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-7-11" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">7.11 영수증 이미지 처리</a></strong></td>
+          <td><strong>7.11 Process Receipt Image</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/budget/process-receipt</code></td>
-          <td><code>MultipartFormData (file), Query: user_id</code></td>
-          <td><code>ReceiptProcessResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-8-1" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">8.1 음성 처리</a></strong></td>
+          <td><strong>8.1 Process Voice</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/voice/process</code></td>
-          <td><code>VoiceProcessRequest</code></td>
-          <td><code>VoiceProcessResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-8-2" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">8.2 음성 응답 생성</a></strong></td>
+          <td><strong>8.2 Generate Voice Response</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/voice/response</code></td>
-          <td><code>Query: query, user_id</code></td>
-          <td><code>VoiceResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-9-1" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">9.1 결혼식 프로필 생성</a></strong></td>
+          <td><strong>9.1 Create Wedding Profile</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/wedding-profiles</code></td>
-          <td><code>WeddingProfileCreateRequest</code></td>
-          <td><code>WeddingProfileCreateResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-9-2" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">9.2 결혼식 프로필 목록 조회</a></strong></td>
+          <td><strong>9.2 Get Wedding Profiles</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/wedding-profiles</code></td>
-          <td><code>None</code></td>
-          <td><code>WeddingProfileListResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-9-3" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">9.3 결혼식 프로필 상세 조회</a></strong></td>
+          <td><strong>9.3 Get Wedding Profile</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/wedding-profiles/{profile_id}</code></td>
-          <td><code>Path: profile_id</code></td>
-          <td><code>WeddingProfileDetailResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-9-4" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">9.4 결혼식 프로필 수정</a></strong></td>
+          <td><strong>9.4 Update Wedding Profile</strong></td>
           <td><span class="method-badge method-put">PUT</span></td>
           <td><code>/api/wedding-profiles/{profile_id}</code></td>
-          <td><code>WeddingProfileUpdateRequest</code></td>
-          <td><code>WeddingProfileUpdateResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-9-5" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">9.5 결혼식 프로필 삭제</a></strong></td>
+          <td><strong>9.5 Delete Wedding Profile</strong></td>
           <td><span class="method-badge method-delete">DELETE</span></td>
           <td><code>/api/wedding-profiles/{profile_id}</code></td>
-          <td><code>Path: profile_id</code></td>
-          <td><code>DeleteWeddingProfileResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-9-6" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">9.6 업체 추천</a></strong></td>
+          <td><strong>9.6 Recommend Vendors</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/vendors/recommend</code></td>
-          <td><code>Query: wedding_profile_id, vendor_type, min_price, max_price, location_city, has_rain_plan, sort</code></td>
-          <td><code>VendorRecommendResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-9-7" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">9.7 업체 상세 조회</a></strong></td>
+          <td><strong>9.7 Get Vendors</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/api/vendors</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>9.8 Get My Vendor</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/api/vendors/my-vendor</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>9.9 Get Vendor</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/vendors/{vendor_id}</code></td>
-          <td><code>Path: vendor_id</code></td>
-          <td><code>VendorDetailResponse</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
           <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-9-8" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">9.8 찜하기</a></strong></td>
+          <td><strong>9.10 Create Favorite</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/favorites</code></td>
-          <td><code>FavoriteVendorCreateRequest</code></td>
-          <td><code>FavoriteCreateResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-9-9" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">9.9 찜 목록 조회</a></strong></td>
+          <td><strong>9.11 Get Favorites</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/favorites</code></td>
-          <td><code>Query: wedding_profile_id (optional)</code></td>
-          <td><code>FavoriteListResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-9-10" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">9.10 찜 삭제</a></strong></td>
+          <td><strong>9.12 Delete Favorite</strong></td>
           <td><span class="method-badge method-delete">DELETE</span></td>
           <td><code>/api/favorites/{favorite_id}</code></td>
-          <td><code>Path: favorite_id</code></td>
-          <td><code>DeleteFavoriteResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
-        </tr>
-        <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-10-1" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">10.1 게시글 벡터 검색</a></strong></td>
-          <td><span class="method-badge method-get">GET</span></td>
-          <td><code>/api/vector/posts/search</code></td>
-          <td><code>Query: query, k, board_type</code></td>
-          <td><code>VectorSearchResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
-        </tr>
-        <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-10-2" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">10.2 게시글 벡터 통계</a></strong></td>
-          <td><span class="method-badge method-get">GET</span></td>
-          <td><code>/api/vector/posts/stats</code></td>
-          <td><code>None</code></td>
-          <td><code>VectorStatsResponse</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
           <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-10-3" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">10.3 게시글 일괄 벡터화</a></strong></td>
+          <td><strong>99.1 Create Thread</strong></td>
+          <td><span class="method-badge method-post">POST</span></td>
+          <td><code>/api/vendor-threads</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.2 Get Threads</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/api/vendor-threads</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.3 Get Thread</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/api/vendor-threads/{thread_id}</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.4 Update Thread</strong></td>
+          <td><span class="method-badge method-put">PUT</span></td>
+          <td><code>/api/vendor-threads/{thread_id}</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.5 Send Message</strong></td>
+          <td><span class="method-badge method-post">POST</span></td>
+          <td><code>/api/vendor-messages</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.6 Create Contract</strong></td>
+          <td><span class="method-badge method-post">POST</span></td>
+          <td><code>/api/vendor-contracts</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.7 Update Contract</strong></td>
+          <td><span class="method-badge method-put">PUT</span></td>
+          <td><code>/api/vendor-contracts/{contract_id}</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.8 Create Document</strong></td>
+          <td><span class="method-badge method-post">POST</span></td>
+          <td><code>/api/vendor-documents</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.9 Update Document</strong></td>
+          <td><span class="method-badge method-put">PUT</span></td>
+          <td><code>/api/vendor-documents/{document_id}</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.10 Create Payment Schedule</strong></td>
+          <td><span class="method-badge method-post">POST</span></td>
+          <td><code>/api/vendor-payment-schedules</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.11 Update Payment Schedule</strong></td>
+          <td><span class="method-badge method-put">PUT</span></td>
+          <td><code>/api/vendor-payment-schedules/{schedule_id}</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.12 Get Payment Reminders</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/api/vendor-payment-reminders</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.13 Compare Vendors</strong></td>
+          <td><span class="method-badge method-post">POST</span></td>
+          <td><code>/api/vendors/compare</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.1 Get My Couple Key</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/api/couple/my-key</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.2 Connect Couple</strong></td>
+          <td><span class="method-badge method-post">POST</span></td>
+          <td><code>/api/couple/connect</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.3 Get Couple Info</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/api/couple/info</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>10.1 Search Posts Vector</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/api/vector/posts/search</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>10.2 Get Posts Vector Stats</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/api/vector/posts/stats</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>10.3 Batch Vectorize Posts</strong></td>
           <td><span class="method-badge method-post">POST</span></td>
           <td><code>/api/vector/posts/batch-vectorize</code></td>
-          <td><code>Query: limit</code></td>
-          <td><code>BatchVectorizeResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-10-4" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">10.4 사용자 메모리 검색</a></strong></td>
+          <td><strong>10.4 Get User Memory</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/vector/user/memory</code></td>
-          <td><code>Query: query, k, preference_type</code></td>
-          <td><code>UserMemoryResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-10-5" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">10.5 사용자 프로필 요약</a></strong></td>
+          <td><strong>10.5 Get User Profile</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/vector/user/profile</code></td>
-          <td><code>None</code></td>
-          <td><code>UserProfileSummaryResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
+
         <tr>
-          <td><strong><a href="/secret_admin/api-reference/details#api-10-6" style="color: var(--accent-2); text-decoration: none; cursor: pointer;">10.6 사용자 메모리 통계</a></strong></td>
+          <td><strong>10.6 Get User Memory Stats</strong></td>
           <td><span class="method-badge method-get">GET</span></td>
           <td><code>/api/vector/user/stats</code></td>
-          <td><code>None</code></td>
-          <td><code>UserMemoryStatsResponse</code></td>
-          <td><span class="auth-badge auth-required">필수</span></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.2 Admin Dashboard</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/secret_admin/dashboard</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.3 Sql Terminal</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/secret_admin/sql-terminal</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.4 Sql Terminal</strong></td>
+          <td><span class="method-badge method-post">POST</span></td>
+          <td><code>/secret_admin/sql-terminal</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.5 Api Reference</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/secret_admin/api-reference</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.6 Api Reference Details</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/secret_admin/api-reference/details</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.7 Erd Viewer</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/secret_admin/erd</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.8 User Auth Setting Page</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/secret_admin/dashboard/userauthsetting</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.9 Get Users</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/secret_admin/api/admin/users</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.10 Update User Role</strong></td>
+          <td><span class="method-badge method-put">PUT</span></td>
+          <td><code>/secret_admin/api/admin/users/role</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.11 Vendor Management Page</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/secret_admin/dashboard/vendor-management</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.12 Get Vendors</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/secret_admin/api/admin/vendors</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.13 Create Vendor</strong></td>
+          <td><span class="method-badge method-post">POST</span></td>
+          <td><code>/secret_admin/api/admin/vendors</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.14 Update Vendor</strong></td>
+          <td><span class="method-badge method-put">PUT</span></td>
+          <td><code>/secret_admin/api/admin/vendors/{vendor_id}</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.15 Delete Vendor</strong></td>
+          <td><span class="method-badge method-delete">DELETE</span></td>
+          <td><code>/secret_admin/api/admin/vendors/{vendor_id}</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.16 Vendor Approval Page</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/secret_admin/dashboard/vendor-approval</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.17 Get Pending Vendors</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/secret_admin/api/admin/vendors/pending</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.18 Approve Vendor</strong></td>
+          <td><span class="method-badge method-put">PUT</span></td>
+          <td><code>/secret_admin/api/admin/vendors/{user_id}/approve</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.19 Reject Vendor</strong></td>
+          <td><span class="method-badge method-put">PUT</span></td>
+          <td><code>/secret_admin/api/admin/vendors/{user_id}/reject</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.20 Admin Approval Page</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/secret_admin/dashboard/admin-approval</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.21 Get Pending Admins</strong></td>
+          <td><span class="method-badge method-get">GET</span></td>
+          <td><code>/secret_admin/api/admin/admins/pending</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.22 Approve Admin</strong></td>
+          <td><span class="method-badge method-put">PUT</span></td>
+          <td><code>/secret_admin/api/admin/admins/{user_id}/approve</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
+        </tr>
+
+        <tr>
+          <td><strong>99.23 Reject Admin</strong></td>
+          <td><span class="method-badge method-put">PUT</span></td>
+          <td><code>/secret_admin/api/admin/admins/{user_id}/reject</code></td>
+          <td><code>Request</code></td>
+          <td><code>Response</code></td>
+          <td><span class="auth-badge auth-optional">선택</span></td>
         </tr>
       </tbody>
     </table>
+    <h2 class="section-title">인증 (Authentication)</h2>
     
-    <div style="text-align: center; margin-top: 48px; padding: 32px; background: var(--card); border-radius: 12px;">
-      <h3 style="color: var(--accent-2); margin-bottom: 16px;">상세 API 설명</h3>
-      <p style="color: var(--muted); margin-bottom: 24px;">각 API의 상세 설명을 보려면 위 테이블의 항목을 클릭하세요.</p>
-      <a href="/secret_admin/api-reference/details" style="display: inline-block; padding: 12px 24px; background: var(--accent); color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">전체 상세 설명 보기</a>
+
+    <div class="api-detail">
+      <h3>99.1 Root</h3>
+      <div class="api-id">API ID: 99.1</div>
+      <div class="description">API 루트 엔드포인트</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-  </div>
+
+    <div class="api-detail">
+      <h3>1.1 Login</h3>
+      <div class="api-id">API ID: 1.1</div>
+      <div class="description">로그인 API</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-400">400</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;invalid_credentials&quot;,
+  &quot;error_code&quot;: 4001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>아이디 또는 비밀번호를 확인해주세요</td>
+          </tr>
+          <tr>
+            <td><span class="status-400">400</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;invalid_credentials&quot;,
+  &quot;error_code&quot;: 4001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>아이디 또는 비밀번호를 확인해주세요</td>
+          </tr>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>1.2 Signup</h3>
+      <div class="api-id">API ID: 1.2</div>
+      <div class="description">회원가입 API</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-409">409</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;duplicate_email&quot;,
+  &quot;error_code&quot;: 4090,
+  &quot;data&quot;: null
+}</div></td>
+            <td>이미 사용 중인 이메일입니다</td>
+          </tr>
+          <tr>
+            <td><span class="status-409">409</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;duplicate_nickname&quot;,
+  &quot;error_code&quot;: 4091,
+  &quot;data&quot;: null
+}</div></td>
+            <td>이미 사용 중인 닉네임입니다</td>
+          </tr>
+          <tr>
+            <td><span class="status-400">400</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;invalid_gender&quot;,
+  &quot;error_code&quot;: 4007,
+  &quot;data&quot;: null
+}</div></td>
+            <td>Invalid Gender</td>
+          </tr>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>2.1 Upload Profile Image</h3>
+      <div class="api-id">API ID: 2.1</div>
+      <div class="description">프로필 이미지 업로드 API</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>2.2 Patch Nickname</h3>
+      <div class="api-id">API ID: 2.2</div>
+      <div class="description">프로필(닉네임) 수정 API</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>2.3 Delete User</h3>
+      <div class="api-id">API ID: 2.3</div>
+      <div class="description">회원 탈퇴 API</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>2.4 Update Password</h3>
+      <div class="api-id">API ID: 2.4</div>
+      <div class="description">비밀번호 변경 API</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>3.1 Get Posts</h3>
+      <div class="api-id">API ID: 3.1</div>
+      <div class="description">게시글 목록 조회 API (로그인 선택)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>3.2 Create Post</h3>
+      <div class="api-id">API ID: 3.2</div>
+      <div class="description">게시글 작성 API</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>3.3 Get Post</h3>
+      <div class="api-id">API ID: 3.3</div>
+      <div class="description">게시글 상세 조회 API (로그인 선택)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>3.4 Update Post</h3>
+      <div class="api-id">API ID: 3.4</div>
+      <div class="description">게시글 수정 API</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>3.5 Delete Post</h3>
+      <div class="api-id">API ID: 3.5</div>
+      <div class="description">게시글 삭제 API</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>3.6 Toggle Like</h3>
+      <div class="api-id">API ID: 3.6</div>
+      <div class="description">좋아요 토글 API</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>3.7 Inc View</h3>
+      <div class="api-id">API ID: 3.7</div>
+      <div class="description">조회수 증가 API</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>3.8 Upload Post Image</h3>
+      <div class="api-id">API ID: 3.8</div>
+      <div class="description">게시글 이미지 업로드 API (이미지 분류 포함)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>3.9 Upload Document With Ocr</h3>
+      <div class="api-id">API ID: 3.9</div>
+      <div class="description">문서 업로드 + OCR 처리 API (문서 보관함용)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>4.1 Get Comments</h3>
+      <div class="api-id">API ID: 4.1</div>
+      <div class="description">댓글 목록 조회 API</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>4.2 Create Comment</h3>
+      <div class="api-id">API ID: 4.2</div>
+      <div class="description">댓글 작성 API (감성 분석 포함)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>4.3 Update Comment</h3>
+      <div class="api-id">API ID: 4.3</div>
+      <div class="description">댓글 수정 API</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>4.4 Delete Comment</h3>
+      <div class="api-id">API ID: 4.4</div>
+      <div class="description">댓글 삭제 API</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>5.1 Chat Endpoint</h3>
+      <div class="api-id">API ID: 5.1</div>
+      <div class="description">챗봇 대화 API - RAG + 개인 데이터 통합 + Vector DB 검색</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>5.2 Chat Simple</h3>
+      <div class="api-id">API ID: 5.2</div>
+      <div class="description">챗봇 대화 API (비스트리밍) - RAG + 개인 데이터 통합 + Vector DB 검색</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>6.1 Set Wedding Date</h3>
+      <div class="api-id">API ID: 6.1</div>
+      <div class="description">예식일 설정 (JWT 토큰에서 user_id 추출)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>6.2 Get Wedding Date</h3>
+      <div class="api-id">API ID: 6.2</div>
+      <div class="description">예식일 조회 (JWT 토큰에서 user_id 추출)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>6.3 Generate Timeline</h3>
+      <div class="api-id">API ID: 6.3</div>
+      <div class="description">D-Day 기반 타임라인 자동 생성 (JWT 토큰에서 user_id 추출)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>6.4 Create Todo</h3>
+      <div class="api-id">API ID: 6.4</div>
+      <div class="description">일정/할일 생성 (통합 API, JWT 토큰에서 user_id 추출)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>6.5 Get Todos</h3>
+      <div class="api-id">API ID: 6.5</div>
+      <div class="description">일정/할일 조회 (통합 API, JWT 토큰에서 user_id 추출)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>6.6 Update Todo</h3>
+      <div class="api-id">API ID: 6.6</div>
+      <div class="description">일정/할일 수정 (통합 API, JWT 토큰에서 user_id 추출)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>6.7 Delete Todo</h3>
+      <div class="api-id">API ID: 6.7</div>
+      <div class="description">일정/할일 삭제 (통합 API, JWT 토큰에서 user_id 추출)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>6.8 Get Week Summary</h3>
+      <div class="api-id">API ID: 6.8</div>
+      <div class="description">이번 주 요약 (챗봇 연동용, JWT 토큰에서 user_id 추출)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>7.1 Create Budget Item</h3>
+      <div class="api-id">API ID: 7.1</div>
+      <div class="description">예산 항목 생성</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>7.2 Get Budget Items</h3>
+      <div class="api-id">API ID: 7.2</div>
+      <div class="description">예산 항목 조회</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>7.3 Update Budget Item</h3>
+      <div class="api-id">API ID: 7.3</div>
+      <div class="description">예산 항목 수정</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>7.4 Delete Budget Item</h3>
+      <div class="api-id">API ID: 7.4</div>
+      <div class="description">예산 항목 삭제</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>7.5 Get Budget Summary</h3>
+      <div class="api-id">API ID: 7.5</div>
+      <div class="description">예산 요약 (카테고리별 합계)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>7.6 Set Total Budget</h3>
+      <div class="api-id">API ID: 7.6</div>
+      <div class="description">총 예산 설정</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>7.7 Export To Excel</h3>
+      <div class="api-id">API ID: 7.7</div>
+      <div class="description">예산 데이터를 Excel 파일로 Export</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>7.8 Export To Csv</h3>
+      <div class="api-id">API ID: 7.8</div>
+      <div class="description">예산 데이터를 CSV로 Export</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>7.9 Import From Excel</h3>
+      <div class="api-id">API ID: 7.9</div>
+      <div class="description">Excel 파일에서 예산 데이터 Import</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>7.10 Import From Csv</h3>
+      <div class="api-id">API ID: 7.10</div>
+      <div class="description">CSV 파일에서 예산 데이터 Import</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>7.11 Process Receipt Image</h3>
+      <div class="api-id">API ID: 7.11</div>
+      <div class="description">영수증/견적서 이미지 처리 (OCR + LLM 구조화)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>8.1 Process Voice</h3>
+      <div class="api-id">API ID: 8.1</div>
+      <div class="description">음성 처리 (STT + 자동 정리 파이프라인)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>8.2 Generate Voice Response</h3>
+      <div class="api-id">API ID: 8.2</div>
+      <div class="description">음성 질문에 대한 답변 생성</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>9.1 Create Wedding Profile</h3>
+      <div class="api-id">API ID: 9.1</div>
+      <div class="description">결혼식 프로필 생성</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>9.2 Get Wedding Profiles</h3>
+      <div class="api-id">API ID: 9.2</div>
+      <div class="description">결혼식 프로필 목록 조회</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>9.3 Get Wedding Profile</h3>
+      <div class="api-id">API ID: 9.3</div>
+      <div class="description">결혼식 프로필 단건 조회</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>9.4 Update Wedding Profile</h3>
+      <div class="api-id">API ID: 9.4</div>
+      <div class="description">결혼식 프로필 수정</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>9.5 Delete Wedding Profile</h3>
+      <div class="api-id">API ID: 9.5</div>
+      <div class="description">결혼식 프로필 삭제</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>9.6 Recommend Vendors</h3>
+      <div class="api-id">API ID: 9.6</div>
+      <div class="description">업체 추천 (프로필 기반)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>9.7 Get Vendors</h3>
+      <div class="api-id">API ID: 9.7</div>
+      <div class="description">벤더 목록 조회 (카테고리별)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>9.8 Get My Vendor</h3>
+      <div class="api-id">API ID: 9.8</div>
+      <div class="description">벤더 계정의 자신의 벤더 정보 조회</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>9.9 Get Vendor</h3>
+      <div class="api-id">API ID: 9.9</div>
+      <div class="description">업체 상세 조회</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>9.10 Create Favorite</h3>
+      <div class="api-id">API ID: 9.10</div>
+      <div class="description">찜하기</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>9.11 Get Favorites</h3>
+      <div class="api-id">API ID: 9.11</div>
+      <div class="description">찜 목록 조회</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>9.12 Delete Favorite</h3>
+      <div class="api-id">API ID: 9.12</div>
+      <div class="description">찜 삭제</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.1 Create Thread</h3>
+      <div class="api-id">API ID: 99.1</div>
+      <div class="description">벤더 메시지 쓰레드 생성</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.2 Get Threads</h3>
+      <div class="api-id">API ID: 99.2</div>
+      <div class="description">벤더 메시지 쓰레드 목록 조회 (사용자 또는 벤더)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.3 Get Thread</h3>
+      <div class="api-id">API ID: 99.3</div>
+      <div class="description">벤더 메시지 쓰레드 상세 조회 (사용자 또는 벤더)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.4 Update Thread</h3>
+      <div class="api-id">API ID: 99.4</div>
+      <div class="description">벤더 메시지 쓰레드 수정</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.5 Send Message</h3>
+      <div class="api-id">API ID: 99.5</div>
+      <div class="description">메시지 전송 (사용자 또는 벤더)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.6 Create Contract</h3>
+      <div class="api-id">API ID: 99.6</div>
+      <div class="description">계약 정보 생성</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.7 Update Contract</h3>
+      <div class="api-id">API ID: 99.7</div>
+      <div class="description">계약 정보 수정</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.8 Create Document</h3>
+      <div class="api-id">API ID: 99.8</div>
+      <div class="description">문서 업로드 (견적서/계약서)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.9 Update Document</h3>
+      <div class="api-id">API ID: 99.9</div>
+      <div class="description">문서 상태 수정 (서명 등)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.10 Create Payment Schedule</h3>
+      <div class="api-id">API ID: 99.10</div>
+      <div class="description">결제 일정 생성</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.11 Update Payment Schedule</h3>
+      <div class="api-id">API ID: 99.11</div>
+      <div class="description">결제 일정 수정</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.12 Get Payment Reminders</h3>
+      <div class="api-id">API ID: 99.12</div>
+      <div class="description">결제 리마인더 조회</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.13 Compare Vendors</h3>
+      <div class="api-id">API ID: 99.13</div>
+      <div class="description">벤더 비교</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.1 Get My Couple Key</h3>
+      <div class="api-id">API ID: 99.1</div>
+      <div class="description">자신의 커플 키 조회</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.2 Connect Couple</h3>
+      <div class="api-id">API ID: 99.2</div>
+      <div class="description">커플 연결 (상대방의 키 입력)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.3 Get Couple Info</h3>
+      <div class="api-id">API ID: 99.3</div>
+      <div class="description">커플 정보 조회</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>10.1 Search Posts Vector</h3>
+      <div class="api-id">API ID: 10.1</div>
+      <div class="description">게시글 벡터 검색 (Vector DB 기반)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>10.2 Get Posts Vector Stats</h3>
+      <div class="api-id">API ID: 10.2</div>
+      <div class="description">게시판 Vector DB 통계</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>10.3 Batch Vectorize Posts</h3>
+      <div class="api-id">API ID: 10.3</div>
+      <div class="description">기존 게시글들을 일괄 벡터화 (관리자용)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>10.4 Get User Memory</h3>
+      <div class="api-id">API ID: 10.4</div>
+      <div class="description">사용자 메모리 검색</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>10.5 Get User Profile</h3>
+      <div class="api-id">API ID: 10.5</div>
+      <div class="description">사용자 프로필 요약 (예산 스타일, 선호 컨셉, 일정 패턴 등)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>10.6 Get User Memory Stats</h3>
+      <div class="api-id">API ID: 10.6</div>
+      <div class="description">사용자 메모리 통계</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.2 Admin Dashboard</h3>
+      <div class="api-id">API ID: 99.2</div>
+      <div class="description">관리자 대시보드 메인 페이지</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.3 Sql Terminal</h3>
+      <div class="api-id">API ID: 99.3</div>
+      <div class="description">SQL 쿼리 실행 터미널</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.4 Sql Terminal</h3>
+      <div class="api-id">API ID: 99.4</div>
+      <div class="description">SQL 쿼리 실행 터미널</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.5 Api Reference</h3>
+      <div class="api-id">API ID: 99.5</div>
+      <div class="description">API 레퍼런스 문서</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.6 Api Reference Details</h3>
+      <div class="api-id">API ID: 99.6</div>
+      <div class="description">API 레퍼런스 상세 설명 문서</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.7 Erd Viewer</h3>
+      <div class="api-id">API ID: 99.7</div>
+      <div class="description">데이터베이스 ERD 뷰어</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.8 User Auth Setting Page</h3>
+      <div class="api-id">API ID: 99.8</div>
+      <div class="description">사용자 권한 설정 페이지</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.9 Get Users</h3>
+      <div class="api-id">API ID: 99.9</div>
+      <div class="description">사용자 목록 조회 (시스템 관리자만)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.10 Update User Role</h3>
+      <div class="api-id">API ID: 99.10</div>
+      <div class="description">사용자 역할 변경 (시스템 관리자만)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.11 Vendor Management Page</h3>
+      <div class="api-id">API ID: 99.11</div>
+      <div class="description">벤더 관리 페이지</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.12 Get Vendors</h3>
+      <div class="api-id">API ID: 99.12</div>
+      <div class="description">벤더 목록 조회 (시스템 관리자만)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.13 Create Vendor</h3>
+      <div class="api-id">API ID: 99.13</div>
+      <div class="description">벤더 생성 (시스템 관리자만)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.14 Update Vendor</h3>
+      <div class="api-id">API ID: 99.14</div>
+      <div class="description">벤더 수정 (시스템 관리자만)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.15 Delete Vendor</h3>
+      <div class="api-id">API ID: 99.15</div>
+      <div class="description">벤더 삭제 (시스템 관리자만)</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.16 Vendor Approval Page</h3>
+      <div class="api-id">API ID: 99.16</div>
+      <div class="description">제휴 업체 승인 관리 페이지</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.17 Get Pending Vendors</h3>
+      <div class="api-id">API ID: 99.17</div>
+      <div class="description">승인 대기 중인 제휴 업체 목록 조회</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.18 Approve Vendor</h3>
+      <div class="api-id">API ID: 99.18</div>
+      <div class="description">제휴 업체 승인</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.19 Reject Vendor</h3>
+      <div class="api-id">API ID: 99.19</div>
+      <div class="description">제휴 업체 거부</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.20 Admin Approval Page</h3>
+      <div class="api-id">API ID: 99.20</div>
+      <div class="description">관리자 승인 관리 페이지</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.21 Get Pending Admins</h3>
+      <div class="api-id">API ID: 99.21</div>
+      <div class="description">승인 대기 중인 관리자 목록 조회</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.22 Approve Admin</h3>
+      <div class="api-id">API ID: 99.22</div>
+      <div class="description">관리자 승인</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="api-detail">
+      <h3>99.23 Reject Admin</h3>
+      <div class="api-id">API ID: 99.23</div>
+      <div class="description">관리자 거부</div>
+      
+      <h4 style="margin-top: 24px; margin-bottom: 12px; color: var(--accent-2);">Body / Parameter / Header / Query</h4>
+      <h5 style="margin-top: 24px; color: var(--text);">응답 코드별 예시</h5>
+      <table class="status-code-table">
+        <thead>
+          <tr>
+            <th>Response Status Code</th>
+            <th>Body</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status-500">500</span></td>
+            <td><div class="code-block" style="margin: 0; padding: 8px; font-size: 12px;">{
+  &quot;message&quot;: &quot;internal_server_error&quot;,
+  &quot;error_code&quot;: 5001,
+  &quot;data&quot;: null
+}</div></td>
+            <td>서버 오류</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 </body>
 </html>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-type DemoType = 'board' | 'chat' | 'calendar' | 'budget' | 'voice' | 'vendor' | null
+type DemoType = 'board' | 'chat' | 'calendar' | 'budget' | 'voice' | 'vendor' | 'vendor-message' | null
 
 const currentDemo = ref<DemoType>(null)
 
@@ -41,6 +41,9 @@ function openDemo(kind: DemoType) {
           </button>
           <button class="btn" type="button" :class="{ active: currentDemo === 'vendor' }" @click="openDemo('vendor')">
             💍 업체추천
+          </button>
+          <button class="btn" type="button" :class="{ active: currentDemo === 'vendor-message' }" @click="openDemo('vendor-message')">
+            💬 벤더메시지
           </button>
         </div>
         <div
@@ -1155,6 +1158,132 @@ function openDemo(kind: DemoType) {
               <span class="chip">찜 & 비교</span>
               <span class="chip">우천 플랜 특화</span>
             </div>
+            <p style="font-size: 12px; margin-top: 10px; color: var(--muted)">
+              💡 <i>결혼식 프로필에 맞춰 최적의 업체를 추천하고, 가격·평점·리뷰를 비교하여 최종 선택 지원</i>
+            </p>
+          </div>
+
+          <!-- 벤더 메시지 & 결제 리마인더 데모 -->
+          <div v-else-if="currentDemo === 'vendor-message'" class="demo-content">
+            <div class="title">
+              💬 벤더 메시지 & 결제 리마인더 <span class="badge ok">샘플</span>
+            </div>
+            <p style="color: var(--muted); margin-bottom: 12px">
+              <strong>🎯 목적:</strong> 웨딩 업체와의 계약·일정·결제 일정을 한 곳에서 관리하는 소통·리마인더 시스템
+            </p>
+
+            <div class="demo-inner-box">
+              <div style="display: flex; flex-direction: column; gap: 12px">
+                <!-- 기능 설명 -->
+                <div
+                  style="
+                    padding: 12px;
+                    background: rgba(34, 211, 238, 0.1);
+                    border-radius: 8px;
+                    border-left: 3px solid var(--accent-2);
+                  "
+                >
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">✨ 주요 기능</div>
+                  <div style="font-size: 12px; line-height: 1.8">
+                    <div>📨 <strong>벤더별 메시지 쓰레드:</strong> 카메라, 드레스, 본식스냅 등 업체별 대화방</div>
+                    <div>📄 <strong>견적서·계약서 관리:</strong> 업로드·버전 관리, 서명 상태 확인</div>
+                    <div>💰 <strong>결제 일정 관리:</strong> 계약금·중도금·잔금 납부일 자동 알림</div>
+                    <div>📅 <strong>일정 자동 캘린더 반영:</strong> 결제 일정이 캘린더에 자동 등록</div>
+                    <div>⚖️ <strong>벤더 비교:</strong> 가격·서비스 범위·후기를 나란히 비교</div>
+                  </div>
+                </div>
+
+                <!-- 메시지 예시 -->
+                <div>
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">💬 메시지 대화 예시</div>
+                  <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px">
+                    <div style="display: flex; justify-content: flex-end">
+                      <div style="padding: 8px 12px; background: rgba(59, 130, 246, 0.3); border-radius: 8px; max-width: 70%; font-size: 12px">
+                        안녕하세요. 견적서를 받고 싶습니다.
+                      </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-start">
+                      <div style="padding: 8px 12px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; max-width: 70%; font-size: 12px">
+                        안녕하세요! 견적서를 보내드리겠습니다.
+                      </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-start">
+                      <div style="padding: 8px 12px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; max-width: 70%; font-size: 12px">
+                        견적서를 확인해주세요. 추가 문의사항이 있으시면 언제든지 연락주세요.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 결제 일정 예시 -->
+                <div>
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">💰 결제 일정 관리</div>
+                  <div style="display: flex; flex-direction: column; gap: 6px">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 6px; border-left: 3px solid #f59e0b">
+                      <div>
+                        <div style="font-weight: 600; font-size: 12px">계약금</div>
+                        <div style="font-size: 11px; color: var(--muted)">납부일: 2024년 2월 1일</div>
+                      </div>
+                      <div style="text-align: right">
+                        <div style="font-weight: 600; font-size: 13px">1,000,000원</div>
+                        <div style="font-size: 11px; color: #f59e0b">대기 중</div>
+                      </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 6px; border-left: 3px solid #f59e0b">
+                      <div>
+                        <div style="font-weight: 600; font-size: 12px">중도금</div>
+                        <div style="font-size: 11px; color: var(--muted)">납부일: 2024년 3월 15일</div>
+                      </div>
+                      <div style="text-align: right">
+                        <div style="font-weight: 600; font-size: 13px">2,000,000원</div>
+                        <div style="font-size: 11px; color: #f59e0b">대기 중</div>
+                      </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 6px; border-left: 3px solid #10b981">
+                      <div>
+                        <div style="font-weight: 600; font-size: 12px">잔금</div>
+                        <div style="font-size: 11px; color: var(--muted)">납부일: 2024년 5월 1일</div>
+                      </div>
+                      <div style="text-align: right">
+                        <div style="font-weight: 600; font-size: 13px">2,000,000원</div>
+                        <div style="font-size: 11px; color: #10b981">완료</div>
+                      </div>
+                    </div>
+                  </div>
+                  <p style="font-size: 11px; margin-top: 8px; color: var(--muted); padding: 8px; background: rgba(34, 211, 238, 0.1); border-radius: 6px">
+                    💡 결제 일정은 자동으로 캘린더에 등록되어 알림을 받을 수 있습니다!
+                  </p>
+                </div>
+
+                <!-- 문서 관리 예시 -->
+                <div>
+                  <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px">📄 문서 관리</div>
+                  <div style="display: flex; flex-direction: column; gap: 6px">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 6px">
+                      <div>
+                        <div style="font-weight: 600; font-size: 12px">견적서 v1</div>
+                        <div style="font-size: 11px; color: var(--muted)">견적서_v1.pdf</div>
+                      </div>
+                      <div style="font-size: 11px; color: #f59e0b">검토 중</div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 6px">
+                      <div>
+                        <div style="font-weight: 600; font-size: 12px">계약서 v1</div>
+                        <div style="font-size: 11px; color: var(--muted)">계약서_v1.pdf</div>
+                      </div>
+                      <div style="font-size: 11px; color: #10b981">서명 완료</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="foot" style="margin-top: 10px">
+              <span class="chip">메시지 쓰레드</span><span class="chip">계약 관리</span><span class="chip">결제 일정</span
+              ><span class="chip">문서 관리</span><span class="chip">벤더 비교</span><span class="chip">캘린더 연동</span>
+            </div>
+            <p style="font-size: 12px; margin-top: 10px; color: var(--muted)">
+              💡 <i>여러 업체와의 계약 및 결제 일정을 한 곳에서 관리하고, 결제일·미팅 일정·서류 제출 등 다양한 알림을 자동화하여 누락을 방지</i>
+            </p>
           </div>
         </div>
       </div>
