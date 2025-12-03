@@ -1009,5 +1009,178 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
   line-height: 1.6;
   color: var(--text, #666);
 }
+
+/* 모바일 스타일 */
+@media (max-width: 768px) {
+  .board-view {
+    padding: 12px;
+  }
+
+  .board-header {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .header-content h1 {
+    font-size: 20px;
+  }
+
+  .header-description {
+    font-size: 12px;
+  }
+
+  .write-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .board-content {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .post-card {
+    padding: 12px;
+  }
+
+  .post-header h3 {
+    font-size: 14px;
+  }
+
+  .post-meta {
+    font-size: 11px;
+    gap: 8px;
+  }
+
+  .post-content {
+    font-size: 12px;
+  }
+
+  .post-footer {
+    font-size: 11px;
+    gap: 12px;
+  }
+
+  .post-detail {
+    padding: 16px;
+  }
+
+  .detail-header h2 {
+    font-size: 18px;
+  }
+
+  .detail-meta {
+    font-size: 12px;
+  }
+
+  .detail-content p {
+    font-size: 14px;
+  }
+
+  .action-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .comments-section h3 {
+    font-size: 16px;
+  }
+
+  .comment-item {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .comment-author,
+  .comment-content {
+    font-size: 12px;
+  }
+
+  .comment-input {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .comment-input input {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .comment-input button {
+    width: 100%;
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .modal-content {
+    padding: 20px 16px;
+    width: 95%;
+    max-width: none;
+  }
+
+  .modal-content h2 {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .form-actions button {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .file-upload-area {
+    padding: 16px;
+  }
+
+  .file-hint {
+    font-size: 12px;
+  }
+
+  .ocr-status,
+  .ocr-loading,
+  .ocr-error,
+  .ocr-success {
+    font-size: 12px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .post-card {
+    padding: 10px;
+  }
+
+  .post-header h3 {
+    font-size: 13px;
+  }
+
+  .post-content {
+    font-size: 11px;
+  }
+}
 </style>
 

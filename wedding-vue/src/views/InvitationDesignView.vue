@@ -1246,5 +1246,203 @@ onMounted(() => {
   padding: 8px 0;
   border-bottom: 1px solid #f0f0f0;
 }
+
+/* 모바일 스타일 */
+@media (max-width: 768px) {
+  .invitation-design-view {
+    padding: 12px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+    margin-bottom: 6px;
+  }
+
+  .description {
+    font-size: 14px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .section-header button {
+    width: 100%;
+  }
+
+  .templates-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .template-card {
+    border-radius: 6px;
+  }
+
+  .template-info {
+    padding: 12px;
+  }
+
+  .template-info h3 {
+    font-size: 14px;
+  }
+
+  .template-style {
+    font-size: 11px;
+  }
+
+  .designs-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .editor-section {
+    margin-top: 16px;
+  }
+
+  .editor-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .editor-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .editor-actions button {
+    width: 100%;
+  }
+
+  .editor-content {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .editor-panel {
+    padding: 16px;
+    max-height: none;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+
+  .preview-panel {
+    padding: 16px;
+  }
+
+  .preview-card {
+    padding: 32px 24px;
+  }
+
+  .main-text {
+    font-size: 1em;
+    margin-bottom: 16px;
+  }
+
+  .names {
+    font-size: 1.2em;
+    margin-bottom: 24px;
+  }
+
+  .wedding-info,
+  .reception-info,
+  .closing-text {
+    margin-bottom: 12px;
+    font-size: 0.9em;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .modal-content {
+    padding: 24px 16px;
+    width: 95%;
+    max-width: none;
+  }
+
+  .modal-content h2 {
+    font-size: 20px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+
+  .invitations-list {
+    gap: 12px;
+  }
+
+  .invitation-card {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .invitation-actions {
+    width: 100%;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .invitation-actions button,
+  .invitation-actions a {
+    width: 100%;
+  }
+
+  .statistics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 16px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .templates-grid,
+  .designs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .statistics-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
 

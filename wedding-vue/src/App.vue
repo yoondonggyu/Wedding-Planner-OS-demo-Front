@@ -3,6 +3,8 @@ import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute, RouterView } from 'vue-router'
 import Sidebar from '@/components/layout/Sidebar.vue'
 import HeaderBar from '@/components/layout/HeaderBar.vue'
+import MobileBottomNav from '@/components/layout/MobileBottomNav.vue'
+import MobileMoreMenuModal from '@/components/modals/MobileMoreMenuModal.vue'
 import LoginModal from '@/components/modals/LoginModal.vue'
 import ProfileEditModal from '@/components/modals/ProfileEditModal.vue'
 import ContactModal from '@/components/modals/ContactModal.vue'
@@ -14,6 +16,29 @@ import { useApi } from '@/composables/useApi'
 import type { SidebarLink } from '@/types/navigation'
 
 const sidebarCollapsed = ref(false)
+const mobileMenuOpen = ref(false)
+const isMobile = ref(false)
+
+// 모바일 감지
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+// 모바일 메뉴 토글
+const toggleMobileMenu = () => {
+  mobileMenuOpen.value = !mobileMenuOpen.value
+  if (mobileMenuOpen.value) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+}
+
+// 모바일 메뉴 닫기
+const closeMobileMenu = () => {
+  mobileMenuOpen.value = false
+  document.body.style.overflow = ''
+}
 // 기본 테마를 라이트 모드로 설정 (localStorage에 저장된 테마가 있으면 사용)
 const theme = ref<'dark' | 'light'>(
   typeof window !== 'undefined' 
@@ -131,7 +156,11 @@ const promptLoginRequired = (link: SidebarLink) => {
   pendingProtectedLink.value = link
 }
 
+// 모바일에서 네비게이션 시 메뉴 닫기
 const handleNavigate = async (link: SidebarLink) => {
+  if (isMobile.value) {
+    closeMobileMenu()
+  }
   // 외부 링크인 경우 새 창에서 열기
   if (link.external && link.href) {
     // 관리자 페이지인 경우 토큰을 쿼리 파라미터로 전달
@@ -344,6 +373,8 @@ watch(
 
 onMounted(() => {
   document.body.dataset.theme = theme.value
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
   // 초기 로드 시에도 확인
   if (isAuthenticated.value) {
     setTimeout(() => {
@@ -354,11 +385,19 @@ onMounted(() => {
 </script>
 
 <template>
+  <!-- 모바일 오버레이 -->
+  <div 
+    v-if="isMobile"
+    :class="['mobile-overlay', { active: mobileMenuOpen }]"
+    @click="closeMobileMenu"
+  />
+
   <Sidebar
     :collapsed="sidebarCollapsed"
     :public-links="publicLinks"
     :protected-links="protectedLinks"
     :current-user="currentUser"
+    :class="{ expanded: mobileMenuOpen }"
     @toggle="sidebarCollapsed = !sidebarCollapsed"
     @navigate="handleNavigate"
     @open-profile="showProfileModal = true"
@@ -366,6 +405,16 @@ onMounted(() => {
 
   <div :class="appShellClass">
         <div class="main-content">
+          <!-- 모바일 메뉴 버튼 (더보기 메뉴용) -->
+          <button
+            v-if="isMobile"
+            class="mobile-menu-btn"
+            type="button"
+            @click="toggleMobileMenu"
+            style="position: fixed; top: 16px; left: 16px; z-index: 30;"
+          >
+            ☰
+          </button>
           <HeaderBar
             :theme="theme"
             :is-authenticated="isAuthenticated"
@@ -378,10 +427,31 @@ onMounted(() => {
             @open-profile="showProfileModal = true"
             @open-contact="showContactModal = true"
           />
-      <main>
+      <main :class="{ 'mobile-main': isMobile }">
         <RouterView />
       </main>
     </div>
+
+    <!-- 모바일 하단 네비게이션 -->
+    <MobileBottomNav
+      v-if="isMobile"
+      :public-links="publicLinks"
+      :protected-links="protectedLinks"
+      :is-authenticated="isAuthenticated"
+      @navigate="handleNavigate"
+      @open-more-menu="mobileMenuOpen = true"
+    />
+
+    <!-- 모바일 더보기 메뉴 모달 -->
+    <MobileMoreMenuModal
+      v-if="isMobile"
+      :show="mobileMenuOpen"
+      :public-links="publicLinks"
+      :protected-links="protectedLinks"
+      :is-authenticated="isAuthenticated"
+      @close="closeMobileMenu"
+      @navigate="handleNavigate"
+    />
 
     <LoginModal
       v-if="showLoginModal"
@@ -416,3 +486,20 @@ onMounted(() => {
     <Toast />
   </div>
 </template>
+
+<style scoped>
+.mobile-main {
+  padding-bottom: 90px; /* 하단 네비게이션 공간 확보 (크기 증가에 맞춰) */
+}
+
+@media (max-width: 768px) {
+  .mobile-main {
+    padding-bottom: max(90px, calc(90px + env(safe-area-inset-bottom)));
+  }
+  
+  /* 모바일에서 전체적인 패딩 증가 */
+  main {
+    padding: 20px 16px; /* 패딩 증가 */
+  }
+}
+</style>

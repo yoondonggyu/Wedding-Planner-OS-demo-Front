@@ -1017,12 +1017,14 @@ function handleDatePaste(event: ClipboardEvent, field: 'start_date' | 'due_date'
 
       <!-- 캘린더 -->
       <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px">
+        <div class="calendar-header">
           <h2 style="margin: 0">캘린더</h2>
-          <div style="display: flex; gap: 8px">
-            <button class="btn" type="button" @click="prevMonth">◀</button>
-            <span style="padding: 10px 16px; font-weight: 600">{{ currentMonthText }}</span>
-            <button class="btn" type="button" @click="nextMonth">▶</button>
+          <div class="calendar-controls">
+            <div class="month-navigation">
+              <button class="btn month-btn" type="button" @click="prevMonth">◀</button>
+              <span class="month-text">{{ currentMonthText }}</span>
+              <button class="btn month-btn" type="button" @click="nextMonth">▶</button>
+            </div>
             <button class="btn primary" type="button" @click="openEventModal">일정 추가</button>
           </div>
         </div>
@@ -1371,6 +1373,42 @@ function handleDatePaste(event: ClipboardEvent, field: 'start_date' | 'due_date'
 </template>
 
 <style scoped>
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.calendar-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.month-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.month-btn {
+  padding: 8px 12px;
+  min-width: 40px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.month-text {
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text);
+  min-width: 140px;
+  text-align: center;
+}
+
 .wedding-date-section {
   display: flex;
   gap: 12px;
@@ -1661,5 +1699,312 @@ function handleDatePaste(event: ClipboardEvent, field: 'start_date' | 'due_date'
   transform: translateY(-50%);
   pointer-events: none;
   font-size: 16px;
+}
+
+/* 모바일 스타일 */
+@media (max-width: 768px) {
+  .section {
+    padding: 16px 8px;
+  }
+
+  .container {
+    padding: 0 12px;
+  }
+
+  .page-title h1 {
+    font-size: 22px;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .page-title p {
+    font-size: 14px;
+  }
+
+  .card {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .card h2 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .wedding-date-section {
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+
+  .wedding-date-section label {
+    width: 100%;
+    margin-left: 0;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .wedding-date-section input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+  }
+
+  .wedding-date-section button {
+    width: 100%;
+    font-size: 15px;
+    padding: 12px;
+    min-height: 48px;
+  }
+
+  .wedding-date-section > div[style*="font-size: 18px"] {
+    font-size: 20px !important;
+    font-weight: 700;
+  }
+
+  .calendar-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .calendar-header h2 {
+    font-size: 18px;
+  }
+
+  .calendar-controls {
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .month-navigation {
+    width: 100%;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .month-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .month-text {
+    font-size: 18px;
+    font-weight: 700;
+    padding: 12px 20px;
+    min-width: auto;
+    flex: 1;
+    text-align: center;
+  }
+
+  .calendar-controls > .btn.primary {
+    width: 100%;
+    font-size: 15px;
+    padding: 12px;
+  }
+
+  .card > div[style*="display: flex"][style*="gap: 16px"][style*="flex-wrap"] {
+    font-size: 13px;
+  }
+
+  .card > div[style*="display: flex"][style*="gap: 16px"][style*="flex-wrap"] > div {
+    font-size: 13px;
+  }
+
+  .card > div[style*="display: flex"][style*="gap: 16px"][style*="flex-wrap"] > div > div {
+    font-size: 13px;
+  }
+
+  .card > div[style*="display: flex"][style*="gap: 16px"][style*="flex-wrap"] > div > span {
+    font-size: 13px;
+  }
+
+  .calendar-grid {
+    gap: 4px;
+  }
+
+  .calendar-grid > div[style*="text-align: center"] {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 4px;
+  }
+
+  .calendar-day {
+    padding: 8px 4px;
+    min-height: 70px;
+  }
+
+  .day-number {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .event-item {
+    font-size: 11px;
+    padding: 5px 6px;
+    margin-bottom: 3px;
+    min-height: 22px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .todo-section {
+    margin-top: 16px;
+  }
+
+  .todo-section h2 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .todo-section > div[style*="display: flex"] > div > div[style*="display: flex"] > span {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .todo-section > div[style*="display: flex"] > div > p {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .todo-item {
+    padding: 12px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .todo-checkbox {
+    width: 20px;
+    height: 20px;
+  }
+
+  .todo-item > div[style*="flex: 1"] > div[style*="font-weight: 600"] {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .todo-item > div[style*="flex: 1"] > div[style*="font-size: 12px"] {
+    font-size: 13px;
+  }
+
+  .todo-item > div[style*="padding: 4px 8px"] {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .todo-item > div[style*="display: flex"][style*="gap: 6px"] {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .todo-item > div[style*="display: flex"][style*="gap: 6px"] > button {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px;
+    min-height: 44px;
+  }
+
+  .modal-card {
+    padding: 20px 16px;
+    width: 95%;
+    max-width: none;
+  }
+
+  .modal-card h3 {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .form-group {
+    margin-bottom: 14px;
+  }
+
+  .form-group label {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 12px;
+    font-size: 16px;
+  }
+
+  .form-group > div[style*="display: flex"] {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .form-group > div[style*="display: flex"] > div {
+    width: 100%;
+  }
+
+  .form-group > div[style*="display: flex"] > button {
+    width: 100%;
+    font-size: 14px;
+    padding: 12px;
+  }
+
+  .btn {
+    padding: 12px 16px;
+    font-size: 15px;
+    min-height: 48px;
+  }
+
+  .card > div[style*="display: flex"] {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .card > div[style*="display: flex"] > button {
+    width: 100%;
+    font-size: 15px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title h1 {
+    font-size: 20px;
+  }
+
+  .card h2 {
+    font-size: 16px;
+  }
+
+  .calendar-day {
+    min-height: 65px;
+    padding: 6px 3px;
+  }
+
+  .day-number {
+    font-size: 14px;
+  }
+
+  .event-item {
+    font-size: 10px;
+    padding: 4px 5px;
+    min-height: 20px;
+  }
+
+  .calendar-grid > div[style*="text-align: center"] {
+    font-size: 12px;
+    padding: 8px 2px;
+  }
+
+  .todo-item > div[style*="flex: 1"] > div[style*="font-weight: 600"] {
+    font-size: 14px;
+  }
 }
 </style>

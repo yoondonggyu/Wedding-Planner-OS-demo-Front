@@ -108,6 +108,7 @@ const threads = ref<VendorThread[]>([])
 const selectedThread = ref<ThreadDetail | null>(null)
 const selectedThreadId = ref<number | null>(null)
 const messageInput = ref('')
+const isMessagePrivate = ref(false) // 메시지 비공개 여부 (1대1 채팅에서만 사용)
 const loading = ref(false)
 
 // 모달 상태
@@ -115,6 +116,8 @@ const showNewThreadModal = ref(false)
 const showContractModal = ref(false)
 const showDocumentModal = ref(false)
 const showPaymentModal = ref(false)
+const showDeleteThreadModal = ref(false)
+const showInviteModal = ref(false)
 const showCompareModal = ref(false)
 const showHelp = ref(false)
 
@@ -122,6 +125,8 @@ const showHelp = ref(false)
 const newThreadForm = ref({
   vendor_id: 0,
   title: '',
+  thread_type: 'one_on_one', // 'one_on_one' 또는 'group'
+  is_shared_with_partner: true, // 파트너와 공유 여부
 })
 
 // 제휴 업체 목록
@@ -185,6 +190,12 @@ const documentForm = ref({
 // 제휴 업체 비교
 const comparingVendorIds = ref<number[]>([])
 const compareResults = ref<any[]>([])
+
+// 초대 관련
+const inviteForm = ref({
+  user_ids: [] as number[]
+})
+const availableUsers = ref<any[]>([]) // 초대 가능한 사용자 목록 (파트너 등)
 
 // 데모 데이터
 const demoThreads = ref<VendorThread[]>([
@@ -253,7 +264,16 @@ const demoMessages = ref<VendorMessage[]>([
 const canAccess = computed(() => authStore.isAuthenticated)
 const isVendorAccount = computed(() => authStore.user?.role === 'PARTNER_VENDOR')
 
+// 모바일 감지
+const isMobile = ref(false)
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
 onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  
   if (!canAccess.value) {
     authStore.openLoginModal()
     return
@@ -262,8 +282,27 @@ onMounted(() => {
   if (!isVendorAccount.value) {
     // 일반 사용자만 제휴 업체 목록 로드 (제휴 업체 계정은 불필요)
     loadVendors()
+    loadAvailableUsers() // 초대 가능한 사용자 목록 로드
   }
 })
+
+async function loadAvailableUsers() {
+  try {
+    // 커플 정보 조회하여 파트너 정보 가져오기
+    const res = await request<{ message: string; data: any }>('/couple/info')
+    if (res.message === 'couple_info_retrieved' && res.data?.partner) {
+      availableUsers.value = [{
+        id: res.data.partner.id,
+        nickname: res.data.partner.nickname,
+        email: res.data.partner.email,
+        gender: res.data.partner.gender
+      }]
+    }
+  } catch (err: any) {
+    console.error('사용자 목록 로드 실패:', err)
+    availableUsers.value = []
+  }
+}
 
 async function loadVendors() {
   try {
@@ -338,7 +377,12 @@ async function loadThread(threadId: number) {
 function openNewThreadModal() {
   showNewThreadModal.value = true
   selectedVendorCategory.value = ''
-  newThreadForm.value = { vendor_id: 0, title: '' }
+  newThreadForm.value = { 
+    vendor_id: 0, 
+    title: '',
+    thread_type: 'one_on_one',
+    is_shared_with_partner: true // 기본값: 파트너와 공유
+  }
 }
 
 watch(() => newThreadForm.value.vendor_id, (vendorId) => {
@@ -365,6 +409,8 @@ async function createThread() {
         method: 'POST',
         body: {
           vendor_id: newThreadForm.value.vendor_id,
+          thread_type: newThreadForm.value.thread_type || 'one_on_one',
+          is_shared_with_partner: newThreadForm.value.is_shared_with_partner,
           title: newThreadForm.value.title || null,
         },
       }
@@ -378,7 +424,12 @@ async function createThread() {
         'success'
       )
       showNewThreadModal.value = false
-      newThreadForm.value = { vendor_id: 0, title: '' }
+      newThreadForm.value = { 
+        vendor_id: 0, 
+        title: '',
+        thread_type: 'one_on_one',
+        is_shared_with_partner: true
+      }
       await loadThreads()
       if (res.data?.id) {
         await loadThread(res.data.id)
@@ -421,6 +472,12 @@ async function sendMessage() {
   if (!messageInput.value.trim() || !selectedThreadId.value) return
 
   try {
+    // 1대1 채팅이고 파트너와 공유된 경우에만 is_visible_to_partner 옵션 사용
+    const thread = threads.value.find(t => t.id === selectedThreadId.value)
+    const isVisibleToPartner = thread?.thread_type === 'one_on_one' && thread?.is_shared_with_partner
+      ? !isMessagePrivate.value
+      : true
+
     const res = await request<{ message: string; data: any }>(
       '/vendor-messages',
       {
@@ -429,12 +486,14 @@ async function sendMessage() {
           thread_id: selectedThreadId.value,
           content: messageInput.value.trim(),
           attachments: [],
+          is_visible_to_partner: isVisibleToPartner,
         },
       }
     )
 
     if (res.message === 'message_sent') {
       messageInput.value = ''
+      isMessagePrivate.value = false // 초기화
       await loadThread(selectedThreadId.value!)
       await loadThreads()
     }
@@ -584,6 +643,71 @@ async function compareVendors() {
   } catch (err: any) {
     console.error('제휴 업체 비교 실패:', err)
     showToast(err?.data?.error || '제휴 업체 비교에 실패했습니다.', 'error')
+  }
+}
+
+async function deleteThread() {
+  if (!selectedThreadId.value) return
+
+  try {
+    const res = await request<{ message: string; data: any }>(
+      `/vendor-threads/${selectedThreadId.value}`,
+      {
+        method: 'DELETE',
+      }
+    )
+
+    if (res.message === 'thread_deleted') {
+      showToast('대화가 삭제되었습니다.', 'success')
+      showDeleteThreadModal.value = false
+      selectedThreadId.value = null
+      selectedThread.value = null
+      await loadThreads()
+    } else {
+      showToast(res.message || '대화 삭제에 실패했습니다.', 'error')
+    }
+  } catch (err: any) {
+    console.error('대화 삭제 실패:', err)
+    showToast(err?.data?.error || '대화 삭제에 실패했습니다.', 'error')
+  }
+}
+
+function openInviteModal() {
+  if (!selectedThread.value) return
+  // 1대1 채팅이거나 단체톡방인 경우 초대 가능
+  inviteForm.value.user_ids = []
+  showInviteModal.value = true
+}
+
+async function inviteParticipant() {
+  if (!selectedThreadId.value || inviteForm.value.user_ids.length === 0) {
+    showToast('초대할 사용자를 선택해주세요.', 'error')
+    return
+  }
+
+  try {
+    const res = await request<{ message: string; data: any }>(
+      `/vendor-threads/${selectedThreadId.value}/invite`,
+      {
+        method: 'POST',
+        body: {
+          user_ids: inviteForm.value.user_ids,
+        },
+      }
+    )
+
+    if (res.message === 'participants_invited') {
+      showToast('참여자가 초대되었습니다.', 'success')
+      showInviteModal.value = false
+      inviteForm.value.user_ids = []
+      await loadThread(selectedThreadId.value)
+      await loadThreads()
+    } else {
+      showToast(res.message || '참여자 초대에 실패했습니다.', 'error')
+    }
+  } catch (err: any) {
+    console.error('참여자 초대 실패:', err)
+    showToast(err?.data?.error || '참여자 초대에 실패했습니다.', 'error')
   }
 }
 
@@ -939,12 +1063,25 @@ function showDemoThread(thread: VendorThread) {
                 <p class="vendor-type" v-if="!isVendorAccount">{{ selectedThread.vendor.vendor_type }}</p>
               </div>
             </div>
-            <div class="message-actions" v-if="!isVendorAccount">
+            <div class="message-actions" :class="{ 'mobile-actions': isMobile }" v-if="!isVendorAccount">
+              <button 
+                v-if="selectedThread?.thread_type === 'one_on_one' || selectedThread?.thread_type === 'group'"
+                class="btn-action secondary" 
+                @click="openInviteModal"
+              >
+                👥 초대
+              </button>
               <button class="btn-action" @click="showContractModal = true">
                 📄 계약 정보
               </button>
               <button class="btn-action secondary" @click="showCompareModal = true">
-                ⚖️ 제휴 업체 비교
+                ⚖️ 비교
+              </button>
+              <button 
+                class="btn-action secondary btn-delete" 
+                @click="showDeleteThreadModal = true"
+              >
+                🗑️ 삭제
               </button>
             </div>
           </div>
@@ -965,13 +1102,26 @@ function showDemoThread(thread: VendorThread) {
 
           <!-- 메시지 입력 -->
           <div class="message-input-area">
-            <input
-              v-model="messageInput"
-              @keyup.enter="sendMessage"
-              type="text"
-              placeholder="메시지를 입력하세요..."
-              class="message-input"
-            />
+            <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+              <input
+                v-model="messageInput"
+                @keyup.enter="sendMessage"
+                type="text"
+                placeholder="메시지를 입력하세요..."
+                class="message-input"
+              />
+              <label 
+                v-if="selectedThread?.thread_type === 'one_on_one' && selectedThread?.is_shared_with_partner"
+                style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; padding: 4px 8px;"
+              >
+                <input 
+                  type="checkbox" 
+                  v-model="isMessagePrivate"
+                  style="cursor: pointer; width: 16px; height: 16px;"
+                />
+                <span>파트너에게 비공개</span>
+              </label>
+            </div>
             <button class="btn-send" @click="sendMessage" :disabled="!messageInput.trim()">
               전송
             </button>
@@ -1105,6 +1255,127 @@ function showDemoThread(thread: VendorThread) {
               type="text"
               placeholder="자동 생성됩니다"
             />
+          </div>
+          <div class="form-group">
+            <label>대화 유형</label>
+            <div style="display: flex; gap: 12px; margin-top: 8px;">
+              <label 
+                :style="{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  cursor: 'pointer',
+                  padding: '16px',
+                  background: newThreadForm.thread_type === 'one_on_one' 
+                    ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(232, 184, 184, 0.2))' 
+                    : 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '12px',
+                  flex: 1,
+                  border: newThreadForm.thread_type === 'one_on_one' 
+                    ? '2px solid var(--accent)' 
+                    : '1px solid rgba(255, 255, 255, 0.1)',
+                  transition: 'all 0.3s ease',
+                  boxShadow: newThreadForm.thread_type === 'one_on_one' 
+                    ? '0 4px 12px rgba(139, 92, 246, 0.3)' 
+                    : 'none'
+                }"
+              >
+                <div style="position: relative; width: 24px; height: 24px; flex-shrink: 0;">
+                  <input 
+                    type="radio" 
+                    v-model="newThreadForm.thread_type" 
+                    value="one_on_one"
+                    style="cursor: pointer; width: 24px; height: 24px; margin: 0; accent-color: var(--accent);"
+                  />
+                  <div 
+                    v-if="newThreadForm.thread_type === 'one_on_one'"
+                    style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; background: var(--accent); border-radius: 50%; pointer-events: none;"
+                  ></div>
+                </div>
+                <div>
+                  <div :style="{fontWeight: 600, marginBottom: '4px', color: newThreadForm.thread_type === 'one_on_one' ? 'var(--accent)' : 'var(--text)'}">1대1 채팅</div>
+                  <div style="font-size: 12px; color: var(--muted);">나와 업체만</div>
+                </div>
+              </label>
+              <label 
+                :style="{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  cursor: 'pointer',
+                  padding: '16px',
+                  background: newThreadForm.thread_type === 'group' 
+                    ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(232, 184, 184, 0.2))' 
+                    : 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '12px',
+                  flex: 1,
+                  border: newThreadForm.thread_type === 'group' 
+                    ? '2px solid var(--accent)' 
+                    : '1px solid rgba(255, 255, 255, 0.1)',
+                  transition: 'all 0.3s ease',
+                  boxShadow: newThreadForm.thread_type === 'group' 
+                    ? '0 4px 12px rgba(139, 92, 246, 0.3)' 
+                    : 'none'
+                }"
+              >
+                <div style="position: relative; width: 24px; height: 24px; flex-shrink: 0;">
+                  <input 
+                    type="radio" 
+                    v-model="newThreadForm.thread_type" 
+                    value="group"
+                    style="cursor: pointer; width: 24px; height: 24px; margin: 0; accent-color: var(--accent);"
+                  />
+                  <div 
+                    v-if="newThreadForm.thread_type === 'group'"
+                    style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; background: var(--accent); border-radius: 50%; pointer-events: none;"
+                  ></div>
+                </div>
+                <div>
+                  <div :style="{fontWeight: 600, marginBottom: '4px', color: newThreadForm.thread_type === 'group' ? 'var(--accent)' : 'var(--text)'}">단체톡방</div>
+                  <div style="font-size: 12px; color: var(--muted);">신랑 + 신부 + 업체</div>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div v-if="newThreadForm.thread_type === 'one_on_one'" class="form-group">
+            <label 
+              :style="{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                cursor: 'pointer',
+                padding: '16px',
+                background: newThreadForm.is_shared_with_partner 
+                  ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(232, 184, 184, 0.15))' 
+                  : 'rgba(255, 255, 255, 0.05)',
+                borderRadius: '12px',
+                border: newThreadForm.is_shared_with_partner 
+                  ? '2px solid var(--accent)' 
+                  : '1px solid rgba(255, 255, 255, 0.1)',
+                transition: 'all 0.3s ease',
+                boxShadow: newThreadForm.is_shared_with_partner 
+                  ? '0 2px 8px rgba(139, 92, 246, 0.2)' 
+                  : 'none'
+              }"
+            >
+              <div style="position: relative; width: 24px; height: 24px; flex-shrink: 0;">
+                <input 
+                  type="checkbox" 
+                  v-model="newThreadForm.is_shared_with_partner"
+                  style="cursor: pointer; width: 24px; height: 24px; margin: 0; accent-color: var(--accent);"
+                />
+                <div 
+                  v-if="newThreadForm.is_shared_with_partner"
+                  style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; background: var(--accent); border-radius: 4px; pointer-events: none; display: flex; align-items: center; justify-content: center;"
+                >
+                  <span style="color: white; font-size: 14px; font-weight: bold;">✓</span>
+                </div>
+              </div>
+              <div>
+                <div :style="{fontWeight: 600, marginBottom: '4px', color: newThreadForm.is_shared_with_partner ? 'var(--accent)' : 'var(--text)'}">파트너와 공유</div>
+                <div style="font-size: 12px; color: var(--muted);">상대방도 이 대화를 볼 수 있습니다</div>
+              </div>
+            </label>
           </div>
         </div>
         <div class="modal-actions">
@@ -1263,6 +1534,102 @@ function showDemoThread(thread: VendorThread) {
         </div>
       </div>
     </div>
+
+    <!-- 대화 삭제 확인 모달 -->
+    <div v-if="showDeleteThreadModal" class="modal-overlay" @click.self="showDeleteThreadModal = false">
+      <div class="modal-card">
+        <h3 class="modal-title">대화 삭제</h3>
+        <div style="padding: 20px 0;">
+          <p style="font-size: 16px; color: var(--text); margin-bottom: 12px;">
+            정말로 이 대화를 삭제하시겠습니까?
+          </p>
+          <p style="font-size: 14px; color: var(--muted);">
+            삭제된 대화는 복구할 수 없습니다.
+          </p>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-cancel" @click="showDeleteThreadModal = false">취소</button>
+          <button 
+            class="btn-primary" 
+            @click="deleteThread"
+            style="background: linear-gradient(135deg, var(--danger), #ef4444);"
+          >
+            삭제
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 참여자 초대 모달 -->
+    <div v-if="showInviteModal" class="modal-overlay" @click.self="showInviteModal = false">
+      <div class="modal-card">
+        <h3 class="modal-title">참여자 초대</h3>
+        <div class="modal-form">
+          <div class="form-group">
+            <label>초대할 사용자 선택</label>
+            <div style="padding: 12px; background: rgba(139, 92, 246, 0.1); border-radius: 8px; margin-bottom: 12px;">
+              <p style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">
+                💡 파트너는 자동으로 초대됩니다.
+              </p>
+              <p style="font-size: 12px; color: var(--muted);">
+                {{ selectedThread?.thread_type === 'one_on_one' 
+                  ? '1대1 채팅이 단체톡방으로 전환됩니다.' 
+                  : '선택한 사용자가 단체톡방에 추가됩니다.' }}
+              </p>
+            </div>
+            <div v-if="availableUsers.length === 0" style="padding: 20px; text-align: center; color: var(--muted);">
+              초대할 수 있는 사용자가 없습니다. (커플이 연결되어 있지 않습니다)
+            </div>
+            <div v-else style="max-height: 200px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 8px;">
+              <label
+                v-for="user in availableUsers"
+                :key="user.id"
+                style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; margin-bottom: 8px; border: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s ease;"
+                :style="{
+                  background: inviteForm.user_ids.includes(user.id)
+                    ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(232, 184, 184, 0.15))'
+                    : 'rgba(255, 255, 255, 0.05)',
+                  border: inviteForm.user_ids.includes(user.id)
+                    ? '2px solid var(--accent)'
+                    : '1px solid rgba(255, 255, 255, 0.1)'
+                }"
+              >
+                <div style="position: relative; width: 20px; height: 20px; flex-shrink: 0;">
+                  <input 
+                    type="checkbox" 
+                    :value="user.id"
+                    v-model="inviteForm.user_ids"
+                    style="cursor: pointer; width: 20px; height: 20px; margin: 0; accent-color: var(--accent);"
+                  />
+                  <div 
+                    v-if="inviteForm.user_ids.includes(user.id)"
+                    style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 18px; height: 18px; background: var(--accent); border-radius: 4px; pointer-events: none; display: flex; align-items: center; justify-content: center;"
+                  >
+                    <span style="color: white; font-size: 12px; font-weight: bold;">✓</span>
+                  </div>
+                </div>
+                <div>
+                  <div :style="{fontWeight: 600, marginBottom: '4px', color: inviteForm.user_ids.includes(user.id) ? 'var(--accent)' : 'var(--text)'}">
+                    {{ user.nickname }} ({{ user.gender === 'BRIDE' ? '신부' : '신랑' }})
+                  </div>
+                  <div style="font-size: 12px; color: var(--muted);">{{ user.email }}</div>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-cancel" @click="showInviteModal = false">취소</button>
+          <button 
+            class="btn-primary" 
+            @click="inviteParticipant" 
+            :disabled="inviteForm.user_ids.length === 0"
+          >
+            초대
+          </button>
+        </div>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -1271,6 +1638,12 @@ function showDemoThread(thread: VendorThread) {
   min-height: calc(100vh - 4rem);
   padding: 24px;
   background: var(--bg);
+}
+
+@media (max-width: 768px) {
+  .vendor-message-section {
+    padding: 16px 12px;
+  }
 }
 
 .vendor-message-container {
@@ -1286,6 +1659,27 @@ function showDemoThread(thread: VendorThread) {
   padding: 32px;
   margin-bottom: 24px;
   box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+}
+
+@media (max-width: 768px) {
+  .vendor-header {
+    padding: 20px 16px;
+    margin-bottom: 16px;
+    border-radius: 16px;
+  }
+  
+  .header-title {
+    font-size: 24px !important;
+  }
+  
+  .header-icon {
+    font-size: 28px !important;
+  }
+  
+  .header-subtitle {
+    font-size: 14px !important;
+    margin-bottom: 16px !important;
+  }
 }
 
 .header-content {
@@ -1481,6 +1875,15 @@ function showDemoThread(thread: VendorThread) {
   min-height: 600px;
 }
 
+@media (max-width: 768px) {
+  .main-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    height: auto;
+    min-height: auto;
+  }
+}
+
 /* 쓰레드 목록 패널 */
 .thread-list-panel {
   background: var(--card);
@@ -1643,6 +2046,33 @@ function showDemoThread(thread: VendorThread) {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(232, 184, 184, 0.1));
 }
 
+@media (max-width: 768px) {
+  .message-header {
+    padding: 12px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .message-vendor-info {
+    width: 100%;
+  }
+  
+  .vendor-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 20px !important;
+  }
+  
+  .vendor-name {
+    font-size: 16px !important;
+  }
+  
+  .vendor-type {
+    font-size: 12px !important;
+  }
+}
+
 .message-vendor-info {
   display: flex;
   gap: 16px;
@@ -1675,6 +2105,27 @@ function showDemoThread(thread: VendorThread) {
 .message-actions {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.message-actions.mobile-actions {
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.message-actions.mobile-actions .btn-action {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 14px;
+  justify-content: center;
+}
+
+.message-actions.mobile-actions .btn-delete {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: var(--danger) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
 }
 
 .btn-action {
@@ -2293,17 +2744,208 @@ function showDemoThread(thread: VendorThread) {
 }
 
 @media (max-width: 768px) {
+  .vendor-message-container {
+    max-width: 100%;
+  }
+  
   .main-layout {
     grid-template-columns: 1fr;
     height: auto;
+    gap: 16px;
   }
   
   .thread-list-panel {
-    max-height: 300px;
+    max-height: 250px;
+    border-radius: 16px;
+  }
+  
+  .panel-header {
+    padding: 12px 16px;
+  }
+  
+  .panel-title {
+    font-size: 16px !important;
+  }
+  
+  .btn-new-thread {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  .thread-item {
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .thread-title {
+    font-size: 14px !important;
+  }
+  
+  .thread-preview {
+    font-size: 12px !important;
+  }
+  
+  .thread-vendor-icon {
+    font-size: 20px !important;
+  }
+  
+  .message-panel {
+    border-radius: 16px;
+    min-height: 400px;
+  }
+  
+  .messages-container {
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .message-bubble {
+    max-width: 85%;
+  }
+  
+  .message-content {
+    padding: 12px 16px;
+  }
+  
+  .message-text {
+    font-size: 14px !important;
+  }
+  
+  .message-time {
+    font-size: 10px !important;
+  }
+  
+  .message-input-area {
+    padding: 12px 16px;
+    gap: 8px;
+  }
+  
+  .message-input {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  .btn-send {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+  
+  .contract-panel {
+    border-radius: 16px;
+    padding: 16px;
+    margin-top: 16px;
+  }
+  
+  .panel-title {
+    font-size: 18px !important;
+  }
+  
+  .section-title {
+    font-size: 14px !important;
   }
   
   .feature-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .feature-item {
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .feature-icon {
+    font-size: 24px !important;
+  }
+  
+  .feature-title {
+    font-size: 14px !important;
+  }
+  
+  .feature-desc {
+    font-size: 12px !important;
+  }
+  
+  .help-section {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+  
+  .help-title {
+    font-size: 20px !important;
+    margin-bottom: 16px !important;
+  }
+  
+  .help-item {
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .help-number {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 16px !important;
+  }
+  
+  .help-text h4 {
+    font-size: 14px !important;
+  }
+  
+  .help-text p {
+    font-size: 12px !important;
+  }
+  
+  .empty-state {
+    padding: 60px 20px;
+  }
+  
+  .empty-icon {
+    font-size: 60px !important;
+  }
+  
+  .empty-title {
+    font-size: 20px !important;
+  }
+  
+  .empty-desc {
+    font-size: 14px !important;
+  }
+  
+  .modal-card {
+    width: 95vw;
+    padding: 20px;
+    border-radius: 16px;
+  }
+  
+  .modal-title {
+    font-size: 20px !important;
+    margin-bottom: 16px !important;
+  }
+  
+  .modal-form {
+    gap: 16px;
+  }
+  
+  .form-group label {
+    font-size: 13px !important;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  
+  .btn-action {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  .btn-primary,
+  .btn-cancel {
+    padding: 10px 20px;
+    font-size: 14px;
   }
 }
 </style>

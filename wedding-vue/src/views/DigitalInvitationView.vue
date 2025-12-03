@@ -582,5 +582,106 @@ onMounted(() => {
   padding: 48px;
   font-size: 18px;
 }
+
+/* 모바일 스타일 */
+@media (max-width: 768px) {
+  .digital-invitation-view {
+    padding: 12px;
+  }
+
+  .invitation-page {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .invitation-header {
+    padding: 32px 16px;
+  }
+
+  .couple-names {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .wedding-date {
+    font-size: 14px;
+  }
+
+  .invitation-content {
+    padding: 20px 16px;
+  }
+
+  .section {
+    margin-bottom: 24px;
+  }
+
+  .section h2 {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .actions-section {
+    gap: 10px;
+    margin: 24px 0;
+  }
+
+  .action-btn {
+    padding: 14px;
+    font-size: 14px;
+  }
+
+  .message-item {
+    padding: 12px;
+  }
+
+  .modal-content {
+    padding: 24px 16px;
+    width: 95%;
+    max-width: none;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .couple-names {
+    font-size: 20px;
+  }
+
+  .wedding-date {
+    font-size: 12px;
+  }
+
+  .action-btn {
+    padding: 12px;
+    font-size: 13px;
+  }
+}
 </style>
 

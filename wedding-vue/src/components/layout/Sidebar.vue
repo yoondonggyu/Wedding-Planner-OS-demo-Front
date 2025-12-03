@@ -29,8 +29,8 @@ function handleButtonMouseLeave() {
 <template>
   <aside :class="['sidebar', { collapsed, 'button-hover': isHoveringButton && collapsed }]">
     <div class="sidebar-header">
-      <img :src="logoImage" alt="Wedding OS Logo" class="logo-image" />
-      <strong>AI Wedding Planner</strong>
+      <img :src="logoImage" alt="PromiseMarry Lab Logo" class="logo-image" />
+      <strong>PromiseMarry Lab</strong>
       <button
         class="sidebar-expand-btn"
         type="button"

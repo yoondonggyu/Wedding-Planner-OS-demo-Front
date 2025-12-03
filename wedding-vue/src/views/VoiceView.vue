@@ -542,4 +542,156 @@ function handleKeyPress(event: KeyboardEvent) {
   content: '💬 ';
   margin-right: 8px;
 }
+
+/* 모바일 스타일 */
+@media (max-width: 768px) {
+  .section {
+    padding: 16px 8px;
+  }
+
+  .container {
+    padding: 0 12px;
+  }
+
+  .page-title h1 {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  .page-title p {
+    font-size: 12px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .voice-interface {
+    max-width: 100%;
+  }
+
+  .record-button-container {
+    margin: 24px 0;
+  }
+
+  .record-button {
+    width: 120px;
+    height: 120px;
+    font-size: 48px;
+  }
+
+  .record-status {
+    font-size: 14px;
+    margin-top: 16px;
+  }
+
+  .text-input-section {
+    margin-top: 24px;
+    padding-top: 24px;
+  }
+
+  .text-input-area {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .text-input {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .text-input-area > button {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .result-section {
+    margin-top: 24px;
+  }
+
+  .result-card {
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .result-card h4 {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  .result-text {
+    font-size: 13px;
+  }
+
+  .organized-item {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .organized-item-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .organized-item-title {
+    font-size: 13px;
+  }
+
+  .organized-item-desc {
+    font-size: 11px;
+  }
+
+  .example-commands {
+    margin-top: 24px;
+    padding: 16px;
+  }
+
+  .example-commands h4 {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .example-list li {
+    padding: 6px 0;
+    font-size: 12px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .record-button {
+    width: 100px;
+    height: 100px;
+    font-size: 40px;
+  }
+
+  .record-status {
+    font-size: 12px;
+  }
+
+  .result-card {
+    padding: 12px;
+  }
+
+  .result-text {
+    font-size: 12px;
+  }
+
+  .organized-item {
+    padding: 8px;
+  }
+
+  .organized-item-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+}
 </style>

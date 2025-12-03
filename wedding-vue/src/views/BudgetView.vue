@@ -816,4 +816,128 @@ select {
   background: var(--soft);
   border-color: var(--accent);
 }
+
+/* 모바일 스타일 */
+@media (max-width: 768px) {
+  .section {
+    padding: 16px 8px;
+  }
+
+  .container {
+    padding: 0 12px;
+  }
+
+  .page-title h1 {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  .page-title p {
+    font-size: 12px;
+  }
+
+  .card {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .budget-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .summary-item {
+    padding: 12px 8px;
+  }
+
+  .summary-item .label {
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+
+  .summary-item .value {
+    font-size: 16px;
+  }
+
+  .card > div[style*="display: flex"] {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .card > div[style*="display: flex"] > input,
+  .card > div[style*="display: flex"] > button {
+    width: 100%;
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .table-container {
+    overflow-x: scroll;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    font-size: 11px;
+  }
+
+  th, td {
+    padding: 8px 6px;
+    font-size: 11px;
+  }
+
+  th {
+    font-size: 10px;
+  }
+
+  .modal-card {
+    padding: 20px 16px;
+    width: 95%;
+    max-width: none;
+  }
+
+  .form-group {
+    margin-bottom: 12px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .file-upload-area {
+    padding: 24px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .budget-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-item .value {
+    font-size: 18px;
+  }
+
+  table {
+    font-size: 10px;
+  }
+
+  th, td {
+    padding: 6px 4px;
+    font-size: 10px;
+  }
+}
 </style>

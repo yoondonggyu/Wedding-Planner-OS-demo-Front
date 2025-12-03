@@ -5,5 +5,7 @@ export type SidebarLink = {
   route?: string
   active?: boolean
   external?: boolean
+  isMoreMenu?: boolean
+  isLogin?: boolean
 }
 

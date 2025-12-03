@@ -1496,4 +1496,211 @@ function handleDatePaste(event: ClipboardEvent) {
 [data-theme='light'] .btn.primary:hover {
   background: var(--accent-2);
 }
+
+/* 모바일 스타일 */
+@media (max-width: 768px) {
+  .section {
+    padding: 16px 8px;
+  }
+
+  .container {
+    padding: 0 12px;
+  }
+
+  .page-title h1 {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  .page-title p {
+    font-size: 12px;
+  }
+
+  .card {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .profile-section > div[style*="display: flex"] {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .profile-section > div[style*="display: flex"] > div[style*="display: flex"] {
+    width: 100%;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .profile-section > div[style*="display: flex"] > div[style*="display: flex"] > button {
+    width: 100%;
+  }
+
+  .profile-section > div[style*="display: flex"][style*="flex-wrap"] {
+    flex-direction: column;
+  }
+
+  .profile-section > div[style*="display: flex"][style*="flex-wrap"] > button {
+    width: 100%;
+  }
+
+  .card > div[style*="display: flex"][style*="justify-content: space-between"] {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .card > div[style*="display: flex"][style*="justify-content: space-between"] > button {
+    width: 100%;
+  }
+
+  .card > div[style*="display: flex"][style*="gap: 8px"][style*="flex-wrap"] {
+    flex-direction: column;
+  }
+
+  .card > div[style*="display: flex"][style*="gap: 8px"][style*="flex-wrap"] > button {
+    width: 100%;
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .card > div[style*="display: flex"][style*="gap: 12px"][style*="flex-wrap"] {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .card > div[style*="display: flex"][style*="gap: 12px"][style*="flex-wrap"] > div {
+    width: 100%;
+  }
+
+  .card > div[style*="display: flex"][style*="gap: 12px"][style*="flex-wrap"] > div > input,
+  .card > div[style*="display: flex"][style*="gap: 12px"][style*="flex-wrap"] > div > select {
+    width: 100%;
+  }
+
+  .vendor-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .vendor-card {
+    padding: 16px;
+  }
+
+  .vendor-card h3 {
+    font-size: 16px;
+  }
+
+  .vendor-card > div[style*="display: flex"][style*="justify-content: space-between"] {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .vendor-card > div[style*="display: flex"][style*="justify-content: space-between"] > div[style*="display: flex"] {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .vendor-card > div[style*="display: flex"][style*="gap: 16px"] {
+    flex-direction: column;
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .vendor-card > div[style*="display: flex"][style*="justify-content: space-between"][style*="align-items: center"] {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .vendor-card button {
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .modal-card {
+    padding: 20px 16px;
+    width: 95%;
+    max-width: none;
+  }
+
+  .modal-card h3 {
+    font-size: 18px;
+  }
+
+  .form-group {
+    margin-bottom: 12px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group select {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+
+  .vendor-detail-modal {
+    padding: 16px;
+  }
+
+  .vendor-detail-modal > div[style*="display: flex"][style*="justify-content: space-between"] {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .vendor-detail-modal > div[style*="display: grid"][style*="grid-template-columns"] {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .vendor-detail-modal > div[style*="display: flex"][style*="gap: 8px"] {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .vendor-detail-modal > div[style*="display: flex"][style*="gap: 8px"] > a,
+  .vendor-detail-modal > div[style*="display: flex"][style*="gap: 8px"] > button {
+    width: 100%;
+  }
+
+  .compare-table {
+    font-size: 11px;
+  }
+
+  .compare-table th,
+  .compare-table td {
+    padding: 8px 6px;
+    font-size: 11px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .vendor-card {
+    padding: 12px;
+  }
+
+  .vendor-card h3 {
+    font-size: 14px;
+  }
+
+  .compare-table {
+    font-size: 10px;
+  }
+
+  .compare-table th,
+  .compare-table td {
+    padding: 6px 4px;
+    font-size: 10px;
+  }
+}
 </style>
