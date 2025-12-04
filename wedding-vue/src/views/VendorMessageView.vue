@@ -133,12 +133,51 @@ const newThreadForm = ref({
 const vendorList = ref<VendorListItem[]>([])
 const selectedVendorCategory = ref<string>('')
 const vendorCategories = [
-  { value: '', label: '전체', icon: '📋' },
+  // 사진/영상
   { value: 'IPHONE_SNAP', label: '아이폰 스냅', icon: '📱' },
+  { value: 'STUDIO_PREWEDDING', label: '웨딩 스튜디오', icon: '📸' },
+  { value: 'WEDDING_PHOTO', label: '웨딩 사진', icon: '📷' },
+  { value: 'VIDEO', label: '웨딩 영상', icon: '🎬' },
+  // 웨딩홀/장소
+  { value: 'WEDDING_HALL', label: '웨딩홀', icon: '🏛️' },
+  { value: 'VENUE_INDOOR', label: '실내 식장', icon: '🏢' },
+  { value: 'VENUE_OUTDOOR', label: '야외 식장', icon: '🏞️' },
+  { value: 'VENUE_COMPLEX', label: '복합 식장', icon: '🏰' },
+  // 플래너/기획
+  { value: 'PLANNER', label: '웨딩 플래너', icon: '📅' },
+  { value: 'COORDINATOR', label: '웨딩 코디네이터', icon: '🎯' },
+  // 패션/뷰티
+  { value: 'DRESS_SHOP', label: '드레스샵', icon: '👗' },
+  { value: 'SUIT_SHOP', label: '턱시도샵', icon: '🤵' },
+  { value: 'MAKEUP_HAIR', label: '메이크업/헤어', icon: '💄' },
+  { value: 'BEAUTY_SALON', label: '뷰티 살롱', icon: '💅' },
+  // 음식/케이터링
+  { value: 'CATERING', label: '케이터링', icon: '🍽️' },
+  { value: 'BUFFET', label: '뷔페/식당', icon: '🍴' },
+  { value: 'CAKE', label: '케이크/디저트', icon: '🎂' },
+  { value: 'BAR', label: '바/음료', icon: '🍷' },
+  // 꽃/장식
+  { value: 'FLORIST', label: '꽃/플로리스트', icon: '🌸' },
+  { value: 'DECORATION', label: '장식/데코', icon: '🎨' },
+  { value: 'BOUQUET', label: '부케/꽃다발', icon: '💐' },
+  // 예물/주얼리
+  { value: 'JEWELRY', label: '예물/주얼리', icon: '💍' },
+  { value: 'RING', label: '예물/반지', icon: '💎' },
+  // 교통/운송
+  { value: 'WEDDING_CAR', label: '웨딩카', icon: '🚗' },
+  { value: 'LIMOUSINE', label: '리무진', icon: '🚙' },
+  { value: 'TRANSPORTATION', label: '교통/운송', icon: '🚌' },
+  // 기타
   { value: 'MC', label: '사회자', icon: '🎤' },
   { value: 'SINGER', label: '축가', icon: '🎵' },
-  { value: 'STUDIO_PREWEDDING', label: '웨딩 스튜디오', icon: '📸' },
-  { value: 'VENUE_OUTDOOR', label: '야외 식장', icon: '🏞️' },
+  { value: 'BAND', label: '밴드/연주자', icon: '🎸' },
+  { value: 'MUSIC', label: '축가/연주', icon: '🎼' },
+  { value: 'INVITATION', label: '청첩장/인쇄', icon: '💌' },
+  { value: 'GIFT', label: '웨딩선물/답례품', icon: '🎁' },
+  { value: 'HOTEL', label: '호텔/숙박', icon: '🏨' },
+  { value: 'WEDDING_FAIR', label: '웨딩박람회', icon: '🎪' },
+  { value: 'HANBOK', label: '한복', icon: '🎎' },
+  { value: 'HONEYMOON', label: '신혼여행', icon: '✈️' }
 ]
 
 const filteredVendors = computed(() => {

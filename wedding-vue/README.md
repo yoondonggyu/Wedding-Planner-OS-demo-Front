@@ -77,3 +77,36 @@ src/
 ## 📝 개발 가이드
 
 자세한 내용은 상위 디렉토리의 `README.md`를 참조하세요.
+
+## Docker 사용법
+
+### 개발 환경 실행
+
+```bash
+# 개발 모드로 빌드 및 실행
+docker build --target dev -t wedding-frontend:dev .
+docker run -p 5173:5173 -v $(pwd):/app wedding-frontend:dev
+```
+
+또는 docker-compose 사용:
+```bash
+# 프로젝트 루트에서
+docker-compose up frontend
+```
+
+### 프로덕션 빌드 및 실행
+
+```bash
+# 프로덕션 모드로 빌드
+docker build --target prod -t wedding-frontend:prod .
+
+# 실행
+docker run -p 80:80 wedding-frontend:prod
+```
+
+### 환경 변수 설정
+
+`.env.example` 파일을 참고하여 환경 변수를 설정하세요.
+
+- 로컬 개발: `.env.development` 파일 생성
+- Docker 환경: `docker-compose.yml`의 `environment` 섹션에서 설정
