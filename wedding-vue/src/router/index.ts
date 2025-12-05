@@ -12,6 +12,8 @@ const PrivateSpaceView = () => import('@/views/PrivateSpaceView.vue')
 const DocumentVaultView = () => import('@/views/DocumentVaultView.vue')
 const InvitationDesignView = () => import('@/views/InvitationDesignView.vue')
 const DigitalInvitationView = () => import('@/views/DigitalInvitationView.vue')
+const ReviewSummaryView = () => import('@/views/ReviewSummaryView.vue')
+const ReviewWriteView = () => import('@/views/ReviewWriteView.vue')
 
 export const router = createRouter({
   history: createWebHashHistory(),
@@ -28,6 +30,8 @@ export const router = createRouter({
     { path: '/document-vault', name: 'document-vault', component: DocumentVaultView },
     { path: '/invitation-design', name: 'invitation-design', component: InvitationDesignView },
     { path: '/invitation/:url', name: 'digital-invitation', component: DigitalInvitationView },
+    { path: '/review-summary', name: 'review-summary', component: ReviewSummaryView },
+    { path: '/review-write', name: 'review-write', component: ReviewWriteView },
   ],
   scrollBehavior() {
     return { top: 0, behavior: 'smooth' }
