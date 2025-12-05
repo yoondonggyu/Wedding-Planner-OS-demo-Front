@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wedding OS - Database ERD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ 
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        primaryColor: '#8b5cf6',
+        primaryTextColor: '#f7f8fc',
+        primaryBorderColor: '#22d3ee',
+        lineColor: '#9da6bf',
+        secondaryColor: '#10121a',
+        tertiaryColor: '#181b25'
+      }
+    });
+  </script>
+  <style>
+    :root {
+      --bg: #05060a;
+      --card: #10121a;
+      --soft: #181b25;
+      --text: #f7f8fc;
+      --muted: #9da6bf;
+      --line: rgba(255,255,255,0.08);
+      --accent: #8b5cf6;
+      --accent-2: #22d3ee;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at top, rgba(34,211,238,0.15), transparent 40%),
+                  radial-gradient(circle at 30% 10%, rgba(139,92,246,0.2), transparent 35%),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 0;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+    header {
+      text-align: center;
+      padding: 48px 0 32px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 48px;
+    }
+    header h1 {
+      font-size: clamp(32px, 4vw, 46px);
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    header p {
+      color: var(--muted);
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .update-info {
+      background: rgba(34,211,238,0.1);
+      border: 1px solid rgba(34,211,238,0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 32px;
+    }
+    .update-info h3 {
+      color: var(--accent-2);
+      margin-bottom: 12px;
+    }
+    .update-info ul {
+      margin-left: 24px;
+      color: var(--muted);
+    }
+    .update-info li {
+      margin: 8px 0;
+    }
+    .mermaid {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+      overflow-x: auto;
+    }
+    .section-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 48px 0 24px;
+      color: var(--accent-2);
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--line);
+    }
+    @media (max-width: 768px) {
+      .container { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🗄️ Wedding OS Database ERD</h1>
+      <p>데이터베이스 구조 및 테이블 관계 다이어그램</p>
+    </header>
+
+    <div class="update-info">
+      <h3>📋 최근 업데이트 (2025년)</h3>
+      <ul>
+        <li><strong>posts 테이블:</strong> <code>category VARCHAR(50)</code> 컬럼 추가 (카테고리 필터링 지원)</li>
+        <li><strong>posts 테이블:</strong> <code>vendor_id BIGINT</code> 컬럼 추가 (업체 연결, 외래키: vendors.id)</li>
+        <li><strong>인덱스 추가:</strong> <code>idx_posts_category</code>, <code>idx_posts_board_type_category</code></li>
+      </ul>
+    </div>
+
+    <h2 class="section-title">핵심 테이블 관계도</h2>
+    <div class="mermaid">
+erDiagram
+    users ||--o{ posts : "작성"
+    users ||--o| couples : "연결"
+    couples ||--o{ posts : "공유"
+    couples ||--o{ calendar_events : "공유"
+    couples ||--o{ budget_items : "공유"
+    users ||--o{ calendar_events : "생성"
+    users ||--o{ budget_items : "생성"
+    users ||--o{ comments : "작성"
+    users ||--o{ post_likes : "좋아요"
+    users ||--o{ favorite_vendors : "즐겨찾기"
+    users ||--o{ wedding_profiles : "프로필"
+    users ||--o{ chat_history : "대화"
+    users ||--o{ chat_memories : "메모리"
+    users ||--o{ vendor_threads : "스레드"
+    
+    posts ||--o{ comments : "댓글"
+    posts ||--o{ post_likes : "좋아요"
+    posts }o--o| vendors : "업체 연결"
+    posts }o--o{ tags : "태그"
+    
+    vendors ||--o{ favorite_vendors : "즐겨찾기"
+    vendors ||--o{ vendor_threads : "스레드"
+    vendors ||--o{ vendor_messages : "메시지"
+    vendors ||--o{ vendor_contracts : "계약"
+    vendors ||--o{ vendor_payment_schedules : "결제일정"
+    
+    wedding_profiles ||--o{ favorite_vendors : "프로필"
+    wedding_profiles ||--o{ vendors : "추천"
+    
+    vendor_threads ||--o{ vendor_messages : "메시지"
+    vendor_threads ||--o{ vendor_contracts : "계약"
+    vendor_threads ||--o{ vendor_payment_schedules : "결제일정"
+    </div>
+
+    <h2 class="section-title">주요 테이블 상세 구조</h2>
+    
+    <h3 style="color: var(--accent-2); margin: 32px 0 16px;">📝 posts (게시글)</h3>
+    <div class="mermaid">
+erDiagram
+    posts {
+      BIGINT id PK
+      BIGINT user_id FK
+      BIGINT couple_id FK "NULL, 커플 공유"
+      BIGINT vendor_id FK "NULL, 업체 연결"
+      VARCHAR title
+      TEXT content
+      TEXT image_url "NULL"
+      VARCHAR board_type "기본값: couple"
+      VARCHAR category "NULL, 카테고리 필터링"
+      TEXT summary "NULL, AI 요약"
+      FLOAT sentiment_score "NULL"
+      VARCHAR sentiment_label "NULL"
+      INT view_count "기본값: 0"
+      DATETIME created_at
+      DATETIME updated_at
+    }
+    </div>
+
+    <h3 style="color: var(--accent-2); margin: 32px 0 16px;">👥 users (사용자)</h3>
+    <div class="mermaid">
+erDiagram
+    users {
+      BIGINT id PK
+      VARCHAR email UK
+      VARCHAR password
+      VARCHAR nickname
+      TEXT profile_image_url "NULL"
+      ENUM role "기본값: USER"
+      ENUM gender "NULL"
+      VARCHAR couple_key UK "NULL"
+      VARCHAR partner_couple_key "NULL"
+      BIGINT couple_id FK "NULL"
+      ENUM vendor_approval_status "NULL"
+      ENUM admin_approval_status "NULL"
+      DATETIME created_at
+      DATETIME updated_at
+    }
+    </div>
+
+    <h3 style="color: var(--accent-2); margin: 32px 0 16px;">💑 couples (커플)</h3>
+    <div class="mermaid">
+erDiagram
+    couples {
+      BIGINT id PK
+      VARCHAR couple_key UK
+      BIGINT user1_id
+      BIGINT user2_id "NULL"
+      VARCHAR user1_entered_key "NULL"
+      VARCHAR user2_entered_key "NULL"
+      ENUM status "기본값: PENDING"
+      DATETIME connected_at "NULL"
+      DATETIME created_at
+      DATETIME updated_at
+    }
+    </div>
+
+    <h3 style="color: var(--accent-2); margin: 32px 0 16px;">🏢 vendors (업체)</h3>
+    <div class="mermaid">
+erDiagram
+    vendors {
+      BIGINT id PK
+      BIGINT user_id FK "업체 계정"
+      VARCHAR name
+      TEXT description "NULL"
+      ENUM vendor_type
+      VARCHAR base_location_city "NULL"
+      VARCHAR base_location_district "NULL"
+      DECIMAL min_price "NULL"
+      DECIMAL max_price "NULL"
+      ENUM guest_count_category
+      JSON metadata "NULL"
+      DATETIME created_at
+      DATETIME updated_at
+    }
+    </div>
+
+    <h3 style="color: var(--accent-2); margin: 32px 0 16px;">📅 calendar_events (캘린더 일정)</h3>
+    <div class="mermaid">
+erDiagram
+    calendar_events {
+      BIGINT id PK
+      BIGINT user_id FK
+      BIGINT couple_id FK "NULL, 커플 공유"
+      VARCHAR title
+      TEXT description "NULL"
+      DATE start_date "NULL"
+      DATE end_date "NULL"
+      TIME start_time "NULL"
+      TIME end_time "NULL"
+      VARCHAR location "NULL"
+      VARCHAR category "NULL"
+      ENUM priority "NULL"
+      ENUM assignee "NULL"
+      INT progress "NULL"
+      BOOLEAN is_completed "NULL"
+      DATETIME created_at "NULL"
+      DATETIME updated_at "NULL"
+    }
+    </div>
+
+    <h3 style="color: var(--accent-2); margin: 32px 0 16px;">💰 budget_items (예산 항목)</h3>
+    <div class="mermaid">
+erDiagram
+    budget_items {
+      BIGINT id PK
+      BIGINT user_id FK
+      BIGINT couple_id FK "NULL, 커플 공유"
+      VARCHAR item_name
+      VARCHAR category "기본값: etc"
+      DECIMAL estimated_budget
+      DECIMAL actual_expense "기본값: 0.0"
+      VARCHAR unit "NULL"
+      DECIMAL quantity "기본값: 1.0"
+      TEXT notes "NULL"
+      ENUM payer "기본값: both"
+      DATETIME created_at
+      DATETIME updated_at
+    }
+    </div>
+
+    <h3 style="color: var(--accent-2); margin: 32px 0 16px;">💬 vendor_threads (업체 스레드)</h3>
+    <div class="mermaid">
+erDiagram
+    vendor_threads {
+      BIGINT id PK
+      BIGINT user_id FK
+      BIGINT vendor_id FK
+      ENUM thread_type "기본값: one_on_one"
+      DATETIME created_at
+      DATETIME updated_at
+    }
+    </div>
+
+    <h3 style="color: var(--accent-2); margin: 32px 0 16px;">📨 vendor_messages (업체 메시지)</h3>
+    <div class="mermaid">
+erDiagram
+    vendor_messages {
+      BIGINT id PK
+      BIGINT thread_id FK
+      BIGINT vendor_id FK
+      ENUM sender_type
+      TEXT message
+      BOOLEAN is_read "기본값: false"
+      DATETIME created_at
+    }
+    </div>
+
+    <h2 class="section-title">인덱스 정보</h2>
+    <div style="background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px; margin-bottom: 32px;">
+      <h3 style="color: var(--accent-2); margin-bottom: 16px;">posts 테이블 인덱스</h3>
+      <ul style="color: var(--muted); margin-left: 24px; line-height: 2;">
+        <li><code>PRIMARY KEY (id)</code></li>
+        <li><code>INDEX idx_posts_user_id (user_id)</code></li>
+        <li><code>INDEX idx_posts_couple_id (couple_id)</code></li>
+        <li><code>INDEX idx_posts_vendor_id (vendor_id)</code> - 업체 연결</li>
+        <li><code>INDEX idx_posts_category (category)</code> - 카테고리 필터링</li>
+        <li><code>INDEX idx_posts_board_type_category (board_type, category)</code> - 복합 인덱스</li>
+        <li><code>FOREIGN KEY (user_id) REFERENCES users(id)</code></li>
+        <li><code>FOREIGN KEY (couple_id) REFERENCES couples(id)</code></li>
+        <li><code>FOREIGN KEY (vendor_id) REFERENCES vendors(id)</code> - ON DELETE SET NULL</li>
+      </ul>
+    </div>
+
+    <h2 class="section-title">카테고리 시스템</h2>
+    <div style="background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px; margin-bottom: 32px;">
+      <p style="color: var(--muted); margin-bottom: 16px;">
+        <code>posts.category</code> 필드는 35개의 웨딩 관련 카테고리를 지원합니다:
+      </p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px;">
+        <div>
+          <strong style="color: var(--accent-2);">사진/영상 (4개)</strong>
+          <ul style="color: var(--muted); margin-top: 8px; margin-left: 20px; font-size: 14px;">
+            <li>아이폰_스냅</li>
+            <li>웨딩_스튜디오</li>
+            <li>웨딩_사진</li>
+            <li>웨딩_영상</li>
+          </ul>
+        </div>
+        <div>
+          <strong style="color: var(--accent-2);">식장 (4개)</strong>
+          <ul style="color: var(--muted); margin-top: 8px; margin-left: 20px; font-size: 14px;">
+            <li>웨딩홀</li>
+            <li>실내_식장</li>
+            <li>야외_식장</li>
+            <li>복합_식장</li>
+          </ul>
+        </div>
+        <div>
+          <strong style="color: var(--accent-2);">플래너 (2개)</strong>
+          <ul style="color: var(--muted); margin-top: 8px; margin-left: 20px; font-size: 14px;">
+            <li>웨딩_플래너</li>
+            <li>웨딩_코디네이터</li>
+          </ul>
+        </div>
+        <div>
+          <strong style="color: var(--accent-2);">의상 (5개)</strong>
+          <ul style="color: var(--muted); margin-top: 8px; margin-left: 20px; font-size: 14px;">
+            <li>드레스샵</li>
+            <li>턱시도샵</li>
+            <li>메이크업_헤어</li>
+            <li>뷰티_살롱</li>
+            <li>한복</li>
+          </ul>
+        </div>
+        <div>
+          <strong style="color: var(--accent-2);">식음료 (4개)</strong>
+          <ul style="color: var(--muted); margin-top: 8px; margin-left: 20px; font-size: 14px;">
+            <li>케이터링</li>
+            <li>뷔페_식당</li>
+            <li>케이크_디저트</li>
+            <li>바_음료</li>
+          </ul>
+        </div>
+        <div>
+          <strong style="color: var(--accent-2);">꽃/장식 (3개)</strong>
+          <ul style="color: var(--muted); margin-top: 8px; margin-left: 20px; font-size: 14px;">
+            <li>꽃_플로리스트</li>
+            <li>장식_데코</li>
+            <li>부케_꽃다발</li>
+          </ul>
+        </div>
+        <div>
+          <strong style="color: var(--accent-2);">주얼리 (2개)</strong>
+          <ul style="color: var(--muted); margin-top: 8px; margin-left: 20px; font-size: 14px;">
+            <li>예물_주얼리</li>
+            <li>예물_반지</li>
+          </ul>
+        </div>
+        <div>
+          <strong style="color: var(--accent-2);">교통 (3개)</strong>
+          <ul style="color: var(--muted); margin-top: 8px; margin-left: 20px; font-size: 14px;">
+            <li>웨딩카</li>
+            <li>리무진</li>
+            <li>교통_운송</li>
+          </ul>
+        </div>
+        <div>
+          <strong style="color: var(--accent-2);">연예 (4개)</strong>
+          <ul style="color: var(--muted); margin-top: 8px; margin-left: 20px; font-size: 14px;">
+            <li>사회자</li>
+            <li>축가</li>
+            <li>밴드_연주자</li>
+            <li>축가_연주</li>
+          </ul>
+        </div>
+        <div>
+          <strong style="color: var(--accent-2);">기타 (4개)</strong>
+          <ul style="color: var(--muted); margin-top: 8px; margin-left: 20px; font-size: 14px;">
+            <li>청첩장_인쇄</li>
+            <li>웨딩선물_답례품</li>
+            <li>호텔_숙박</li>
+            <li>웨딩박람회</li>
+            <li>신혼여행</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align: center; padding: 32px 0; color: var(--muted); border-top: 1px solid var(--line); margin-top: 48px;">
+      <p>Wedding OS Database ERD Viewer</p>
+      <p style="font-size: 14px; margin-top: 8px;">마지막 업데이트: 2025년</p>
+    </div>
+  </div>
+</body>
+</html>
+
