@@ -10,7 +10,8 @@ const VendorView = () => import('@/views/VendorView.vue')
 const VendorMessageView = () => import('@/views/VendorMessageView.vue')
 const PrivateSpaceView = () => import('@/views/PrivateSpaceView.vue')
 const DocumentVaultView = () => import('@/views/DocumentVaultView.vue')
-const InvitationDesignView = () => import('@/views/InvitationDesignView.vue')
+const InvitationView = () => import('@/views/InvitationView.vue')
+const InvitationDesignViewOld = () => import('@/views/InvitationDesignView.vue')
 const DigitalInvitationView = () => import('@/views/DigitalInvitationView.vue')
 const ReviewSummaryView = () => import('@/views/ReviewSummaryView.vue')
 const ReviewWriteView = () => import('@/views/ReviewWriteView.vue')
@@ -28,7 +29,8 @@ export const router = createRouter({
     { path: '/vendor-message', name: 'vendor-message', component: VendorMessageView },
     { path: '/private-space', name: 'private-space', component: PrivateSpaceView },
     { path: '/document-vault', name: 'document-vault', component: DocumentVaultView },
-    { path: '/invitation-design', name: 'invitation-design', component: InvitationDesignView },
+    { path: '/invitation', name: 'invitation', component: InvitationDesignViewOld },
+    { path: '/invitation-design', name: 'invitation-design', component: InvitationView },
     { path: '/invitation/:url', name: 'digital-invitation', component: DigitalInvitationView },
     { path: '/review-summary', name: 'review-summary', component: ReviewSummaryView },
     { path: '/review-write', name: 'review-write', component: ReviewWriteView },

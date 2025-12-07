@@ -1,8 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, nextTick, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useApi } from '@/composables/useApi'
 import { useToast } from '@/composables/useToast'
+
+// Google Maps API 타입 선언
+declare global {
+  interface Window {
+    google: any
+  }
+}
 
 interface Template {
   id: number
@@ -44,8 +51,10 @@ const designData = ref<any>({
   main_text: '',
   groom_name: '',
   bride_name: '',
-  groom_parents: '',
-  bride_parents: '',
+  groom_father_name: '',
+  groom_mother_name: '',
+  bride_father_name: '',
+  bride_mother_name: '',
   wedding_info: '',
   reception_info: '',
   closing_text: '',
@@ -68,6 +77,10 @@ const showTextRecommendModal = ref(false)
 const textRecommendForm = ref({
   groom_name: '',
   bride_name: '',
+  groom_father_name: '',
+  groom_mother_name: '',
+  bride_father_name: '',
+  bride_mother_name: '',
   wedding_date: '',
   wedding_time: '',
   wedding_location: '',
@@ -75,10 +88,22 @@ const textRecommendForm = ref({
   additional_info: ''
 })
 const recommending = ref(false)
-const recommendedText = ref<any>(null)
+const recommendedTextOptions = ref<any[]>([])
+const selectedTextOptionIndex = ref<number>(0)
+const locationInputRef = ref<HTMLInputElement | null>(null)
 
-// PDF 생성
-const generatingPDF = ref(false)
+// 5가지 톤 제안
+const showToneModal = ref(false)
+const tonesGenerated = ref(false)
+const generatedTones = ref<any[]>([])
+const selectedTone = ref<any>(null)
+
+// 이미지 생성
+const showImageModal = ref(false)
+const imageGenerating = ref(false)
+const generatedImage = ref('')
+const imagePrompt = ref('')
+const imageModel = ref('sdxl') // 'sdxl', 'flux', 'gemini'
 
 const canEdit = computed(() => authStore.isAuthenticated)
 
@@ -212,8 +237,10 @@ function startNewDesign() {
     main_text: '',
     groom_name: '',
     bride_name: '',
-    groom_parents: '',
-    bride_parents: '',
+    groom_father_name: '',
+    groom_mother_name: '',
+    bride_father_name: '',
+    bride_mother_name: '',
     wedding_info: '',
     reception_info: '',
     closing_text: '',
@@ -284,42 +311,261 @@ async function recommendText() {
   try {
     const res = await request<{
       message: string
-      data: any
+      data: { options: any[] }
     }>('/invitation-text-recommend', {
       method: 'POST',
       body: textRecommendForm.value
     })
-    recommendedText.value = res.data
-    showToast('문구 추천이 완료되었습니다.', 'success')
+    
+    // options 배열이 있는 경우
+    if (res.data?.options && Array.isArray(res.data.options)) {
+      recommendedTextOptions.value = res.data.options
+      selectedTextOptionIndex.value = 0
+      showToast(`${res.data.options.length}개의 문구 옵션이 생성되었습니다.`, { type: 'success' })
+    } else {
+      // 하위 호환성: 단일 옵션인 경우 배열로 변환
+      recommendedTextOptions.value = [res.data]
+      selectedTextOptionIndex.value = 0
+      showToast('문구 추천이 완료되었습니다.', { type: 'success' })
+    }
   } catch (err: any) {
     console.error('문구 추천 실패:', err)
-    // AI 기능이 아직 구현되지 않은 경우 기본 문구 제공
-    recommendedText.value = {
+    // 기본 문구 옵션 제공
+    recommendedTextOptions.value = [{
       main_text: `${textRecommendForm.value.groom_name} · ${textRecommendForm.value.bride_name} 두 사람이 하나가 되어\n새로운 인생을 시작합니다.`,
-      groom_parents: '신랑 부모님',
-      bride_parents: '신부 부모님',
-      wedding_info: `${textRecommendForm.value.wedding_date} ${textRecommendForm.value.wedding_time || ''} ${textRecommendForm.value.wedding_location || ''}`,
+      groom_father: '',
+      groom_mother: '',
+      bride_father: '',
+      bride_mother: '',
+      wedding_info: `${textRecommendForm.value.wedding_date}\n${textRecommendForm.value.wedding_time || ''}\n${textRecommendForm.value.wedding_location || ''}`,
       reception_info: textRecommendForm.value.wedding_location || '',
       closing_text: '바쁘시겠지만 참석해 주시면 감사하겠습니다.'
-    }
-    showToast('기본 문구가 생성되었습니다. (AI 기능 준비 중)', 'success')
+    }]
+    selectedTextOptionIndex.value = 0
+    showToast('기본 문구가 생성되었습니다.', { type: 'success' })
   } finally {
     recommending.value = false
   }
 }
 
-function applyRecommendedText() {
-  if (recommendedText.value) {
-    designData.value.main_text = recommendedText.value.main_text || ''
-    designData.value.groom_parents = recommendedText.value.groom_parents || ''
-    designData.value.bride_parents = recommendedText.value.bride_parents || ''
-    designData.value.wedding_info = recommendedText.value.wedding_info || ''
-    designData.value.reception_info = recommendedText.value.reception_info || ''
-    designData.value.closing_text = recommendedText.value.closing_text || ''
-    showTextRecommendModal.value = false
-    showToast('추천 문구가 적용되었습니다.', 'success')
+// 5가지 톤 생성
+async function generateTones() {
+  if (!textRecommendForm.value.groom_name || !textRecommendForm.value.bride_name || !textRecommendForm.value.wedding_date) {
+    showToast('신랑 이름, 신부 이름, 예식일을 입력해주세요.', 'error')
+    return
+  }
+
+  recommending.value = true
+  try {
+    const res = await request<{
+      message: string
+      data: { tones: any[] }
+    }>('/invitation-tones', {
+      method: 'POST',
+      body: textRecommendForm.value
+    })
+    
+    if (res.data?.tones && Array.isArray(res.data.tones)) {
+      generatedTones.value = res.data.tones
+      tonesGenerated.value = true
+      showToast(`${res.data.tones.length}가지 톤이 생성되었습니다.`, { type: 'success' })
+      showToneModal.value = true
+    } else {
+      throw new Error('톤 데이터가 없습니다')
+    }
+  } catch (err: any) {
+    console.error('톤 생성 실패:', err)
+    showToast(err?.data?.error || '톤 생성에 실패했습니다.', 'error')
+  } finally {
+    recommending.value = false
   }
 }
+
+function selectTone(tone: any) {
+  selectedTone.value = tone
+  designData.value.main_text = tone.main_text || ''
+  designData.value.wedding_info = tone.wedding_info || ''
+  designData.value.closing_text = tone.closing || ''
+  showToneModal.value = false
+  showToast(`${tone.description} 톤이 적용되었습니다.`, { type: 'success' })
+}
+
+// 이미지 생성
+async function generateInvitationImage() {
+  if (!imagePrompt.value) {
+    showToast('이미지 설명을 입력해주세요.', 'error')
+    return
+  }
+
+  if (!selectedDesignId.value) {
+    showToast('먼저 디자인을 저장해주세요.', 'error')
+    return
+  }
+
+  imageGenerating.value = true
+  try {
+    const res = await request<{
+      message: string
+      data: { image_b64: string }
+    }>('/invitation-image-generate', {
+      method: 'POST',
+      body: {
+        design_id: selectedDesignId.value,
+        selected_tone: selectedTone.value?.tone || 'polite',
+        selected_text: designData.value.main_text || '',
+        prompt: imagePrompt.value,
+        model_type: imageModel.value === 'gemini' ? 'pro' : 'free'
+      }
+    })
+    
+    if (res.data?.image_b64) {
+      generatedImage.value = res.data.image_b64
+      designData.value.image_url = res.data.image_b64
+      showToast('이미지가 생성되었습니다!', { type: 'success' })
+    }
+  } catch (err: any) {
+    console.error('이미지 생성 실패:', err)
+    showToast(err?.data?.error || '이미지 생성에 실패했습니다.', 'error')
+  } finally {
+    imageGenerating.value = false
+  }
+}
+
+// PDF 생성
+const generatingPDF = ref(false)
+
+// 날짜 입력 처리 함수들 (CalendarView에서 가져옴)
+function handleDateKeydown(event: KeyboardEvent, field: 'wedding_date') {
+  const input = event.target as HTMLInputElement
+  
+  // 백스페이스, 삭제, 화살표 키 등은 허용
+  if ([' Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Enter'].includes(event.key)) {
+    return
+  }
+  
+  // Ctrl/Cmd + A, C, V, X 등은 허용
+  if (event.ctrlKey || event.metaKey) {
+    return
+  }
+  
+  // 숫자만 허용
+  if (!/^\d$/.test(event.key)) {
+    event.preventDefault()
+    return
+  }
+  
+  const currentValue = input.value.replace(/\D/g, '') // 숫자만 추출
+  const newValue = currentValue + event.key
+  
+  // 최대 8자리까지만 허용
+  if (newValue.length > 8) {
+    event.preventDefault()
+    return
+  }
+  
+  // 연도 4자리 입력 완료 시 자동으로 하이픈 추가
+  if (newValue.length === 4) {
+    event.preventDefault()
+    const formatted = newValue + '-'
+    textRecommendForm.value.wedding_date = formatted
+    nextTick(() => {
+      input.value = formatted
+      const position = 5
+      input.setSelectionRange(position, position)
+    })
+    return
+  }
+  
+  // 월 2자리 입력 완료 시 자동으로 하이픈 추가
+  if (newValue.length === 6) {
+    event.preventDefault()
+    const formatted = newValue.slice(0, 4) + '-' + newValue.slice(4, 6) + '-'
+    textRecommendForm.value.wedding_date = formatted
+    nextTick(() => {
+      input.value = formatted
+      const position = formatted.length
+      input.setSelectionRange(position, position)
+    })
+    return
+  }
+  
+  // 일반 입력 시 포맷팅만 적용
+  event.preventDefault()
+  const formatted = formatDateValue(newValue)
+  textRecommendForm.value.wedding_date = formatted
+  nextTick(() => {
+    input.value = formatted
+    const position = formatted.length
+    input.setSelectionRange(position, position)
+  })
+}
+
+function formatDateValue(digits: string): string {
+  if (digits.length <= 4) {
+    return digits
+  } else if (digits.length <= 6) {
+    return digits.slice(0, 4) + '-' + digits.slice(4, 6)
+  } else {
+    return digits.slice(0, 4) + '-' + digits.slice(4, 6) + '-' + digits.slice(6, 8)
+  }
+}
+
+function handleDateInput(event: Event, field: 'wedding_date') {
+  const input = event.target as HTMLInputElement
+  const value = input.value
+  
+  // 이미 올바른 형식이면 그대로 사용
+  if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    textRecommendForm.value.wedding_date = value
+    return
+  }
+  
+  // 숫자만 추출하여 포맷팅
+  const digits = value.replace(/\D/g, '').slice(0, 8)
+  const formatted = formatDateValue(digits)
+  textRecommendForm.value.wedding_date = formatted
+  
+  nextTick(() => {
+    if (input.value !== formatted) {
+      input.value = formatted
+    }
+  })
+}
+
+function handleDatePaste(event: ClipboardEvent, field: 'wedding_date') {
+  event.preventDefault()
+  const input = event.target as HTMLInputElement
+  const pastedText = event.clipboardData?.getData('text') || ''
+  const digits = pastedText.replace(/\D/g, '').slice(0, 8)
+  const formatted = formatDateValue(digits)
+  
+  textRecommendForm.value.wedding_date = formatted
+  
+  nextTick(() => {
+    input.value = formatted
+    input.setSelectionRange(formatted.length, formatted.length)
+  })
+}
+
+
+function applyRecommendedText() {
+  if (recommendedTextOptions.value.length > 0 && selectedTextOptionIndex.value >= 0) {
+    const selectedOption = recommendedTextOptions.value[selectedTextOptionIndex.value]
+    if (selectedOption) {
+      designData.value.main_text = selectedOption.main_text || ''
+      designData.value.groom_father = selectedOption.groom_father || ''
+      designData.value.groom_mother = selectedOption.groom_mother || ''
+      designData.value.bride_father = selectedOption.bride_father || ''
+      designData.value.bride_mother = selectedOption.bride_mother || ''
+      designData.value.wedding_info = selectedOption.wedding_info || ''
+      designData.value.reception_info = selectedOption.reception_info || ''
+      designData.value.closing_text = selectedOption.closing_text || ''
+      showTextRecommendModal.value = false
+      showToast('추천 문구가 적용되었습니다.', { type: 'success' })
+    }
+  }
+}
+
 
 async function createDigitalInvitation() {
   if (!selectedDesignId.value) {
@@ -459,6 +705,75 @@ async function viewStatistics(invitationId: number) {
   }
 }
 
+function loadGoogleMapsAPI(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (window.google && window.google.maps && window.google.maps.places) {
+      resolve()
+      return
+    }
+
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+    if (!apiKey) {
+      console.warn('Google Maps API 키가 설정되지 않았습니다.')
+      resolve() // API 키가 없어도 계속 진행
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`
+    script.async = true
+    script.defer = true
+    script.onload = () => {
+      if (window.google && window.google.maps && window.google.maps.places) {
+        resolve()
+      } else {
+        reject(new Error('Google Maps API 로드 실패'))
+      }
+    }
+    script.onerror = () => reject(new Error('Google Maps API 스크립트 로드 실패'))
+    document.head.appendChild(script)
+  })
+}
+
+function initGooglePlacesAutocomplete() {
+  if (!locationInputRef.value) return
+
+  loadGoogleMapsAPI()
+    .then(() => {
+      if (window.google && window.google.maps && window.google.maps.places) {
+        const autocomplete = new window.google.maps.places.Autocomplete(
+          locationInputRef.value!,
+          {
+            componentRestrictions: { country: 'kr' }, // 한국만 검색
+            fields: ['formatted_address', 'geometry', 'name']
+          }
+        )
+
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace()
+          if (place.formatted_address) {
+            textRecommendForm.value.wedding_location = place.formatted_address
+          } else if (place.name) {
+            textRecommendForm.value.wedding_location = place.name
+          }
+        })
+      }
+    })
+    .catch((err) => {
+      console.error('Google Maps API 초기화 실패:', err)
+    })
+}
+
+// 모달이 열릴 때 Google Maps Autocomplete 초기화
+watch(showTextRecommendModal, async (isOpen: boolean) => {
+  if (isOpen) {
+    await nextTick()
+    setTimeout(() => {
+      initGooglePlacesAutocomplete()
+    }, 100) // 모달 애니메이션 후 초기화
+  }
+})
+
 onMounted(() => {
   fetchTemplates()
   if (canEdit.value) {
@@ -576,7 +891,13 @@ onMounted(() => {
           </button>
           <div class="editor-actions">
             <button class="btn-secondary" @click="showTextRecommendModal = true">
-              🤖 AI 문구 추천
+              🤖 기본 문구 추천
+            </button>
+            <button class="btn-secondary" @click="showTextRecommendModal = true; generateTones()">
+              🎨 5가지 톤 제안
+            </button>
+            <button class="btn-secondary" @click="showImageModal = true">
+              🖼️ AI 이미지 생성
             </button>
             <button class="btn-primary" @click="saveDesign">
               💾 저장
@@ -616,13 +937,23 @@ onMounted(() => {
             </div>
 
             <div class="form-group">
-              <label>신랑 부모님</label>
-              <input v-model="designData.groom_parents" type="text" placeholder="신랑 부모님 성함" />
+              <label>신랑 부</label>
+              <input v-model="designData.groom_father_name" type="text" placeholder="예: 김아버지" />
             </div>
 
             <div class="form-group">
-              <label>신부 부모님</label>
-              <input v-model="designData.bride_parents" type="text" placeholder="신부 부모님 성함" />
+              <label>신랑 모</label>
+              <input v-model="designData.groom_mother_name" type="text" placeholder="예: 박어머니" />
+            </div>
+
+            <div class="form-group">
+              <label>신부 부</label>
+              <input v-model="designData.bride_father_name" type="text" placeholder="예: 이아버지" />
+            </div>
+
+            <div class="form-group">
+              <label>신부 모</label>
+              <input v-model="designData.bride_mother_name" type="text" placeholder="예: 최어머니" />
             </div>
 
             <div class="form-group">
@@ -802,8 +1133,17 @@ onMounted(() => {
             <input v-model="textRecommendForm.bride_name" type="text" required />
           </div>
           <div class="form-group">
-            <label>예식일 (YYYY-MM-DD) *</label>
-            <input v-model="textRecommendForm.wedding_date" type="date" required />
+            <label>예식일 *</label>
+            <input
+              :value="textRecommendForm.wedding_date"
+              type="text"
+              required
+              placeholder="YYYY-MM-DD"
+              maxlength="10"
+              @keydown="handleDateKeydown($event, 'wedding_date')"
+              @input="handleDateInput($event, 'wedding_date')"
+              @paste="handleDatePaste($event, 'wedding_date')"
+            />
           </div>
           <div class="form-group">
             <label>예식 시간 (HH:MM)</label>
@@ -811,7 +1151,13 @@ onMounted(() => {
           </div>
           <div class="form-group">
             <label>예식 장소</label>
-            <input v-model="textRecommendForm.wedding_location" type="text" />
+            <input
+              id="wedding-location-input"
+              v-model="textRecommendForm.wedding_location"
+              type="text"
+              placeholder="장소를 검색하세요"
+              ref="locationInputRef"
+            />
           </div>
           <div class="form-group">
             <label>스타일</label>
@@ -838,17 +1184,129 @@ onMounted(() => {
           </button>
         </div>
 
-        <div v-if="recommendedText" class="recommended-text">
-          <h3>추천 문구</h3>
-          <div class="recommended-content">
-            <p><strong>주요 문구:</strong> {{ recommendedText.main_text }}</p>
-            <p><strong>신랑 부모님:</strong> {{ recommendedText.groom_parents }}</p>
-            <p><strong>신부 부모님:</strong> {{ recommendedText.bride_parents }}</p>
-            <p><strong>예식 정보:</strong> {{ recommendedText.wedding_info }}</p>
-            <p><strong>식장 정보:</strong> {{ recommendedText.reception_info }}</p>
-            <p><strong>마무리 문구:</strong> {{ recommendedText.closing_text }}</p>
+        <div v-if="recommendedTextOptions.length > 0" class="recommended-text">
+          <h3>추천 문구 ({{ recommendedTextOptions.length }}개 옵션)</h3>
+          
+          <!-- 옵션 탭 -->
+          <div class="text-options-tabs">
+            <button
+              v-for="(option, index) in recommendedTextOptions"
+              :key="index"
+              :class="['option-tab', { active: selectedTextOptionIndex === index }]"
+              @click="selectedTextOptionIndex = index"
+            >
+              옵션 {{ index + 1 }}
+            </button>
           </div>
-          <button class="btn-primary" @click="applyRecommendedText">적용하기</button>
+          
+          <!-- 선택된 옵션 표시 -->
+          <div v-if="recommendedTextOptions[selectedTextOptionIndex]" class="recommended-content">
+            <div class="option-content">
+              <p><strong>주요 문구:</strong></p>
+              <p class="text-preview">{{ recommendedTextOptions[selectedTextOptionIndex].main_text }}</p>
+              
+              <div v-if="recommendedTextOptions[selectedTextOptionIndex].groom_father || recommendedTextOptions[selectedTextOptionIndex].groom_mother">
+                <p><strong>신랑 부:</strong> {{ recommendedTextOptions[selectedTextOptionIndex].groom_father || '-' }}</p>
+                <p><strong>신랑 모:</strong> {{ recommendedTextOptions[selectedTextOptionIndex].groom_mother || '-' }}</p>
+              </div>
+              
+              <div v-if="recommendedTextOptions[selectedTextOptionIndex].bride_father || recommendedTextOptions[selectedTextOptionIndex].bride_mother">
+                <p><strong>신부 부:</strong> {{ recommendedTextOptions[selectedTextOptionIndex].bride_father || '-' }}</p>
+                <p><strong>신부 모:</strong> {{ recommendedTextOptions[selectedTextOptionIndex].bride_mother || '-' }}</p>
+              </div>
+              
+              <p><strong>예식 정보:</strong></p>
+              <p class="text-preview">{{ recommendedTextOptions[selectedTextOptionIndex].wedding_info }}</p>
+              
+              <p v-if="recommendedTextOptions[selectedTextOptionIndex].reception_info">
+                <strong>식장 정보:</strong> {{ recommendedTextOptions[selectedTextOptionIndex].reception_info }}
+              </p>
+              
+              <p><strong>마무리 문구:</strong></p>
+              <p class="text-preview">{{ recommendedTextOptions[selectedTextOptionIndex].closing_text }}</p>
+            </div>
+          </div>
+          
+          <div class="modal-actions">
+            <button class="btn-secondary" @click="showTextRecommendModal = false">닫기</button>
+            <button class="btn-primary" @click="applyRecommendedText">선택한 옵션 적용하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5가지 톤 선택 모달 -->
+    <div v-if="showToneModal" class="modal-overlay" @click.self="showToneModal = false">
+      <div class="modal-content tone-modal" style="max-width: 1200px;">
+        <h2>🎨 5가지 톤 선택</h2>
+        <p class="modal-subtitle">마음에 드는 톤을 선택하세요</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin: 2rem 0;">
+          <div
+            v-for="(tone, index) in generatedTones"
+            :key="index"
+            style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 1rem; cursor: pointer; transition: all 0.3s;"
+            @click="selectTone(tone)"
+            @mouseover="$event.currentTarget.style.borderColor='#667eea'"
+            @mouseleave="$event.currentTarget.style.borderColor='#e0e0e0'"
+          >
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+              <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold;">{{ index + 1 }}</span>
+              <h3 style="margin: 0;">{{ tone.description }}</h3>
+            </div>
+            <p style="margin: 0.5rem 0; white-space: pre-line; font-size: 0.95rem;">{{ tone.main_text }}</p>
+            <small style="color: #666;">{{ tone.wedding_info }}</small>
+          </div>
+        </div>
+        
+        <div class="modal-actions">
+          <button class="btn-secondary" @click="showToneModal = false">닫기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 이미지 생성 모달 -->
+    <div v-if="showImageModal" class="modal-overlay" @click.self="showImageModal = false">
+      <div class="modal-content image-modal" style="max-width: 800px;">
+        <h2>🖼️ AI 이미지 생성</h2>
+        <p class="modal-subtitle">청첩장 이미지를 생성합니다</p>
+        
+        <div class="modal-form">
+          <div class="form-group">
+            <label>모델 선택</label>
+            <select v-model="imageModel" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+              <option value="sdxl">SDXL (무료, 텍스트만)</option>
+              <option value="flux">FLUX (무료, 텍스트+이미지)</option>
+              <option value="gemini">Gemini 3.0 Pro (유료, 미구현)</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>이미지 설명 (영어로 입력) *</label>
+            <textarea
+              v-model="imagePrompt"
+              rows="4"
+              placeholder="예: Elegant wedding invitation card with soft pink flowers, romantic atmosphere, gold accents, minimalist design"
+              style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"
+            ></textarea>
+            <small style="color: #666;">💡 꽃, 색상, 스타일 등을 영어로 자세히 설명해주세요</small>
+          </div>
+          
+          <div v-if="generatedImage" style="margin-top: 1rem;">
+            <h4>생성된 이미지:</h4>
+            <img :src="generatedImage" alt="생성된 청첩장" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+          </div>
+        </div>
+        
+        <div class="modal-actions">
+          <button class="btn-secondary" @click="showImageModal = false">닫기</button>
+          <button 
+            class="btn-primary" 
+            @click="generateInvitationImage"
+            :disabled="imageGenerating || !imagePrompt"
+          >
+            {{ imageGenerating ? '생성 중...' : '✨ 이미지 생성' }}
+          </button>
         </div>
       </div>
     </div>
@@ -1147,6 +1605,34 @@ onMounted(() => {
   border-top: 1px solid var(--line, #e0e0e0);
 }
 
+.text-options-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+.option-tab {
+  padding: 8px 16px;
+  border: 1px solid var(--line, #e0e0e0);
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.option-tab:hover {
+  background: #f5f5f5;
+  border-color: var(--accent, #22d3ee);
+}
+
+.option-tab.active {
+  background: var(--accent, #22d3ee);
+  color: #fff;
+  border-color: var(--accent, #22d3ee);
+}
+
 .recommended-content {
   margin: 16px 0;
   padding: 16px;
@@ -1154,8 +1640,101 @@ onMounted(() => {
   border-radius: 6px;
 }
 
-.recommended-content p {
+.option-content {
+  margin: 16px 0;
+}
+
+.option-content p {
   margin: 8px 0;
+}
+
+.text-preview {
+  white-space: pre-line;
+  line-height: 1.6;
+  color: #333;
+  margin: 8px 0 16px 0;
+}
+
+.radio-group {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.radio-label input[type="radio"] {
+  cursor: pointer;
+}
+
+.image-preview-container {
+  position: relative;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+.preview-image {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 6px;
+  border: 1px solid var(--line, #e0e0e0);
+}
+
+.btn-remove-image {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ff4444;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.file-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--line, #e0e0e0);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.generated-design-preview {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.generated-design-preview h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+}
+
+.generated-image {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.design-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .digital-invitations-section {

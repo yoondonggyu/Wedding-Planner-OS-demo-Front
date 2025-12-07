@@ -1,0 +1,714 @@
+<template>
+  <div class="design-step">
+    <!-- 4-1. 초안 제공 (SD 1.5, FLUX-Schnell 두 모델로 생성) -->
+    <div class="draft-section">
+      <h3>🎨 초안 생성</h3>
+      <p class="section-description">
+        선택한 톤과 문구를 바탕으로 <strong>Stable Diffusion</strong>과 <strong>FLUX-Schnell</strong> 두 AI 모델이 청첩장 초안을 생성합니다.<br>
+        마음에 드는 초안을 선택해주세요.
+      </p>
+      <button class="generate-draft-btn" @click="generateDrafts" :disabled="loading">
+        {{ loading ? '초안 생성 중... (약 30초 소요)' : '🎨 초안 생성하기 (AI 모델 2종)' }}
+      </button>
+    </div>
+
+    <!-- 두 모델의 초안 표시 -->
+    <div v-if="sdxlDraftImage || fluxDraftImage" class="drafts-comparison">
+      <h3>🖼️ 생성된 초안 비교</h3>
+      <p class="comparison-note">두 AI 모델이 생성한 초안입니다. 마음에 드는 것을 선택하세요.</p>
+      
+      <div class="drafts-grid">
+        <!-- SD 1.5 초안 -->
+        <div 
+          v-if="sdxlDraftImage" 
+          class="draft-card"
+          :class="{ selected: selectedDraft === 'sdxl' }"
+          @click="selectDraft('sdxl', sdxlDraftImage)"
+        >
+          <div class="draft-badge">SD 1.5</div>
+          <div class="draft-image-wrapper">
+            <img :src="sdxlDraftImage" alt="SD 1.5 초안" />
+          </div>
+          <p class="model-name">Stable Diffusion 1.5</p>
+          <p class="model-desc">클래식 이미지 생성</p>
+        </div>
+        
+        <!-- FLUX-Schnell 초안 -->
+        <div 
+          v-if="fluxDraftImage" 
+          class="draft-card"
+          :class="{ selected: selectedDraft === 'flux' }"
+          @click="selectDraft('flux', fluxDraftImage)"
+        >
+          <div class="draft-badge flux">FLUX</div>
+          <div class="draft-image-wrapper">
+            <img :src="fluxDraftImage" alt="FLUX 초안" />
+          </div>
+          <p class="model-name">FLUX.1-schnell</p>
+          <p class="model-desc">빠른 AI 이미지 생성</p>
+        </div>
+      </div>
+      
+      <p v-if="selectedDraft" class="selected-info">
+        ✅ <strong>{{ selectedDraft === 'sdxl' ? 'SD 1.5' : 'FLUX-Schnell' }}</strong> 초안이 선택되었습니다.
+      </p>
+    </div>
+
+    <!-- 4-2. 스타일 선택 (초안 선택 후 활성화) -->
+    <div v-if="selectedDraft" class="style-selection">
+      <h3>원하는 스타일 선택</h3>
+      <div class="style-options">
+        <label
+          v-for="style in styles"
+          :key="style.value"
+          class="style-option"
+          :class="{ selected: selectedStyle === style.value }"
+        >
+          <input type="radio" v-model="selectedStyle" :value="style.value" />
+          <div class="style-content">
+            <span class="style-icon">{{ style.icon }}</span>
+            <span class="style-name">{{ style.name }}</span>
+            <span class="style-desc">{{ style.description }}</span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 4-3. 추가 요청 입력 -->
+    <div v-if="selectedDraft && selectedStyle" class="additional-request">
+      <h3>추가 요청 (선택사항)</h3>
+      <p class="section-description">
+        원하는 디자인 변경사항을 텍스트로 입력해주세요.
+      </p>
+      <textarea
+        v-model="additionalRequest"
+        rows="4"
+        placeholder="예: 색상을 더 밝게, 꽃 장식을 추가, 레이아웃을 더 넓게"
+        class="request-input"
+      ></textarea>
+    </div>
+
+    <!-- 4-4. 이미지 생성 -->
+    <div v-if="selectedDraft && selectedStyle" class="generate-section">
+      <h3>✨ 최종 이미지 생성</h3>
+      <p class="section-description">
+        선택한 <strong>{{ selectedDraft === 'sdxl' ? 'SD 1.5' : 'FLUX-Schnell' }}</strong> 모델로 최종 이미지를 생성합니다.
+      </p>
+
+      <button
+        class="generate-final-btn"
+        @click="generateFinalImage"
+        :disabled="loading || !selectedStyle"
+      >
+        {{ loading ? '생성 중...' : `🎨 ${selectedDraft === 'sdxl' ? 'SD 1.5' : 'FLUX-Schnell'}로 최종 이미지 생성하기` }}
+      </button>
+    </div>
+
+    <!-- 생성된 최종 이미지 -->
+    <div v-if="finalImage" class="final-result">
+      <h3>생성된 최종 디자인</h3>
+      <div class="final-image">
+        <img :src="finalImage" alt="최종 청첩장" />
+      </div>
+      <div class="result-actions">
+        <button class="next-btn" @click="handleNext">
+          ✨ 다음 단계: 커스텀하기
+        </button>
+        <button class="regenerate-btn" @click="handleRegenerate">
+          🔄 다시 생성하기
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import type { InvitationBasicInfo } from '@/services/invitationService'
+
+interface Props {
+  selectedText: string
+  selectedTone: string
+  basicInfo?: InvitationBasicInfo
+}
+
+const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  generate: [data: { image: string; prompt: string; style: string; additionalRequest: string }]
+  next: []
+}>()
+
+const loading = ref(false)
+const draftGenerated = ref(false)
+const sdxlDraftImage = ref('')
+const fluxDraftImage = ref('')
+const selectedDraft = ref<'sdxl' | 'flux' | ''>('')
+const draftImage = ref('')  // 선택된 초안 이미지
+const selectedStyle = ref('')
+const additionalRequest = ref('')
+const modelType = ref<'sdxl' | 'flux'>('sdxl')
+const finalImage = ref('')
+
+const styles = [
+  { value: 'CLASSIC', name: '클래식', icon: '🎩', description: '전통적이고 우아한 스타일' },
+  { value: 'MODERN', name: '모던', icon: '✨', description: '현대적이고 세련된 스타일' },
+  { value: 'VINTAGE', name: '빈티지', icon: '🌹', description: '빈티지하고 로맨틱한 스타일' }
+]
+
+// 초안 선택
+const selectDraft = (model: 'sdxl' | 'flux', image: string) => {
+  selectedDraft.value = model
+  draftImage.value = image
+  modelType.value = model  // 선택한 모델을 최종 이미지 생성에도 사용
+}
+
+// 두 모델로 초안 동시 생성
+const generateDrafts = async () => {
+  loading.value = true
+  sdxlDraftImage.value = ''
+  fluxDraftImage.value = ''
+  selectedDraft.value = ''
+  draftImage.value = ''
+  
+  const draftPrompt = `Beautiful wedding invitation card, elegant floral border, soft pastel colors, ${props.selectedTone || 'warm and romantic'} mood, minimalist design, high quality, professional invitation design`
+  
+  // SDXL과 FLUX 두 모델을 병렬로 호출
+  const generateWithModel = async (model: string): Promise<string | null> => {
+    try {
+      const response = await fetch('http://localhost:8102/api/image/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: draftPrompt,
+          model: model
+        })
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`${model} 생성 실패:`, errorText)
+        return null
+      }
+      
+      const result = await response.json()
+      if (result.data && result.data.image_b64) {
+        return result.data.image_b64
+      }
+      return null
+    } catch (error) {
+      console.error(`${model} 생성 에러:`, error)
+      return null
+    }
+  }
+  
+  try {
+    // 병렬로 두 모델 호출 (sd15, flux-schnell 사용)
+    const [sdxlResult, fluxResult] = await Promise.all([
+      generateWithModel('sd15'),          // Stable Diffusion 1.5 (무료)
+      generateWithModel('flux-schnell')   // FLUX.1-schnell (무료, 빠른 생성)
+    ])
+    
+    if (sdxlResult) {
+      sdxlDraftImage.value = sdxlResult
+    }
+    
+    if (fluxResult) {
+      fluxDraftImage.value = fluxResult
+    }
+    
+    // 적어도 하나가 성공하면 완료
+    if (sdxlResult || fluxResult) {
+      draftGenerated.value = true
+      
+      // 하나만 성공했으면 자동 선택
+      if (sdxlResult && !fluxResult) {
+        selectDraft('sdxl', sdxlResult)
+      } else if (!sdxlResult && fluxResult) {
+        selectDraft('flux', fluxResult)
+      }
+    } else {
+      alert('두 모델 모두 초안 생성에 실패했습니다. 다시 시도해주세요.')
+    }
+  } catch (error) {
+    console.error('초안 생성 실패:', error)
+    alert('초안 생성에 실패했습니다. 다시 시도해주세요.')
+  } finally {
+    loading.value = false
+  }
+}
+
+const generateFinalImage = () => {
+  if (!selectedStyle.value) {
+    alert('스타일을 선택해주세요.')
+    return
+  }
+
+  // 프롬프트 생성
+  const prompt = generatePrompt()
+
+  emit('generate', {
+    image: draftImage.value,
+    prompt: prompt,
+    style: selectedStyle.value,
+    additionalRequest: additionalRequest.value
+  })
+}
+
+const generatePrompt = (): string => {
+  let prompt = `Elegant wedding invitation card design, ${selectedStyle.value.toLowerCase()} style`
+  
+  if (props.selectedTone) {
+    const toneMap: Record<string, string> = {
+      'affectionate': 'warm, tender, loving',
+      'cheerful': 'bright, joyful, energetic',
+      'polite': 'respectful, courteous, traditional',
+      'formal': 'dignified, elegant, ceremonial',
+      'emotional': 'touching, heartfelt, sentimental'
+    }
+    prompt += `, ${toneMap[props.selectedTone] || props.selectedTone} tone`
+  }
+
+  if (additionalRequest.value) {
+    prompt += `, ${convertToEnglish(additionalRequest.value)}`
+  }
+
+  if (props.basicInfo) {
+    if (props.basicInfo.groom_name && props.basicInfo.bride_name) {
+      prompt += `, for ${props.basicInfo.groom_name} and ${props.basicInfo.bride_name}`
+    }
+  }
+
+  prompt += ', high quality, professional design, beautiful typography'
+  
+  return prompt
+}
+
+const convertToEnglish = (korean: string): string => {
+  const translations: Record<string, string> = {
+    '더 밝게': 'brighter',
+    '더 어둡게': 'darker',
+    '추가': 'add',
+    '제거': 'remove',
+    '색상': 'color',
+    '꽃': 'flowers',
+    '장식': 'decoration',
+    '레이아웃': 'layout',
+    '넓게': 'wider',
+    '좁게': 'narrower'
+  }
+
+  let result = korean
+  for (const [ko, en] of Object.entries(translations)) {
+    result = result.replace(new RegExp(ko, 'g'), en)
+  }
+  return result
+}
+
+const handleNext = () => {
+  if (!finalImage.value) {
+    alert('먼저 최종 이미지를 생성해주세요.')
+    return
+  }
+  emit('next')
+}
+
+const handleRegenerate = () => {
+  finalImage.value = ''
+  selectedStyle.value = ''
+  additionalRequest.value = ''
+}
+
+// 부모로부터 생성된 이미지 받기
+defineExpose({
+  setFinalImage: (image: string) => {
+    finalImage.value = image
+  },
+  setLoading: (value: boolean) => {
+    loading.value = value
+  }
+})
+</script>
+
+<style scoped>
+.design-step {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.draft-section,
+.style-selection,
+.additional-request,
+.generate-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.draft-section h3,
+.style-selection h3,
+.additional-request h3,
+.generate-section h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.section-description {
+  color: #6c757d;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.generate-draft-btn {
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.generate-draft-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.generate-draft-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 초안 비교 그리드 */
+.drafts-comparison {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #667eea;
+}
+
+.drafts-comparison h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+  color: #495057;
+  text-align: center;
+}
+
+.comparison-note {
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.drafts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.draft-card {
+  position: relative;
+  background: #f8f9fa;
+  border: 3px solid #dee2e6;
+  border-radius: 16px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.draft-card:hover {
+  border-color: #667eea;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+}
+
+.draft-card.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #f0f2ff 0%, #e8ebff 100%);
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+}
+
+.draft-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.4rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.draft-badge.flux {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 4px 12px rgba(240, 147, 251, 0.4);
+}
+
+.draft-image-wrapper {
+  margin: 1rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.draft-image-wrapper img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.model-name {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1.1rem;
+  margin: 0.5rem 0 0.25rem 0;
+}
+
+.model-desc {
+  color: #6c757d;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.selected-info {
+  text-align: center;
+  color: #28a745;
+  font-size: 1rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #d4edda;
+  border-radius: 8px;
+}
+
+.style-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.style-option {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.style-option:hover {
+  border-color: #667eea;
+}
+
+.style-option.selected {
+  border-color: #667eea;
+  background: #f0f2ff;
+}
+
+.style-option input[type="radio"] {
+  margin-right: 1rem;
+}
+
+.style-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.style-icon {
+  font-size: 2rem;
+}
+
+.style-name {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.style-desc {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.request-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.request-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.model-selection {
+  margin: 1rem 0;
+}
+
+.model-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.model-option {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.model-option:hover {
+  border-color: #667eea;
+}
+
+.model-option.selected {
+  border-color: #667eea;
+  background: #f0f2ff;
+}
+
+.model-option input[type="radio"] {
+  margin-right: 1rem;
+}
+
+.option-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.option-title {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.25rem;
+}
+
+.option-desc {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.generate-final-btn {
+  width: 100%;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  margin-top: 1rem;
+}
+
+.generate-final-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.generate-final-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.final-result {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.final-result h3 {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  color: #495057;
+}
+
+.final-image {
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.final-image img {
+  max-width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.result-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.next-btn,
+.regenerate-btn {
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.next-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+}
+
+.next-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(240, 147, 251, 0.6);
+}
+
+.regenerate-btn {
+  background: #6c757d;
+  color: white;
+}
+
+.regenerate-btn:hover {
+  background: #5a6268;
+}
+
+@media (max-width: 768px) {
+  .style-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .model-options {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+

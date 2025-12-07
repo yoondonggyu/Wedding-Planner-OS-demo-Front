@@ -91,3 +91,38 @@ export async function apiFetch<T = any>(
   return payload as T
 }
 
+// axios 스타일 클라이언트 객체 (default export)
+const apiClient = {
+  async get<T = any>(endpoint: string, options: Omit<ApiFetchOptions, 'method' | 'body'> = {}) {
+    const token = localStorage.getItem('wedding_token')
+    const response = await apiFetch<T>(endpoint, { ...options, method: 'GET', token })
+    return { data: response }
+  },
+
+  async post<T = any>(endpoint: string, body?: any, options: Omit<ApiFetchOptions, 'method' | 'body'> = {}) {
+    const token = localStorage.getItem('wedding_token')
+    const response = await apiFetch<T>(endpoint, { ...options, method: 'POST', body, token })
+    return { data: response }
+  },
+
+  async put<T = any>(endpoint: string, body?: any, options: Omit<ApiFetchOptions, 'method' | 'body'> = {}) {
+    const token = localStorage.getItem('wedding_token')
+    const response = await apiFetch<T>(endpoint, { ...options, method: 'PUT', body, token })
+    return { data: response }
+  },
+
+  async patch<T = any>(endpoint: string, body?: any, options: Omit<ApiFetchOptions, 'method' | 'body'> = {}) {
+    const token = localStorage.getItem('wedding_token')
+    const response = await apiFetch<T>(endpoint, { ...options, method: 'PATCH', body, token })
+    return { data: response }
+  },
+
+  async delete<T = any>(endpoint: string, options: Omit<ApiFetchOptions, 'method' | 'body'> = {}) {
+    const token = localStorage.getItem('wedding_token')
+    const response = await apiFetch<T>(endpoint, { ...options, method: 'DELETE', token })
+    return { data: response }
+  }
+}
+
+export default apiClient
+
