@@ -585,7 +585,14 @@ const handleNextFromDesign = () => {
 }
 
 // Step 4: 커스텀 (이미지 수정)
-const handleImageModifyPro = async (data: { image: string; prompt: string; textRequirements: string; model: string }) => {
+const handleImageModifyPro = async (data: { 
+  image: string
+  prompt: string
+  textRequirements: string
+  model: string
+  personImageB64?: string
+  styleImagesB64?: string[]
+}) => {
   if (!designId.value) {
     alert('디자인 정보가 없습니다.')
     return
@@ -607,7 +614,9 @@ const handleImageModifyPro = async (data: { image: string; prompt: string; textR
       modification_prompt: data.prompt,
       model: data.model, // 선택한 모델 사용
       // 하위 호환성을 위해 model_type도 설정 (model이 있으면 무시됨)
-      model_type: data.model === 'gemini' ? 'pro' : 'free'
+      model_type: data.model === 'gemini' ? 'pro' : 'free',
+      person_image_b64: data.personImageB64,
+      style_images_b64: data.styleImagesB64
     })
     
     const imageB64 = response.data.image_b64

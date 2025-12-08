@@ -68,20 +68,55 @@
         <p class="hint">한국어로 자세히 설명해주세요.</p>
       </div>
 
-      <!-- 이미지 참고 (선택사항) -->
+      <!-- 인물 사진 업로드 (선택사항) -->
       <div class="reference-image-section">
-        <h4>참고 이미지 업로드 (선택사항)</h4>
-        <p class="sub-hint">원하는 스타일의 참고 이미지를 업로드하면 더 정확한 수정이 가능합니다.</p>
+        <h4>👤 인물 사진 업로드 (선택사항, 1장)</h4>
+        <p class="sub-hint">청첩장에 들어갈 인물 사진을 1장 업로드해주세요. AI가 배경을 제거하고 디자인에 합성합니다.</p>
         <div class="image-upload">
           <input
             type="file"
             accept="image/*"
-            @change="handleReferenceImageUpload"
-            ref="referenceFileInput"
+            @change="handlePersonImageUpload"
+            ref="personImageInput"
+            id="person-image-input"
           />
-          <div v-if="referenceImagePreview" class="image-preview">
-            <img :src="referenceImagePreview" alt="참고 이미지" />
-            <button @click="clearReferenceImage" class="clear-btn">× 삭제</button>
+          <label for="person-image-input" class="upload-label">
+            <span v-if="!personImage">📷 인물 사진 선택</span>
+            <span v-else>✅ 인물 사진 선택됨</span>
+          </label>
+          <div v-if="personImage" class="image-preview">
+            <img :src="personImage" alt="인물 사진" />
+            <button @click="removePersonImage" class="clear-btn">× 삭제</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 스타일 참고 사진 업로드 (선택사항) -->
+      <div class="reference-image-section">
+        <h4>🎨 스타일 참고 사진 업로드 (선택사항, 최대 3장)</h4>
+        <p class="sub-hint">원하는 청첩장 분위기나 스타일을 참고할 사진을 최대 3장까지 업로드해주세요.</p>
+        <div class="image-upload">
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            @change="handleStyleImagesUpload"
+            ref="styleImagesInput"
+            id="style-images-input"
+          />
+          <label for="style-images-input" class="upload-label">
+            <span v-if="styleImages.length === 0">🖼️ 스타일 사진 선택 (최대 3장)</span>
+            <span v-else>✅ {{ styleImages.length }}장 선택됨</span>
+          </label>
+          <div v-if="styleImages.length > 0" class="image-preview-grid">
+            <div
+              v-for="(img, index) in styleImages"
+              :key="index"
+              class="image-preview-item"
+            >
+              <img :src="img" :alt="`스타일 사진 ${index + 1}`" />
+              <button @click="removeStyleImage(index)" class="clear-btn">×</button>
+            </div>
           </div>
         </div>
       </div>
@@ -185,7 +220,14 @@ interface Props {
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  modify: [data: { image: string; prompt: string; textRequirements: string; model: string }]
+  modify: [data: { 
+    image: string
+    prompt: string
+    textRequirements: string
+    model: string
+    personImageB64?: string
+    styleImagesB64?: string[]
+  }]
   skip: []
   save: [image: string]
 }>()
@@ -197,6 +239,12 @@ const referenceImagePreview = ref('')
 const referenceImageB64 = ref('')
 const modifiedImage = ref('')
 const referenceFileInput = ref<HTMLInputElement>()
+
+// 인물 사진 및 스타일 사진 업로드
+const personImageInput = ref<HTMLInputElement | null>(null)
+const styleImagesInput = ref<HTMLInputElement | null>(null)
+const personImage = ref<string | null>(null)
+const styleImages = ref<string[]>([])
 
 // 이미지 선택 관련
 const selectedImages = ref<string[]>(['after']) // 기본값: 수정 후 이미지 선택
@@ -230,6 +278,57 @@ const clearReferenceImage = () => {
   referenceImageB64.value = ''
   if (referenceFileInput.value) {
     referenceFileInput.value.value = ''
+  }
+}
+
+// 인물 사진 업로드 핸들러
+const handlePersonImageUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      personImage.value = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+// 스타일 사진 업로드 핸들러
+const handleStyleImagesUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const files = target.files
+  if (files) {
+    const newImages: string[] = []
+    const maxImages = Math.min(3, files.length)
+    
+    for (let i = 0; i < maxImages; i++) {
+      const file = files[i]
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        newImages.push(e.target?.result as string)
+        if (newImages.length === maxImages) {
+          styleImages.value = newImages
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+}
+
+// 인물 사진 제거
+const removePersonImage = () => {
+  personImage.value = null
+  if (personImageInput.value) {
+    personImageInput.value.value = ''
+  }
+}
+
+// 스타일 사진 제거
+const removeStyleImage = (index: number) => {
+  styleImages.value.splice(index, 1)
+  if (styleImagesInput.value) {
+    styleImagesInput.value.value = ''
   }
 }
 
@@ -309,7 +408,9 @@ const handleModify = () => {
     image: props.baseImage,
     prompt: prompt,
     textRequirements: textRequirements.value,
-    model: selectedModel.value
+    model: selectedModel.value,
+    personImageB64: personImage.value || undefined,
+    styleImagesB64: styleImages.value.length > 0 ? styleImages.value : undefined
   })
 }
 
@@ -636,19 +737,57 @@ defineExpose({
 }
 
 .image-upload input[type="file"] {
-  display: block;
-  margin-bottom: 1rem;
+  display: none;
+}
+
+.upload-label {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.upload-label:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .image-preview {
   position: relative;
   display: inline-block;
+  margin-top: 1rem;
 }
 
 .image-preview img {
   max-width: 300px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.image-preview-item {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #dee2e6;
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .clear-btn {

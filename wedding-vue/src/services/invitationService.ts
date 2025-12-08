@@ -76,6 +76,8 @@ export const invitationService = {
         modification_prompt: string
         model_type?: 'free' | 'pro'
         model?: string  // 선택한 모델명 (예: "flux", "gemini")
+        person_image_b64?: string  // 인물 사진 (base64)
+        style_images_b64?: string[]  // 스타일 참고 사진 (base64 리스트)
     }) {
         const response = await apiClient.post('/invitation-image-modify', data)
         return response.data
