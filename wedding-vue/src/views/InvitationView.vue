@@ -44,7 +44,7 @@
           <p>⚠️ 먼저 기본 정보를 입력해주세요.</p>
           <button class="back-btn" @click="showBasicInfoModal = true">기본 정보 입력하기</button>
         </div>
-        <InvitationRequirementsForm v-else @submit="handleRequirementsSubmit" />
+        <InvitationRequirementsForm v-else :basic-info="basicInfo" @submit="handleRequirementsSubmit" />
       </div>
 
       <!-- Step 2: 톤 선택 (자동 제안) -->
@@ -398,8 +398,15 @@ const loadTones = async () => {
     console.log('📥 톤 생성 응답:', response)
     console.log('tones 배열:', response.data?.tones)
     
-    tones.value = response.data.tones
-    console.log('✅ tones.value 설정됨:', tones.value)
+    // 배열이 제대로 전달되는지 확인
+    if (response.data?.tones && Array.isArray(response.data.tones)) {
+      tones.value = response.data.tones
+      console.log('✅ tones.value 설정됨:', tones.value.length, '개')
+      console.log('톤 목록:', tones.value.map(t => t.description || t.tone))
+    } else {
+      console.error('❌ tones 데이터 형식 오류:', response.data)
+      alert('톤 데이터 형식이 올바르지 않습니다.')
+    }
   } catch (error) {
     console.error('❌ 톤 생성 실패:', error)
     alert('톤 생성에 실패했습니다.')
@@ -487,10 +494,11 @@ const handleImageGenerate = async (data: { image: string; prompt: string; style:
   
   try {
     // 선택한 모델로 이미지 생성
-    const selectedModel = data.model || 'gemini' // 기본값: Gemini 3 Pro
+    const selectedModel = data.model || 'gemini' // 기본값: Gemini 3 Pro Image Preview
     
     // 모델에 따라 model_type 결정 (하위 호환성)
-    const modelType = (selectedModel === 'gemini') ? 'pro' : 'free'
+    // Gemini 모델은 pro, 나머지는 free
+    const modelType = selectedModel === 'gemini' ? 'pro' : 'free'
     
     const response = await invitationService.generateImage({
       design_id: designId.value!,

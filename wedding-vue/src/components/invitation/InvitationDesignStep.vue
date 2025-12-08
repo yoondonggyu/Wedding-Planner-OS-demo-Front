@@ -8,13 +8,13 @@
       </p>
       
       <div class="model-cards">
-        <!-- Gemini 3 Pro (활성화) -->
+        <!-- Gemini 3 Pro Image Preview (활성화) -->
         <div class="model-card active" @click="selectModel('gemini')">
           <div class="model-card-header">
-            <h4>Gemini 3 Pro</h4>
+            <h4>Gemini 3 Pro Image Preview</h4>
             <span class="premium-badge">유료</span>
           </div>
-          <p class="model-description">Google의 최신 AI 모델로 고품질 이미지 생성</p>
+          <p class="model-description">Google의 최신 Gemini 모델로 고품질 이미지 생성</p>
           <div class="model-status">
             <span class="status-badge active">사용 가능</span>
           </div>
@@ -161,7 +161,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  generate: [data: { image: string; prompt: string; style: string; additionalRequest: string }]
+  generate: [data: { image: string; prompt: string; style: string; additionalRequest: string; model: string }]
 }>()
 
 const loading = ref(false)
@@ -174,7 +174,7 @@ const selectedStyle = ref('')
 const additionalRequest = ref('')
 const modelType = ref<'sd15' | 'flux'>('sd15')
 const finalImage = ref('')
-const selectedModel = ref('gemini') // 기본값: Gemini 3 Pro
+const selectedModel = ref('gemini') // 기본값: Gemini 3 Pro Image Preview
 
 const styles = [
   { value: 'CLASSIC', name: '클래식', icon: '🎩', description: '전통적이고 우아한 스타일' },
@@ -192,13 +192,13 @@ const selectModel = (modelId: string) => {
 // 모델명 가져오기 함수
 const getModelName = (modelId: string): string => {
   const modelNames: Record<string, string> = {
-    'gemini': 'Gemini 3 Pro',
+    'gemini': 'Gemini 3 Pro Image Preview',
     'flux': 'FLUX.2-dev',
     'flux-schnell': 'FLUX.1-schnell',
     'sdxl': 'Stable Diffusion XL',
     'sd15': 'Stable Diffusion 1.5'
   }
-  return modelNames[modelId] || 'Gemini 3 Pro'
+  return modelNames[modelId] || 'Gemini 3 Pro Image Preview'
 }
 
 // 초안 선택
@@ -418,6 +418,12 @@ defineExpose({
   border-color: #667eea;
   background: #f0f2ff;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.model-card.active.selected {
+  border-color: #667eea;
+  background: #e8ebff;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
 .model-card.disabled {

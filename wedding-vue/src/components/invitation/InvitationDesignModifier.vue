@@ -2,7 +2,7 @@
   <div class="design-modifier">
     <div class="pro-service-badge">
       <span class="badge-icon">✨</span>
-      <span class="badge-text">Gemini 3.0 Pro 유료 서비스</span>
+      <span class="badge-text">Gemini 3 Pro Image Preview 유료 서비스</span>
       <span v-if="remainingCount !== undefined" class="remaining-count">
         남은 횟수: {{ remainingCount }}회
       </span>
