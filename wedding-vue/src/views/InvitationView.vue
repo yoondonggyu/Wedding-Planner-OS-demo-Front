@@ -155,11 +155,31 @@
       <div v-if="currentStep === 5" class="step-content completion">
         <div class="success-message">
           <h2>🎉 청첩장이 완성되었습니다!</h2>
-          <p>디자인 ID: {{ designId }}</p>
+          <p class="success-subtitle">아래에서 완성된 청첩장을 확인하고 다운로드하세요.</p>
+          
+          <!-- 완성된 이미지 미리보기 -->
+          <div class="final-image-preview" v-if="generatedImageUrl">
+            <img :src="generatedImageUrl" alt="완성된 청첩장" />
+          </div>
+          
+          <!-- 다운로드 버튼들 -->
+          <div class="download-section">
+            <h3>📥 이미지 다운로드</h3>
+            <p class="download-hint">PC 또는 휴대폰에 이미지를 저장할 수 있습니다.</p>
+            <div class="download-buttons">
+              <button class="download-btn png" @click="downloadImage('png')">
+                🖼️ PNG로 다운로드
+              </button>
+              <button class="download-btn jpeg" @click="downloadImage('jpeg')">
+                📷 JPEG로 다운로드
+              </button>
+            </div>
+          </div>
+          
+          <!-- 기타 액션 버튼 -->
           <div class="completion-actions">
-            <button class="view-btn" @click="viewDesign">청첩장 보기</button>
-            <button class="list-btn" @click="goToList">목록으로</button>
-            <button class="new-btn" @click="createNew">새로 만들기</button>
+            <button class="list-btn" @click="goToList">📋 목록으로</button>
+            <button class="new-btn" @click="createNew">✨ 새로 만들기</button>
           </div>
         </div>
       </div>
@@ -215,6 +235,7 @@ const selectedTone = ref<ToneOption | null>(null)
 // Step 3 data (디자인 생성)
 const designGenerator = ref<InstanceType<typeof InvitationDesignStep>>()
 const generatedImageUrl = ref('')
+const originalGeneratedImageUrl = ref('') // 원본 이미지 보존용
 const designRequirements = ref('')
 
 // Step 4 data (커스텀)
@@ -513,6 +534,7 @@ const handleImageGenerate = async (data: { image: string; prompt: string; style:
     const imageB64 = response.data.image_b64
     designGenerator.value?.setFinalImage(imageB64)
     generatedImageUrl.value = imageB64
+    originalGeneratedImageUrl.value = imageB64 // 원본 이미지 보존
     
     // Step 3 완료 표시 (이미지 생성 완료 시)
     stepCompleted.value.step3 = true
@@ -590,7 +612,8 @@ const handleImageModifyPro = async (data: { image: string; prompt: string; textR
     
     const imageB64 = response.data.image_b64
     designModifier.value?.setGeneratedImage(imageB64)
-    generatedImageUrl.value = imageB64
+    // generatedImageUrl은 원본 유지, 수정된 이미지는 InvitationDesignModifier에서 관리
+    // generatedImageUrl.value = imageB64  // 원본 유지를 위해 주석 처리
     
     // 사용 횟수 차감
     const today = new Date().toDateString()
@@ -619,11 +642,21 @@ const handleSkipModify = () => {
 // Step 4/5: 이미지 저장 및 완료
 const handleImageSave = async (image: string) => {
   if (!designId.value) {
-    alert('디자인 정보가 없습니다.')
+    alert('디자인 정보가 없습니다. 새로고침 후 다시 시도해주세요.')
+    return
+  }
+
+  if (!image) {
+    alert('저장할 이미지가 없습니다.')
     return
   }
 
   try {
+    console.log('저장 시작:', { designId: designId.value, imageLength: image.length })
+    
+    // 최종 이미지 URL 저장 (generatedImageUrl 업데이트)
+    generatedImageUrl.value = image
+    
     await invitationService.updateDesign(designId.value, {
       design_data: {
         ...basicInfo.value,
@@ -635,17 +668,87 @@ const handleImageSave = async (image: string) => {
       status: 'COMPLETED'
     })
     
+    console.log('저장 성공!')
     currentStep.value = 5
-  } catch (error) {
+  } catch (error: any) {
     console.error('저장 실패:', error)
-    alert('저장에 실패했습니다.')
+    console.error('에러 상세:', {
+      message: error?.message,
+      response: error?.response?.data,
+      status: error?.response?.status
+    })
+    
+    let errorMessage = '저장에 실패했습니다.'
+    if (error?.response?.data?.detail) {
+      errorMessage = `저장 실패: ${error.response.data.detail}`
+    } else if (error?.response?.data?.message) {
+      errorMessage = `저장 실패: ${error.response.data.message}`
+    } else if (error?.message) {
+      errorMessage = `저장 실패: ${error.message}`
+    }
+    
+    alert(errorMessage)
   }
 }
 
 // Step 5: 완료 후 액션
-const viewDesign = () => {
-  if (designId.value) {
-    router.push(`/invitation/${designId.value}`)
+
+// 이미지 다운로드 함수
+const downloadImage = (format: 'png' | 'jpeg') => {
+  if (!generatedImageUrl.value) {
+    alert('다운로드할 이미지가 없습니다.')
+    return
+  }
+  
+  try {
+    // base64 데이터 URL에서 실제 데이터 추출
+    const imageData = generatedImageUrl.value
+    
+    // 파일명 생성 (신랑_신부_청첩장_날짜)
+    const groomName = basicInfo.value?.groom_name || '신랑'
+    const brideName = basicInfo.value?.bride_name || '신부'
+    const today = new Date().toISOString().split('T')[0]
+    const fileName = `${groomName}_${brideName}_청첩장_${today}.${format}`
+    
+    // 다운로드 링크 생성
+    const link = document.createElement('a')
+    
+    if (format === 'jpeg' && imageData.includes('image/png')) {
+      // PNG를 JPEG로 변환해야 하는 경우
+      const canvas = document.createElement('canvas')
+      const img = new Image()
+      img.onload = () => {
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          // 흰색 배경 (JPEG는 투명도 미지원)
+          ctx.fillStyle = '#FFFFFF'
+          ctx.fillRect(0, 0, canvas.width, canvas.height)
+          ctx.drawImage(img, 0, 0)
+          
+          const jpegData = canvas.toDataURL('image/jpeg', 0.95)
+          link.href = jpegData
+          link.download = fileName
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+        }
+      }
+      img.src = imageData
+    } else {
+      // 원본 형식 그대로 다운로드
+      link.href = imageData
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
+    
+    console.log(`이미지 다운로드: ${fileName}`)
+  } catch (error) {
+    console.error('다운로드 실패:', error)
+    alert('이미지 다운로드에 실패했습니다. 다시 시도해주세요.')
   }
 }
 
@@ -659,6 +762,7 @@ const createNew = () => {
   tones.value = []
   selectedTone.value = null
   generatedImageUrl.value = ''
+  originalGeneratedImageUrl.value = '' // 원본 이미지도 초기화
   designRequirements.value = ''
   designId.value = undefined
   
@@ -939,18 +1043,95 @@ h1 {
 
 .completion {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .success-message h2 {
   font-size: 2rem;
   color: #28a745;
+  margin-bottom: 0.5rem;
+}
+
+.success-subtitle {
+  color: #6c757d;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+/* 완성된 이미지 미리보기 */
+.final-image-preview {
+  margin: 1.5rem auto;
+  max-width: 500px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.final-image-preview img {
+  width: 100%;
+  display: block;
+}
+
+/* 다운로드 섹션 */
+.download-section {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 16px;
+}
+
+.download-section h3 {
+  font-size: 1.3rem;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.download-hint {
+  color: #6c757d;
+  font-size: 0.95rem;
   margin-bottom: 1rem;
 }
 
-.success-message p {
-  color: #6c757d;
-  margin-bottom: 2rem;
+.download-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.download-btn {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 180px;
+}
+
+.download-btn.png {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.download-btn.png:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.download-btn.jpeg {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+}
+
+.download-btn.jpeg:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(240, 147, 251, 0.6);
 }
 
 .completion-actions {
@@ -958,9 +1139,11 @@ h1 {
   justify-content: center;
   gap: 1rem;
   flex-wrap: wrap;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #dee2e6;
 }
 
-.view-btn,
 .list-btn,
 .new-btn {
   padding: 0.75rem 2rem;
@@ -970,16 +1153,17 @@ h1 {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
-}
-
-.view-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  min-width: 150px;
 }
 
 .list-btn {
   background: #28a745;
   color: white;
+}
+
+.list-btn:hover {
+  background: #218838;
+  transform: translateY(-2px);
 }
 
 .new-btn {
@@ -1003,6 +1187,58 @@ h1 {
   .step-actions {
     flex-direction: column;
     gap: 1rem;
+  }
+  
+  /* 완료 화면 반응형 */
+  .completion {
+    padding: 1rem;
+  }
+  
+  .success-message h2 {
+    font-size: 1.5rem;
+  }
+  
+  .final-image-preview {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+  
+  .download-section {
+    padding: 1rem;
+  }
+  
+  .download-buttons {
+    flex-direction: column;
+  }
+  
+  .download-btn {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .completion-actions {
+    flex-direction: column;
+  }
+  
+  .list-btn,
+  .new-btn {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+/* 작은 모바일 */
+@media (max-width: 480px) {
+  .success-message h2 {
+    font-size: 1.3rem;
+  }
+  
+  .success-subtitle {
+    font-size: 0.95rem;
+  }
+  
+  .download-section h3 {
+    font-size: 1.1rem;
   }
 }
 </style>

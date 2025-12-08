@@ -106,23 +106,63 @@
 
     <!-- 수정된 이미지 -->
     <div v-if="modifiedImage" class="modified-section">
-      <h3>수정된 디자인</h3>
+      <h3>디자인 선택</h3>
+      <p class="selection-hint">저장할 디자인을 선택해주세요. 여러 개를 선택하면 둘 다 저장됩니다.</p>
+      
       <div class="comparison">
         <div class="image-comparison">
-          <div class="comparison-item">
-            <p class="comparison-label">수정 전</p>
+          <!-- 수정 전 이미지 -->
+          <div 
+            class="comparison-item selectable"
+            :class="{ selected: selectedImages.includes('before') }"
+            @click="toggleImageSelection('before')"
+          >
+            <div class="selection-checkbox">
+              <input 
+                type="checkbox" 
+                :checked="selectedImages.includes('before')"
+                @click.stop="toggleImageSelection('before')"
+              />
+            </div>
+            <p class="comparison-label">수정 전 (원본)</p>
             <img :src="baseImage" alt="수정 전" />
           </div>
-          <div class="comparison-item">
+          
+          <!-- 수정 후 이미지 -->
+          <div 
+            class="comparison-item selectable"
+            :class="{ selected: selectedImages.includes('after') }"
+            @click="toggleImageSelection('after')"
+          >
+            <div class="selection-checkbox">
+              <input 
+                type="checkbox" 
+                :checked="selectedImages.includes('after')"
+                @click.stop="toggleImageSelection('after')"
+              />
+            </div>
             <p class="comparison-label">수정 후</p>
             <img :src="modifiedImage" alt="수정 후" />
           </div>
         </div>
       </div>
       
+      <div class="selection-info" v-if="selectedImages.length > 0">
+        <p>
+          선택됨: 
+          <span v-if="selectedImages.includes('before')">원본</span>
+          <span v-if="selectedImages.includes('before') && selectedImages.includes('after')">, </span>
+          <span v-if="selectedImages.includes('after')">수정본</span>
+        </p>
+      </div>
+      
       <div class="image-actions">
-        <button class="save-btn" @click="handleSave">
-          💾 저장하고 완료
+        <button 
+          class="save-btn" 
+          @click="handleSave"
+          :disabled="selectedImages.length === 0 || saving"
+        >
+          {{ saving ? '저장 중...' : `💾 선택한 디자인 저장 (${selectedImages.length}개)` }}
         </button>
         <button class="modify-again-btn" @click="handleModifyAgain">
           🔄 다시 수정하기
@@ -152,10 +192,14 @@ const emit = defineEmits<{
 
 const textRequirements = ref('')
 const loading = ref(false)
+const saving = ref(false)
 const referenceImagePreview = ref('')
 const referenceImageB64 = ref('')
 const modifiedImage = ref('')
 const referenceFileInput = ref<HTMLInputElement>()
+
+// 이미지 선택 관련
+const selectedImages = ref<string[]>(['after']) // 기본값: 수정 후 이미지 선택
 
 // 모델 선택 관련
 const availableModels = ref<any[]>([])
@@ -299,9 +343,50 @@ const handleSkip = () => {
   emit('skip')
 }
 
-const handleSave = () => {
-  const imageToSave = modifiedImage.value || props.baseImage
-  emit('save', imageToSave)
+// 이미지 선택 토글
+const toggleImageSelection = (type: string) => {
+  const index = selectedImages.value.indexOf(type)
+  if (index > -1) {
+    // 이미 선택되어 있으면 제거 (단, 최소 1개는 선택되어야 함)
+    if (selectedImages.value.length > 1) {
+      selectedImages.value.splice(index, 1)
+    }
+  } else {
+    // 선택되어 있지 않으면 추가
+    selectedImages.value.push(type)
+  }
+}
+
+const handleSave = async () => {
+  if (selectedImages.value.length === 0) {
+    alert('저장할 이미지를 선택해주세요.')
+    return
+  }
+  
+  saving.value = true
+  
+  try {
+    // 선택된 이미지 결정
+    let imageToSave: string
+    
+    if (selectedImages.value.length === 2) {
+      // 둘 다 선택된 경우: 수정 후 이미지 우선 (또는 원하면 둘 다 저장 로직 추가 가능)
+      imageToSave = modifiedImage.value
+    } else if (selectedImages.value.includes('after')) {
+      // 수정 후 이미지만 선택
+      imageToSave = modifiedImage.value
+    } else {
+      // 원본 이미지만 선택
+      imageToSave = props.baseImage
+    }
+    
+    emit('save', imageToSave)
+  } catch (error) {
+    console.error('저장 실패:', error)
+    alert('저장에 실패했습니다. 다시 시도해주세요.')
+  } finally {
+    saving.value = false
+  }
 }
 
 const handleModifyAgain = () => {
@@ -309,6 +394,7 @@ const handleModifyAgain = () => {
   textRequirements.value = ''
   referenceImageB64.value = ''
   referenceImagePreview.value = ''
+  selectedImages.value = ['after'] // 기본값으로 리셋
 }
 
 // 컴포넌트 마운트 시 모델 목록 로드
@@ -660,6 +746,68 @@ defineExpose({
   width: 100%;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s;
+}
+
+/* 선택 가능한 이미지 스타일 */
+.comparison-item.selectable {
+  position: relative;
+  cursor: pointer;
+  padding: 1rem;
+  border: 3px solid transparent;
+  border-radius: 16px;
+  transition: all 0.3s;
+  background: white;
+}
+
+.comparison-item.selectable:hover {
+  border-color: #dee2e6;
+  transform: translateY(-2px);
+}
+
+.comparison-item.selectable.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+}
+
+.comparison-item.selectable.selected img {
+  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+}
+
+.selection-checkbox {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 10;
+}
+
+.selection-checkbox input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.selection-hint {
+  color: #6c757d;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.selection-info {
+  text-align: center;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.selection-info p {
+  margin: 0;
+  font-weight: 600;
+  color: #667eea;
 }
 
 .image-actions {
@@ -672,13 +820,14 @@ defineExpose({
 
 .save-btn,
 .modify-again-btn {
-  padding: 0.75rem 2rem;
+  padding: 1rem 2rem;
   border: none;
   border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
+  min-width: 200px;
 }
 
 .save-btn {
@@ -687,9 +836,15 @@ defineExpose({
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
-.save-btn:hover {
+.save-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .modify-again-btn {
@@ -701,14 +856,100 @@ defineExpose({
   background: #5a6268;
 }
 
+/* 반응형 디자인 */
 @media (max-width: 768px) {
+  .design-modifier {
+    padding: 1rem;
+  }
+  
+  .pro-service-badge {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+  }
+  
+  .badge-text {
+    font-size: 0.9rem;
+  }
+  
   .image-comparison {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .comparison-item.selectable {
+    padding: 0.75rem;
+  }
+  
+  .selection-checkbox {
+    top: 1rem;
+    right: 1rem;
+  }
+  
+  .selection-checkbox input[type="checkbox"] {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .model-cards {
     grid-template-columns: 1fr;
   }
   
   .actions,
   .image-actions {
     flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .modify-btn,
+  .skip-btn,
+  .save-btn,
+  .modify-again-btn {
+    width: 100%;
+    min-width: auto;
+    padding: 1rem;
+  }
+  
+  .current-design,
+  .model-selection-section,
+  .modify-section,
+  .modified-section {
+    padding: 1rem;
+  }
+  
+  .current-image img,
+  .image-preview img {
+    max-width: 100%;
+  }
+}
+
+/* 작은 모바일 화면 */
+@media (max-width: 480px) {
+  .design-modifier {
+    padding: 0.5rem;
+  }
+  
+  .pro-service-badge {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+  
+  .remaining-count {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+  }
+  
+  .model-card {
+    padding: 1rem;
+  }
+  
+  .model-card-header h4 {
+    font-size: 1rem;
+  }
+  
+  .requirements-input {
+    font-size: 16px; /* iOS 확대 방지 */
   }
 }
 </style>
