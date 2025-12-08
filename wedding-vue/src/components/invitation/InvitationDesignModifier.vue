@@ -2,7 +2,7 @@
   <div class="design-modifier">
     <div class="pro-service-badge">
       <span class="badge-icon">✨</span>
-      <span class="badge-text">Gemini 3.0 Pro 유료 서비스</span>
+      <span class="badge-text">Gemini 3 Pro Image Preview 유료 서비스</span>
       <span v-if="remainingCount !== undefined" class="remaining-count">
         남은 횟수: {{ remainingCount }}회
       </span>
@@ -13,6 +13,37 @@
       <h3>현재 디자인</h3>
       <div class="current-image">
         <img :src="baseImage" alt="현재 디자인" />
+      </div>
+    </div>
+
+    <!-- 모델 선택 -->
+    <div class="model-selection-section">
+      <h3>AI 모델 선택</h3>
+      <p class="section-description">
+        이미지 수정에 사용할 AI 모델을 선택해주세요.
+      </p>
+      <div v-if="loadingModels" class="loading-models">
+        모델 목록을 불러오는 중...
+      </div>
+      <div v-else class="model-cards">
+        <div
+          v-for="model in availableModels"
+          :key="model.id"
+          class="model-card"
+          :class="{ selected: selectedModel === model.id }"
+          @click="selectModel(model.id)"
+        >
+          <div class="model-card-header">
+            <h4>{{ model.name }}</h4>
+            <span v-if="model.provider === 'google'" class="premium-badge">유료</span>
+            <span v-else class="free-badge">무료</span>
+          </div>
+          <p class="model-description">{{ model.description }}</p>
+          <div class="model-features">
+            <span v-if="model.supports_image_to_image" class="feature-tag">이미지→이미지</span>
+            <span v-if="model.supports_text_to_image" class="feature-tag">텍스트→이미지</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -37,20 +68,55 @@
         <p class="hint">한국어로 자세히 설명해주세요.</p>
       </div>
 
-      <!-- 이미지 참고 (선택사항) -->
+      <!-- 인물 사진 업로드 (선택사항) -->
       <div class="reference-image-section">
-        <h4>참고 이미지 업로드 (선택사항)</h4>
-        <p class="sub-hint">원하는 스타일의 참고 이미지를 업로드하면 더 정확한 수정이 가능합니다.</p>
+        <h4>👤 인물 사진 업로드 (선택사항, 1장)</h4>
+        <p class="sub-hint">청첩장에 들어갈 인물 사진을 1장 업로드해주세요. AI가 배경을 제거하고 디자인에 합성합니다.</p>
         <div class="image-upload">
           <input
             type="file"
             accept="image/*"
-            @change="handleReferenceImageUpload"
-            ref="referenceFileInput"
+            @change="handlePersonImageUpload"
+            ref="personImageInput"
+            id="person-image-input"
           />
-          <div v-if="referenceImagePreview" class="image-preview">
-            <img :src="referenceImagePreview" alt="참고 이미지" />
-            <button @click="clearReferenceImage" class="clear-btn">× 삭제</button>
+          <label for="person-image-input" class="upload-label">
+            <span v-if="!personImage">📷 인물 사진 선택</span>
+            <span v-else>✅ 인물 사진 선택됨</span>
+          </label>
+          <div v-if="personImage" class="image-preview">
+            <img :src="personImage" alt="인물 사진" />
+            <button @click="removePersonImage" class="clear-btn">× 삭제</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 스타일 참고 사진 업로드 (선택사항) -->
+      <div class="reference-image-section">
+        <h4>🎨 스타일 참고 사진 업로드 (선택사항, 최대 3장)</h4>
+        <p class="sub-hint">원하는 청첩장 분위기나 스타일을 참고할 사진을 최대 3장까지 업로드해주세요.</p>
+        <div class="image-upload">
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            @change="handleStyleImagesUpload"
+            ref="styleImagesInput"
+            id="style-images-input"
+          />
+          <label for="style-images-input" class="upload-label">
+            <span v-if="styleImages.length === 0">🖼️ 스타일 사진 선택 (최대 3장)</span>
+            <span v-else>✅ {{ styleImages.length }}장 선택됨</span>
+          </label>
+          <div v-if="styleImages.length > 0" class="image-preview-grid">
+            <div
+              v-for="(img, index) in styleImages"
+              :key="index"
+              class="image-preview-item"
+            >
+              <img :src="img" :alt="`스타일 사진 ${index + 1}`" />
+              <button @click="removeStyleImage(index)" class="clear-btn">×</button>
+            </div>
           </div>
         </div>
       </div>
@@ -61,9 +127,9 @@
       <button
         class="modify-btn"
         @click="handleModify"
-        :disabled="loading || !textRequirements"
+        :disabled="loading || !textRequirements || !selectedModel"
       >
-        {{ loading ? '수정 중...' : '✨ Gemini 3.0 Pro로 수정하기' }}
+        {{ loading ? '수정 중...' : `✨ ${selectedModelName || '모델 선택'}로 수정하기` }}
       </button>
       <button
         class="skip-btn"
@@ -75,23 +141,63 @@
 
     <!-- 수정된 이미지 -->
     <div v-if="modifiedImage" class="modified-section">
-      <h3>수정된 디자인</h3>
+      <h3>디자인 선택</h3>
+      <p class="selection-hint">저장할 디자인을 선택해주세요. 여러 개를 선택하면 둘 다 저장됩니다.</p>
+      
       <div class="comparison">
         <div class="image-comparison">
-          <div class="comparison-item">
-            <p class="comparison-label">수정 전</p>
+          <!-- 수정 전 이미지 -->
+          <div 
+            class="comparison-item selectable"
+            :class="{ selected: selectedImages.includes('before') }"
+            @click="toggleImageSelection('before')"
+          >
+            <div class="selection-checkbox">
+              <input 
+                type="checkbox" 
+                :checked="selectedImages.includes('before')"
+                @click.stop="toggleImageSelection('before')"
+              />
+            </div>
+            <p class="comparison-label">수정 전 (원본)</p>
             <img :src="baseImage" alt="수정 전" />
           </div>
-          <div class="comparison-item">
+          
+          <!-- 수정 후 이미지 -->
+          <div 
+            class="comparison-item selectable"
+            :class="{ selected: selectedImages.includes('after') }"
+            @click="toggleImageSelection('after')"
+          >
+            <div class="selection-checkbox">
+              <input 
+                type="checkbox" 
+                :checked="selectedImages.includes('after')"
+                @click.stop="toggleImageSelection('after')"
+              />
+            </div>
             <p class="comparison-label">수정 후</p>
             <img :src="modifiedImage" alt="수정 후" />
           </div>
         </div>
       </div>
       
+      <div class="selection-info" v-if="selectedImages.length > 0">
+        <p>
+          선택됨: 
+          <span v-if="selectedImages.includes('before')">원본</span>
+          <span v-if="selectedImages.includes('before') && selectedImages.includes('after')">, </span>
+          <span v-if="selectedImages.includes('after')">수정본</span>
+        </p>
+      </div>
+      
       <div class="image-actions">
-        <button class="save-btn" @click="handleSave">
-          💾 저장하고 완료
+        <button 
+          class="save-btn" 
+          @click="handleSave"
+          :disabled="selectedImages.length === 0 || saving"
+        >
+          {{ saving ? '저장 중...' : `💾 선택한 디자인 저장 (${selectedImages.length}개)` }}
         </button>
         <button class="modify-again-btn" @click="handleModifyAgain">
           🔄 다시 수정하기
@@ -102,7 +208,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { invitationService } from '@/services/invitationService'
 
 interface Props {
   baseImage: string
@@ -113,17 +220,45 @@ interface Props {
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  modify: [data: { image: string; prompt: string; textRequirements: string }]
+  modify: [data: { 
+    image: string
+    prompt: string
+    textRequirements: string
+    model: string
+    personImageB64?: string
+    styleImagesB64?: string[]
+  }]
   skip: []
   save: [image: string]
 }>()
 
 const textRequirements = ref('')
 const loading = ref(false)
+const saving = ref(false)
 const referenceImagePreview = ref('')
 const referenceImageB64 = ref('')
 const modifiedImage = ref('')
 const referenceFileInput = ref<HTMLInputElement>()
+
+// 인물 사진 및 스타일 사진 업로드
+const personImageInput = ref<HTMLInputElement | null>(null)
+const styleImagesInput = ref<HTMLInputElement | null>(null)
+const personImage = ref<string | null>(null)
+const styleImages = ref<string[]>([])
+
+// 이미지 선택 관련
+const selectedImages = ref<string[]>(['after']) // 기본값: 수정 후 이미지 선택
+
+// 모델 선택 관련
+const availableModels = ref<any[]>([])
+const selectedModel = ref<string>('')
+const loadingModels = ref(false)
+
+// 선택된 모델 이름
+const selectedModelName = computed(() => {
+  const model = availableModels.value.find(m => m.id === selectedModel.value)
+  return model?.name || ''
+})
 
 const handleReferenceImageUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -146,9 +281,117 @@ const clearReferenceImage = () => {
   }
 }
 
+// 인물 사진 업로드 핸들러
+const handlePersonImageUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      personImage.value = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+// 스타일 사진 업로드 핸들러
+const handleStyleImagesUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const files = target.files
+  if (files) {
+    const newImages: string[] = []
+    const maxImages = Math.min(3, files.length)
+    
+    for (let i = 0; i < maxImages; i++) {
+      const file = files[i]
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        newImages.push(e.target?.result as string)
+        if (newImages.length === maxImages) {
+          styleImages.value = newImages
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+}
+
+// 인물 사진 제거
+const removePersonImage = () => {
+  personImage.value = null
+  if (personImageInput.value) {
+    personImageInput.value.value = ''
+  }
+}
+
+// 스타일 사진 제거
+const removeStyleImage = (index: number) => {
+  styleImages.value.splice(index, 1)
+  if (styleImagesInput.value) {
+    styleImagesInput.value.value = ''
+  }
+}
+
+// 모델 목록 로드
+const loadModels = async () => {
+  loadingModels.value = true
+  try {
+    const response = await invitationService.getAvailableModels()
+    // image_to_image 모델만 필터링 (커스텀 단계에서는 이미지 수정만 필요)
+    const imageToImageModels = response.data?.image_to_image || []
+    const premiumModels = response.data?.premium || []
+    
+    // 모든 사용 가능한 모델 합치기 (중복 제거)
+    const allModels = [...imageToImageModels, ...premiumModels]
+    const uniqueModels = allModels.filter((model, index, self) => 
+      index === self.findIndex(m => m.id === model.id)
+    )
+    
+    availableModels.value = uniqueModels
+    
+    // 기본 모델 선택 (flux가 있으면 flux, 없으면 첫 번째 모델)
+    if (uniqueModels.length > 0) {
+      const defaultModel = uniqueModels.find(m => m.id === 'flux') || uniqueModels[0]
+      selectedModel.value = defaultModel.id
+    }
+  } catch (error) {
+    console.error('모델 목록 로드 실패:', error)
+    // 기본 모델 목록 제공
+    availableModels.value = [
+      {
+        id: 'flux',
+        name: 'FLUX.2-dev',
+        provider: 'fal-ai',
+        description: '이미지→이미지 변환 지원',
+        supports_image_to_image: true
+      },
+      {
+        id: 'gemini',
+        name: 'Gemini nano banana',
+        provider: 'google',
+        description: '유료 서비스, 텍스트→이미지 및 이미지→이미지 지원',
+        supports_image_to_image: true,
+        supports_text_to_image: true
+      }
+    ]
+    selectedModel.value = 'flux'
+  } finally {
+    loadingModels.value = false
+  }
+}
+
+const selectModel = (modelId: string) => {
+  selectedModel.value = modelId
+}
+
 const handleModify = () => {
   if (!textRequirements.value) {
     alert('수정 요구사항을 입력해주세요.')
+    return
+  }
+
+  if (!selectedModel.value) {
+    alert('AI 모델을 선택해주세요.')
     return
   }
 
@@ -164,7 +407,10 @@ const handleModify = () => {
   emit('modify', {
     image: props.baseImage,
     prompt: prompt,
-    textRequirements: textRequirements.value
+    textRequirements: textRequirements.value,
+    model: selectedModel.value,
+    personImageB64: personImage.value || undefined,
+    styleImagesB64: styleImages.value.length > 0 ? styleImages.value : undefined
   })
 }
 
@@ -198,9 +444,50 @@ const handleSkip = () => {
   emit('skip')
 }
 
-const handleSave = () => {
-  const imageToSave = modifiedImage.value || props.baseImage
-  emit('save', imageToSave)
+// 이미지 선택 토글
+const toggleImageSelection = (type: string) => {
+  const index = selectedImages.value.indexOf(type)
+  if (index > -1) {
+    // 이미 선택되어 있으면 제거 (단, 최소 1개는 선택되어야 함)
+    if (selectedImages.value.length > 1) {
+      selectedImages.value.splice(index, 1)
+    }
+  } else {
+    // 선택되어 있지 않으면 추가
+    selectedImages.value.push(type)
+  }
+}
+
+const handleSave = async () => {
+  if (selectedImages.value.length === 0) {
+    alert('저장할 이미지를 선택해주세요.')
+    return
+  }
+  
+  saving.value = true
+  
+  try {
+    // 선택된 이미지 결정
+    let imageToSave: string
+    
+    if (selectedImages.value.length === 2) {
+      // 둘 다 선택된 경우: 수정 후 이미지 우선 (또는 원하면 둘 다 저장 로직 추가 가능)
+      imageToSave = modifiedImage.value
+    } else if (selectedImages.value.includes('after')) {
+      // 수정 후 이미지만 선택
+      imageToSave = modifiedImage.value
+    } else {
+      // 원본 이미지만 선택
+      imageToSave = props.baseImage
+    }
+    
+    emit('save', imageToSave)
+  } catch (error) {
+    console.error('저장 실패:', error)
+    alert('저장에 실패했습니다. 다시 시도해주세요.')
+  } finally {
+    saving.value = false
+  }
 }
 
 const handleModifyAgain = () => {
@@ -208,7 +495,13 @@ const handleModifyAgain = () => {
   textRequirements.value = ''
   referenceImageB64.value = ''
   referenceImagePreview.value = ''
+  selectedImages.value = ['after'] // 기본값으로 리셋
 }
+
+// 컴포넌트 마운트 시 모델 목록 로드
+onMounted(() => {
+  loadModels()
+})
 
 // 부모로부터 수정된 이미지 받기
 defineExpose({
@@ -278,6 +571,106 @@ defineExpose({
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
+.model-selection-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.model-selection-section h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.loading-models {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+
+.model-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.model-card {
+  padding: 1.5rem;
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.model-card:hover {
+  border-color: #f5576c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.model-card.selected {
+  border-color: #f5576c;
+  background: #fff5f7;
+  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+}
+
+.model-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.model-card-header h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+  margin: 0;
+}
+
+.premium-badge {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.free-badge {
+  background: #28a745;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.model-description {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.model-features {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.feature-tag {
+  background: #e9ecef;
+  color: #495057;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
 .modify-section {
   margin-bottom: 2rem;
   padding: 1.5rem;
@@ -344,19 +737,57 @@ defineExpose({
 }
 
 .image-upload input[type="file"] {
-  display: block;
-  margin-bottom: 1rem;
+  display: none;
+}
+
+.upload-label {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.upload-label:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .image-preview {
   position: relative;
   display: inline-block;
+  margin-top: 1rem;
 }
 
 .image-preview img {
   max-width: 300px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.image-preview-item {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #dee2e6;
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .clear-btn {
@@ -454,6 +885,68 @@ defineExpose({
   width: 100%;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s;
+}
+
+/* 선택 가능한 이미지 스타일 */
+.comparison-item.selectable {
+  position: relative;
+  cursor: pointer;
+  padding: 1rem;
+  border: 3px solid transparent;
+  border-radius: 16px;
+  transition: all 0.3s;
+  background: white;
+}
+
+.comparison-item.selectable:hover {
+  border-color: #dee2e6;
+  transform: translateY(-2px);
+}
+
+.comparison-item.selectable.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+}
+
+.comparison-item.selectable.selected img {
+  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+}
+
+.selection-checkbox {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 10;
+}
+
+.selection-checkbox input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.selection-hint {
+  color: #6c757d;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.selection-info {
+  text-align: center;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.selection-info p {
+  margin: 0;
+  font-weight: 600;
+  color: #667eea;
 }
 
 .image-actions {
@@ -466,13 +959,14 @@ defineExpose({
 
 .save-btn,
 .modify-again-btn {
-  padding: 0.75rem 2rem;
+  padding: 1rem 2rem;
   border: none;
   border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
+  min-width: 200px;
 }
 
 .save-btn {
@@ -481,9 +975,15 @@ defineExpose({
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
-.save-btn:hover {
+.save-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .modify-again-btn {
@@ -495,14 +995,100 @@ defineExpose({
   background: #5a6268;
 }
 
+/* 반응형 디자인 */
 @media (max-width: 768px) {
+  .design-modifier {
+    padding: 1rem;
+  }
+  
+  .pro-service-badge {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+  }
+  
+  .badge-text {
+    font-size: 0.9rem;
+  }
+  
   .image-comparison {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .comparison-item.selectable {
+    padding: 0.75rem;
+  }
+  
+  .selection-checkbox {
+    top: 1rem;
+    right: 1rem;
+  }
+  
+  .selection-checkbox input[type="checkbox"] {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .model-cards {
     grid-template-columns: 1fr;
   }
   
   .actions,
   .image-actions {
     flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .modify-btn,
+  .skip-btn,
+  .save-btn,
+  .modify-again-btn {
+    width: 100%;
+    min-width: auto;
+    padding: 1rem;
+  }
+  
+  .current-design,
+  .model-selection-section,
+  .modify-section,
+  .modified-section {
+    padding: 1rem;
+  }
+  
+  .current-image img,
+  .image-preview img {
+    max-width: 100%;
+  }
+}
+
+/* 작은 모바일 화면 */
+@media (max-width: 480px) {
+  .design-modifier {
+    padding: 0.5rem;
+  }
+  
+  .pro-service-badge {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+  
+  .remaining-count {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+  }
+  
+  .model-card {
+    padding: 1rem;
+  }
+  
+  .model-card-header h4 {
+    font-size: 1rem;
+  }
+  
+  .requirements-input {
+    font-size: 16px; /* iOS 확대 방지 */
   }
 }
 </style>

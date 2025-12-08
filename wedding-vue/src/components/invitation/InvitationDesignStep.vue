@@ -1,61 +1,90 @@
 <template>
   <div class="design-step">
-    <!-- 4-1. 초안 제공 (SD 1.5, FLUX-Schnell 두 모델로 생성) -->
-    <div class="draft-section">
-      <h3>🎨 초안 생성</h3>
+    <!-- AI 모델 선택 섹션 -->
+    <div class="model-selection-section">
+      <h3>🎨 AI 모델 선택</h3>
       <p class="section-description">
-        선택한 톤과 문구를 바탕으로 <strong>Stable Diffusion</strong>과 <strong>FLUX-Schnell</strong> 두 AI 모델이 청첩장 초안을 생성합니다.<br>
-        마음에 드는 초안을 선택해주세요.
+        이미지 생성에 사용할 AI 모델을 선택해주세요.
       </p>
-      <button class="generate-draft-btn" @click="generateDrafts" :disabled="loading">
-        {{ loading ? '초안 생성 중... (약 30초 소요)' : '🎨 초안 생성하기 (AI 모델 2종)' }}
-      </button>
-    </div>
-
-    <!-- 두 모델의 초안 표시 -->
-    <div v-if="sdxlDraftImage || fluxDraftImage" class="drafts-comparison">
-      <h3>🖼️ 생성된 초안 비교</h3>
-      <p class="comparison-note">두 AI 모델이 생성한 초안입니다. 마음에 드는 것을 선택하세요.</p>
       
-      <div class="drafts-grid">
-        <!-- SD 1.5 초안 -->
-        <div 
-          v-if="sdxlDraftImage" 
-          class="draft-card"
-          :class="{ selected: selectedDraft === 'sdxl' }"
-          @click="selectDraft('sdxl', sdxlDraftImage)"
-        >
-          <div class="draft-badge">SD 1.5</div>
-          <div class="draft-image-wrapper">
-            <img :src="sdxlDraftImage" alt="SD 1.5 초안" />
+      <div class="model-cards">
+        <!-- Gemini 3 Pro Image Preview (활성화) -->
+        <div class="model-card active" @click="selectModel('gemini')">
+          <div class="model-card-header">
+            <h4>Gemini 3 Pro Image Preview</h4>
+            <span class="premium-badge">유료</span>
           </div>
-          <p class="model-name">Stable Diffusion 1.5</p>
-          <p class="model-desc">클래식 이미지 생성</p>
+          <p class="model-description">Google의 최신 Gemini 모델로 고품질 이미지 생성</p>
+          <div class="model-status">
+            <span class="status-badge active">사용 가능</span>
+          </div>
         </div>
         
-        <!-- FLUX-Schnell 초안 -->
+        <!-- Hugging Face 모델들 (비활성화 - UI만 표시) -->
         <div 
-          v-if="fluxDraftImage" 
-          class="draft-card"
-          :class="{ selected: selectedDraft === 'flux' }"
-          @click="selectDraft('flux', fluxDraftImage)"
+          class="model-card disabled" 
+          :class="{ 'selected-disabled': selectedModel === 'flux' }"
+          @click="selectModel('flux')"
         >
-          <div class="draft-badge flux">FLUX</div>
-          <div class="draft-image-wrapper">
-            <img :src="fluxDraftImage" alt="FLUX 초안" />
+          <div class="model-card-header">
+            <h4>FLUX.2-dev</h4>
+            <span class="free-badge">무료</span>
           </div>
-          <p class="model-name">FLUX.1-schnell</p>
-          <p class="model-desc">빠른 AI 이미지 생성</p>
+          <p class="model-description">Hugging Face의 최신 FLUX 모델</p>
+          <div class="model-status">
+            <span class="status-badge disabled">결제 후 사용 가능</span>
+          </div>
+        </div>
+        
+        <div 
+          class="model-card disabled"
+          :class="{ 'selected-disabled': selectedModel === 'flux-schnell' }"
+          @click="selectModel('flux-schnell')"
+        >
+          <div class="model-card-header">
+            <h4>FLUX.1-schnell</h4>
+            <span class="free-badge">무료</span>
+          </div>
+          <p class="model-description">빠른 생성 속도의 FLUX 모델</p>
+          <div class="model-status">
+            <span class="status-badge disabled">결제 후 사용 가능</span>
+          </div>
+        </div>
+        
+        <div 
+          class="model-card disabled"
+          :class="{ 'selected-disabled': selectedModel === 'sdxl' }"
+          @click="selectModel('sdxl')"
+        >
+          <div class="model-card-header">
+            <h4>Stable Diffusion XL</h4>
+            <span class="free-badge">무료</span>
+          </div>
+          <p class="model-description">고품질 이미지 생성 모델</p>
+          <div class="model-status">
+            <span class="status-badge disabled">결제 후 사용 가능</span>
+          </div>
+        </div>
+        
+        <div 
+          class="model-card disabled"
+          :class="{ 'selected-disabled': selectedModel === 'sd15' }"
+          @click="selectModel('sd15')"
+        >
+          <div class="model-card-header">
+            <h4>Stable Diffusion 1.5</h4>
+            <span class="free-badge">무료</span>
+          </div>
+          <p class="model-description">클래식 이미지 생성 모델</p>
+          <div class="model-status">
+            <span class="status-badge disabled">결제 후 사용 가능</span>
+          </div>
         </div>
       </div>
-      
-      <p v-if="selectedDraft" class="selected-info">
-        ✅ <strong>{{ selectedDraft === 'sdxl' ? 'SD 1.5' : 'FLUX-Schnell' }}</strong> 초안이 선택되었습니다.
-      </p>
     </div>
 
-    <!-- 4-2. 스타일 선택 (초안 선택 후 활성화) -->
-    <div v-if="selectedDraft" class="style-selection">
+    <!-- 스타일 선택 -->
+    <div class="style-selection">
       <h3>원하는 스타일 선택</h3>
       <div class="style-options">
         <label
@@ -74,8 +103,8 @@
       </div>
     </div>
 
-    <!-- 4-3. 추가 요청 입력 -->
-    <div v-if="selectedDraft && selectedStyle" class="additional-request">
+    <!-- 추가 요청 입력 -->
+    <div v-if="selectedStyle" class="additional-request">
       <h3>추가 요청 (선택사항)</h3>
       <p class="section-description">
         원하는 디자인 변경사항을 텍스트로 입력해주세요.
@@ -88,11 +117,11 @@
       ></textarea>
     </div>
 
-    <!-- 4-4. 이미지 생성 -->
-    <div v-if="selectedDraft && selectedStyle" class="generate-section">
-      <h3>✨ 최종 이미지 생성</h3>
+    <!-- 이미지 생성 -->
+    <div v-if="selectedStyle" class="generate-section">
+      <h3>✨ 이미지 생성</h3>
       <p class="section-description">
-        선택한 <strong>{{ selectedDraft === 'sdxl' ? 'SD 1.5' : 'FLUX-Schnell' }}</strong> 모델로 최종 이미지를 생성합니다.
+        <strong>{{ getModelName(selectedModel) }}</strong> 모델로 청첩장 이미지를 생성합니다.
       </p>
 
       <button
@@ -100,7 +129,7 @@
         @click="generateFinalImage"
         :disabled="loading || !selectedStyle"
       >
-        {{ loading ? '생성 중...' : `🎨 ${selectedDraft === 'sdxl' ? 'SD 1.5' : 'FLUX-Schnell'}로 최종 이미지 생성하기` }}
+        {{ loading ? '생성 중...' : `🎨 ${getModelName(selectedModel)}로 이미지 생성하기` }}
       </button>
     </div>
 
@@ -111,9 +140,6 @@
         <img :src="finalImage" alt="최종 청첩장" />
       </div>
       <div class="result-actions">
-        <button class="next-btn" @click="handleNext">
-          ✨ 다음 단계: 커스텀하기
-        </button>
         <button class="regenerate-btn" @click="handleRegenerate">
           🔄 다시 생성하기
         </button>
@@ -135,20 +161,20 @@ interface Props {
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  generate: [data: { image: string; prompt: string; style: string; additionalRequest: string }]
-  next: []
+  generate: [data: { image: string; prompt: string; style: string; additionalRequest: string; model: string }]
 }>()
 
 const loading = ref(false)
 const draftGenerated = ref(false)
-const sdxlDraftImage = ref('')
+const sd15DraftImage = ref('')
 const fluxDraftImage = ref('')
-const selectedDraft = ref<'sdxl' | 'flux' | ''>('')
+const selectedDraft = ref<'sd15' | 'flux' | ''>('')
 const draftImage = ref('')  // 선택된 초안 이미지
 const selectedStyle = ref('')
 const additionalRequest = ref('')
-const modelType = ref<'sdxl' | 'flux'>('sdxl')
+const modelType = ref<'sd15' | 'flux'>('sd15')
 const finalImage = ref('')
+const selectedModel = ref('gemini') // 기본값: Gemini 3 Pro Image Preview
 
 const styles = [
   { value: 'CLASSIC', name: '클래식', icon: '🎩', description: '전통적이고 우아한 스타일' },
@@ -156,8 +182,27 @@ const styles = [
   { value: 'VINTAGE', name: '빈티지', icon: '🌹', description: '빈티지하고 로맨틱한 스타일' }
 ]
 
+// 모델 선택 함수
+const selectModel = (modelId: string) => {
+  // UI에서는 모든 모델 선택 가능 (버튼 텍스트 변경용)
+  // 실제 생성은 gemini만 가능
+  selectedModel.value = modelId
+}
+
+// 모델명 가져오기 함수
+const getModelName = (modelId: string): string => {
+  const modelNames: Record<string, string> = {
+    'gemini': 'Gemini 3 Pro Image Preview',
+    'flux': 'FLUX.2-dev',
+    'flux-schnell': 'FLUX.1-schnell',
+    'sdxl': 'Stable Diffusion XL',
+    'sd15': 'Stable Diffusion 1.5'
+  }
+  return modelNames[modelId] || 'Gemini 3 Pro Image Preview'
+}
+
 // 초안 선택
-const selectDraft = (model: 'sdxl' | 'flux', image: string) => {
+const selectDraft = (model: 'sd15' | 'flux', image: string) => {
   selectedDraft.value = model
   draftImage.value = image
   modelType.value = model  // 선택한 모델을 최종 이미지 생성에도 사용
@@ -166,14 +211,14 @@ const selectDraft = (model: 'sdxl' | 'flux', image: string) => {
 // 두 모델로 초안 동시 생성
 const generateDrafts = async () => {
   loading.value = true
-  sdxlDraftImage.value = ''
+  sd15DraftImage.value = ''
   fluxDraftImage.value = ''
   selectedDraft.value = ''
   draftImage.value = ''
   
   const draftPrompt = `Beautiful wedding invitation card, elegant floral border, soft pastel colors, ${props.selectedTone || 'warm and romantic'} mood, minimalist design, high quality, professional invitation design`
   
-  // SDXL과 FLUX 두 모델을 병렬로 호출
+  // SD 1.5와 FLUX-Schnell 두 모델을 병렬로 호출
   const generateWithModel = async (model: string): Promise<string | null> => {
     try {
       const response = await fetch('http://localhost:8102/api/image/generate', {
@@ -206,13 +251,13 @@ const generateDrafts = async () => {
   
   try {
     // 병렬로 두 모델 호출 (sd15, flux-schnell 사용)
-    const [sdxlResult, fluxResult] = await Promise.all([
+    const [sd15Result, fluxResult] = await Promise.all([
       generateWithModel('sd15'),          // Stable Diffusion 1.5 (무료)
       generateWithModel('flux-schnell')   // FLUX.1-schnell (무료, 빠른 생성)
     ])
     
-    if (sdxlResult) {
-      sdxlDraftImage.value = sdxlResult
+    if (sd15Result) {
+      sd15DraftImage.value = sd15Result
     }
     
     if (fluxResult) {
@@ -220,13 +265,13 @@ const generateDrafts = async () => {
     }
     
     // 적어도 하나가 성공하면 완료
-    if (sdxlResult || fluxResult) {
+    if (sd15Result || fluxResult) {
       draftGenerated.value = true
       
       // 하나만 성공했으면 자동 선택
-      if (sdxlResult && !fluxResult) {
-        selectDraft('sdxl', sdxlResult)
-      } else if (!sdxlResult && fluxResult) {
+      if (sd15Result && !fluxResult) {
+        selectDraft('sd15', sd15Result)
+      } else if (!sd15Result && fluxResult) {
         selectDraft('flux', fluxResult)
       }
     } else {
@@ -249,16 +294,23 @@ const generateFinalImage = () => {
   // 프롬프트 생성
   const prompt = generatePrompt()
 
+  // 선택한 모델로 이미지 생성
   emit('generate', {
-    image: draftImage.value,
+    image: '', // 초안 이미지 없음
     prompt: prompt,
     style: selectedStyle.value,
-    additionalRequest: additionalRequest.value
+    additionalRequest: additionalRequest.value,
+    model: selectedModel.value // 선택한 모델 전달
   })
 }
 
 const generatePrompt = (): string => {
   let prompt = `Elegant wedding invitation card design, ${selectedStyle.value.toLowerCase()} style`
+  
+  // 선택한 톤의 문구를 프롬프트에 포함
+  if (props.selectedText) {
+    prompt += `. The invitation text should be: "${props.selectedText}". Include this text in the design.`
+  }
   
   if (props.selectedTone) {
     const toneMap: Record<string, string> = {
@@ -307,13 +359,7 @@ const convertToEnglish = (korean: string): string => {
   return result
 }
 
-const handleNext = () => {
-  if (!finalImage.value) {
-    alert('먼저 최종 이미지를 생성해주세요.')
-    return
-  }
-  emit('next')
-}
+// handleNext 함수 제거 - 더 이상 사용하지 않음
 
 const handleRegenerate = () => {
   finalImage.value = ''
@@ -337,6 +383,131 @@ defineExpose({
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem;
+}
+
+.model-selection-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.model-selection-section h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.model-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.model-card {
+  padding: 1.5rem;
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.model-card.active {
+  border-color: #667eea;
+  background: #f0f2ff;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.model-card.active.selected {
+  border-color: #667eea;
+  background: #e8ebff;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.model-card.disabled {
+  opacity: 0.6;
+  cursor: pointer;
+  background: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+.model-card.disabled:hover {
+  opacity: 0.8;
+  border-color: #adb5bd;
+}
+
+.model-card.disabled.selected-disabled {
+  border-color: #6c757d;
+  background: #e9ecef;
+  opacity: 0.8;
+}
+
+.model-card.active:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.model-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.model-card-header h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+  margin: 0;
+}
+
+.premium-badge {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.free-badge {
+  background: #28a745;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.model-description {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.model-status {
+  margin-top: 0.5rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background: #28a745;
+  color: white;
+}
+
+.status-badge.disabled {
+  background: #6c757d;
+  color: white;
 }
 
 .draft-section,

@@ -8,10 +8,10 @@
       <p>AI가 5가지 톤의 문구를 생성하고 있습니다...</p>
     </div>
 
-    <div v-else-if="tones.length > 0" class="tones-grid">
+    <div v-else-if="tonesList.length > 0" class="tones-grid">
       <div
-        v-for="(tone, index) in tones"
-        :key="tone.tone"
+        v-for="(tone, index) in tonesList"
+        :key="`${tone.tone}-${index}`"
         class="tone-card"
         :class="{ selected: selectedTone?.tone === tone.tone }"
         @click="selectTone(tone)"
@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, computed } from 'vue'
 import type { ToneOption } from '@/services/invitationService'
 
 interface Props {
@@ -75,6 +75,16 @@ const emit = defineEmits<{
 }>()
 
 const selectedTone = ref<ToneOption | null>(null)
+
+// props.tones를 computed로 감싸서 반응성 보장
+const tonesList = computed(() => {
+  return Array.isArray(props.tones) ? props.tones : []
+})
+
+// 디버깅: tones 변화 감지
+watch(() => props.tones, (newTones) => {
+  console.log('🎨 InvitationToneSelector - tones 업데이트:', newTones?.length || 0, '개')
+}, { immediate: true, deep: true })
 
 const selectTone = (tone: ToneOption) => {
   selectedTone.value = tone

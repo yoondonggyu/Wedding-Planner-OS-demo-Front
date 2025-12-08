@@ -40,10 +40,10 @@
     <div class="model-selection">
       <h3>생성 모델 선택</h3>
       <div class="model-options">
-        <label class="model-option" :class="{ selected: modelType === 'sdxl' }">
-          <input type="radio" v-model="modelType" value="sdxl" />
+        <label class="model-option" :class="{ selected: modelType === 'sd15' }">
+          <input type="radio" v-model="modelType" value="sd15" />
           <div class="option-content">
-            <span class="option-title">SDXL (Stable Diffusion XL)</span>
+            <span class="option-title">SD 1.5 (Stable Diffusion 1.5)</span>
             <span class="option-desc">텍스트만 입력하여 생성 (무료)</span>
           </div>
         </label>
@@ -122,7 +122,7 @@ const emit = defineEmits<{
 }>()
 
 const requirements = ref('')
-const modelType = ref<'sdxl' | 'flux'>('sdxl')
+const modelType = ref<'sd15' | 'flux'>('sd15')
 const useBaseImage = ref(false)
 const loading = ref(false)
 const baseImagePreview = ref('')

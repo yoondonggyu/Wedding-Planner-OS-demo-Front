@@ -11,7 +11,7 @@
           <input type="radio" v-model="modelType" value="free" />
           <div class="option-content">
             <span class="option-title">무료 모델</span>
-            <span class="option-desc">SDXL / FLUX (텍스트만 / 텍스트+이미지)</span>
+            <span class="option-desc">SD 1.5 / FLUX (텍스트만 / 텍스트+이미지)</span>
           </div>
         </label>
         <label class="model-option" :class="{ selected: modelType === 'pro' }">
