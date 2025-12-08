@@ -37,7 +37,8 @@ export interface ImageGenerateRequest {
     selected_tone: string
     selected_text: string
     prompt: string
-    model_type: 'free' | 'pro'
+    model_type?: 'free' | 'pro'
+    model?: string  // 선택한 모델명 (예: "gemini", "flux", "flux-schnell", "sdxl", "sd15")
     base_image_url?: string
 }
 
@@ -73,10 +74,25 @@ export const invitationService = {
         design_id: number
         base_image_url: string
         modification_prompt: string
-        model_type: 'free' | 'pro'
+        model_type?: 'free' | 'pro'
+        model?: string  // 선택한 모델명 (예: "flux", "gemini")
     }) {
         const response = await apiClient.post('/invitation-image-modify', data)
         return response.data
+    },
+
+    /**
+     * 사용 가능한 이미지 생성 모델 목록 조회
+     */
+    async getAvailableModels() {
+        // 모델 서버의 API 엔드포인트 직접 호출
+        const MODEL_API_BASE_URL = import.meta.env.VITE_MODEL_API_BASE_URL || 'http://localhost:8502'
+        const response = await fetch(`${MODEL_API_BASE_URL}/api/image/models`)
+        if (!response.ok) {
+            throw new Error(`Failed to fetch models: ${response.statusText}`)
+        }
+        const data = await response.json()
+        return data
     },
 
     /**

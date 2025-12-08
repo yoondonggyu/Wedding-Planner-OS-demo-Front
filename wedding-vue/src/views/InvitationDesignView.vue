@@ -4,12 +4,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useApi } from '@/composables/useApi'
 import { useToast } from '@/composables/useToast'
 
-// Google Maps API 타입 선언
-declare global {
-  interface Window {
-    google: any
-  }
-}
 
 interface Template {
   id: number
@@ -705,74 +699,6 @@ async function viewStatistics(invitationId: number) {
   }
 }
 
-function loadGoogleMapsAPI(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (window.google && window.google.maps && window.google.maps.places) {
-      resolve()
-      return
-    }
-
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-    if (!apiKey) {
-      console.warn('Google Maps API 키가 설정되지 않았습니다.')
-      resolve() // API 키가 없어도 계속 진행
-      return
-    }
-
-    const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`
-    script.async = true
-    script.defer = true
-    script.onload = () => {
-      if (window.google && window.google.maps && window.google.maps.places) {
-        resolve()
-      } else {
-        reject(new Error('Google Maps API 로드 실패'))
-      }
-    }
-    script.onerror = () => reject(new Error('Google Maps API 스크립트 로드 실패'))
-    document.head.appendChild(script)
-  })
-}
-
-function initGooglePlacesAutocomplete() {
-  if (!locationInputRef.value) return
-
-  loadGoogleMapsAPI()
-    .then(() => {
-      if (window.google && window.google.maps && window.google.maps.places) {
-        const autocomplete = new window.google.maps.places.Autocomplete(
-          locationInputRef.value!,
-          {
-            componentRestrictions: { country: 'kr' }, // 한국만 검색
-            fields: ['formatted_address', 'geometry', 'name']
-          }
-        )
-
-        autocomplete.addListener('place_changed', () => {
-          const place = autocomplete.getPlace()
-          if (place.formatted_address) {
-            textRecommendForm.value.wedding_location = place.formatted_address
-          } else if (place.name) {
-            textRecommendForm.value.wedding_location = place.name
-          }
-        })
-      }
-    })
-    .catch((err) => {
-      console.error('Google Maps API 초기화 실패:', err)
-    })
-}
-
-// 모달이 열릴 때 Google Maps Autocomplete 초기화
-watch(showTextRecommendModal, async (isOpen: boolean) => {
-  if (isOpen) {
-    await nextTick()
-    setTimeout(() => {
-      initGooglePlacesAutocomplete()
-    }, 100) // 모달 애니메이션 후 초기화
-  }
-})
 
 onMounted(() => {
   fetchTemplates()

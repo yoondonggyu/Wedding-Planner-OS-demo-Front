@@ -16,6 +16,37 @@
       </div>
     </div>
 
+    <!-- 모델 선택 -->
+    <div class="model-selection-section">
+      <h3>AI 모델 선택</h3>
+      <p class="section-description">
+        이미지 수정에 사용할 AI 모델을 선택해주세요.
+      </p>
+      <div v-if="loadingModels" class="loading-models">
+        모델 목록을 불러오는 중...
+      </div>
+      <div v-else class="model-cards">
+        <div
+          v-for="model in availableModels"
+          :key="model.id"
+          class="model-card"
+          :class="{ selected: selectedModel === model.id }"
+          @click="selectModel(model.id)"
+        >
+          <div class="model-card-header">
+            <h4>{{ model.name }}</h4>
+            <span v-if="model.provider === 'google'" class="premium-badge">유료</span>
+            <span v-else class="free-badge">무료</span>
+          </div>
+          <p class="model-description">{{ model.description }}</p>
+          <div class="model-features">
+            <span v-if="model.supports_image_to_image" class="feature-tag">이미지→이미지</span>
+            <span v-if="model.supports_text_to_image" class="feature-tag">텍스트→이미지</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 수정 요구사항 입력 -->
     <div class="modify-section">
       <h3>디자인 수정 요구사항</h3>
@@ -61,9 +92,9 @@
       <button
         class="modify-btn"
         @click="handleModify"
-        :disabled="loading || !textRequirements"
+        :disabled="loading || !textRequirements || !selectedModel"
       >
-        {{ loading ? '수정 중...' : '✨ Gemini 3.0 Pro로 수정하기' }}
+        {{ loading ? '수정 중...' : `✨ ${selectedModelName || '모델 선택'}로 수정하기` }}
       </button>
       <button
         class="skip-btn"
@@ -102,7 +133,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { invitationService } from '@/services/invitationService'
 
 interface Props {
   baseImage: string
@@ -113,7 +145,7 @@ interface Props {
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  modify: [data: { image: string; prompt: string; textRequirements: string }]
+  modify: [data: { image: string; prompt: string; textRequirements: string; model: string }]
   skip: []
   save: [image: string]
 }>()
@@ -124,6 +156,17 @@ const referenceImagePreview = ref('')
 const referenceImageB64 = ref('')
 const modifiedImage = ref('')
 const referenceFileInput = ref<HTMLInputElement>()
+
+// 모델 선택 관련
+const availableModels = ref<any[]>([])
+const selectedModel = ref<string>('')
+const loadingModels = ref(false)
+
+// 선택된 모델 이름
+const selectedModelName = computed(() => {
+  const model = availableModels.value.find(m => m.id === selectedModel.value)
+  return model?.name || ''
+})
 
 const handleReferenceImageUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -146,9 +189,66 @@ const clearReferenceImage = () => {
   }
 }
 
+// 모델 목록 로드
+const loadModels = async () => {
+  loadingModels.value = true
+  try {
+    const response = await invitationService.getAvailableModels()
+    // image_to_image 모델만 필터링 (커스텀 단계에서는 이미지 수정만 필요)
+    const imageToImageModels = response.data?.image_to_image || []
+    const premiumModels = response.data?.premium || []
+    
+    // 모든 사용 가능한 모델 합치기 (중복 제거)
+    const allModels = [...imageToImageModels, ...premiumModels]
+    const uniqueModels = allModels.filter((model, index, self) => 
+      index === self.findIndex(m => m.id === model.id)
+    )
+    
+    availableModels.value = uniqueModels
+    
+    // 기본 모델 선택 (flux가 있으면 flux, 없으면 첫 번째 모델)
+    if (uniqueModels.length > 0) {
+      const defaultModel = uniqueModels.find(m => m.id === 'flux') || uniqueModels[0]
+      selectedModel.value = defaultModel.id
+    }
+  } catch (error) {
+    console.error('모델 목록 로드 실패:', error)
+    // 기본 모델 목록 제공
+    availableModels.value = [
+      {
+        id: 'flux',
+        name: 'FLUX.2-dev',
+        provider: 'fal-ai',
+        description: '이미지→이미지 변환 지원',
+        supports_image_to_image: true
+      },
+      {
+        id: 'gemini',
+        name: 'Gemini nano banana',
+        provider: 'google',
+        description: '유료 서비스, 텍스트→이미지 및 이미지→이미지 지원',
+        supports_image_to_image: true,
+        supports_text_to_image: true
+      }
+    ]
+    selectedModel.value = 'flux'
+  } finally {
+    loadingModels.value = false
+  }
+}
+
+const selectModel = (modelId: string) => {
+  selectedModel.value = modelId
+}
+
 const handleModify = () => {
   if (!textRequirements.value) {
     alert('수정 요구사항을 입력해주세요.')
+    return
+  }
+
+  if (!selectedModel.value) {
+    alert('AI 모델을 선택해주세요.')
     return
   }
 
@@ -164,7 +264,8 @@ const handleModify = () => {
   emit('modify', {
     image: props.baseImage,
     prompt: prompt,
-    textRequirements: textRequirements.value
+    textRequirements: textRequirements.value,
+    model: selectedModel.value
   })
 }
 
@@ -209,6 +310,11 @@ const handleModifyAgain = () => {
   referenceImageB64.value = ''
   referenceImagePreview.value = ''
 }
+
+// 컴포넌트 마운트 시 모델 목록 로드
+onMounted(() => {
+  loadModels()
+})
 
 // 부모로부터 수정된 이미지 받기
 defineExpose({
@@ -276,6 +382,106 @@ defineExpose({
   max-width: 100%;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.model-selection-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.model-selection-section h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.loading-models {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+
+.model-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.model-card {
+  padding: 1.5rem;
+  background: white;
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.model-card:hover {
+  border-color: #f5576c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.model-card.selected {
+  border-color: #f5576c;
+  background: #fff5f7;
+  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+}
+
+.model-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.model-card-header h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+  margin: 0;
+}
+
+.premium-badge {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.free-badge {
+  background: #28a745;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.model-description {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.model-features {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.feature-tag {
+  background: #e9ecef;
+  color: #495057;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
 }
 
 .modify-section {

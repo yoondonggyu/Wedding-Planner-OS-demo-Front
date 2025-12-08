@@ -24,7 +24,7 @@
             <span v-else>{{ step.number }}</span>
           </div>
           <div class="step-info">
-            <div class="step-label">{{ step.label }}</div>
+          <div class="step-label">{{ step.label }}</div>
             <div class="step-description-small">{{ step.description }}</div>
           </div>
         </div>
@@ -61,21 +61,21 @@
               원하는 톤을 선택해주세요.
             </p>
           </div>
-          <InvitationToneSelector
-            :tones="tones"
-            :loading="loadingTones"
-            @select="handleToneSelect"
-            @regenerate="handleRegenerateTones"
-          />
-          <div class="step-actions">
-            <button class="back-btn" @click="currentStep--">← 이전</button>
-            <button
-              class="next-btn"
-              @click="handleNextFromTone"
+        <InvitationToneSelector
+          :tones="tones"
+          :loading="loadingTones"
+          @select="handleToneSelect"
+          @regenerate="handleRegenerateTones"
+        />
+        <div class="step-actions">
+          <button class="back-btn" @click="currentStep--">← 이전</button>
+          <button
+            class="next-btn"
+            @click="handleNextFromTone"
               :disabled="!selectedTone || !stepCompleted.step2"
-            >
-              다음 →
-            </button>
+          >
+            다음 →
+          </button>
           </div>
         </div>
       </div>
@@ -98,15 +98,21 @@
             </p>
           </div>
           <InvitationDesignStep
-            :selected-text="selectedTone?.main_text || ''"
-            :selected-tone="selectedTone?.tone || ''"
+          :selected-text="selectedTone?.main_text || ''"
+          :selected-tone="selectedTone?.tone || ''"
             :basic-info="basicInfo"
-            @generate="handleImageGenerate"
-            @next="handleNextToModify"
+          @generate="handleImageGenerate"
             ref="designGenerator"
           />
           <div class="step-actions">
             <button class="back-btn" @click="currentStep--">← 이전</button>
+            <button
+              class="next-btn"
+              @click="handleNextFromDesign"
+              :disabled="!generatedImageUrl || !stepCompleted.step3"
+            >
+              다음 →
+            </button>
           </div>
         </div>
       </div>
@@ -136,11 +142,11 @@
             :remaining-count="remainingCustomCount"
             @modify="handleImageModifyPro"
             @skip="handleSkipModify"
-            @save="handleImageSave"
+          @save="handleImageSave"
             ref="designModifier"
-          />
-          <div class="step-actions">
-            <button class="back-btn" @click="currentStep--">← 이전</button>
+        />
+        <div class="step-actions">
+          <button class="back-btn" @click="currentStep--">← 이전</button>
           </div>
         </div>
       </div>
@@ -431,9 +437,48 @@ const handleNextFromTone = () => {
 }
 
 // Step 3: 디자인 생성 (초안, 스타일 선택, 추가 요청, 이미지 생성)
-const handleImageGenerate = async (data: { image: string; prompt: string; style: string; additionalRequest: string }) => {
-  if (!designId.value || !selectedTone.value) {
-    alert('디자인 정보가 없습니다.')
+const handleImageGenerate = async (data: { image: string; prompt: string; style: string; additionalRequest: string; model?: string }) => {
+  // designId가 없으면 자동으로 생성
+  if (!designId.value) {
+    if (!basicInfo.value) {
+      alert('기본 정보가 없습니다. 먼저 기본 정보를 입력해주세요.')
+      showBasicInfoModal.value = true
+      return
+    }
+    
+    try {
+      const response = await invitationService.createDesign({
+        groom_name: basicInfo.value.groom_name,
+        bride_name: basicInfo.value.bride_name,
+        groom_father_name: basicInfo.value.groom_father_name,
+        groom_mother_name: basicInfo.value.groom_mother_name,
+        bride_father_name: basicInfo.value.bride_father_name,
+        bride_mother_name: basicInfo.value.bride_mother_name,
+        wedding_date: basicInfo.value.wedding_date,
+        wedding_time: basicInfo.value.wedding_time,
+        wedding_location: basicInfo.value.wedding_location,
+        wedding_location_detail: basicInfo.value.wedding_location_detail,
+        map_address: basicInfo.value.wedding_location,
+        additional_message: basicInfo.value.additional_message,
+        design_data: {
+          ...basicInfo.value,
+          map_lat: basicInfo.value.mapInfo?.lat,
+          map_lng: basicInfo.value.mapInfo?.lng
+        }
+      })
+      
+      designId.value = response.data.id
+      console.log('디자인 자동 생성 성공:', designId.value)
+    } catch (error) {
+      console.error('디자인 생성 실패:', error)
+      alert('디자인 생성에 실패했습니다. 다시 시도해주세요.')
+      return
+    }
+  }
+  
+  if (!selectedTone.value) {
+    alert('톤이 선택되지 않았습니다. 먼저 톤을 선택해주세요.')
+    currentStep.value = 2
     return
   }
 
@@ -441,13 +486,19 @@ const handleImageGenerate = async (data: { image: string; prompt: string; style:
   designRequirements.value = data.additionalRequest
   
   try {
-    // 무료 모델로 이미지 생성 (SDXL 또는 FLUX)
+    // 선택한 모델로 이미지 생성
+    const selectedModel = data.model || 'gemini' // 기본값: Gemini 3 Pro
+    
+    // 모델에 따라 model_type 결정 (하위 호환성)
+    const modelType = (selectedModel === 'gemini') ? 'pro' : 'free'
+    
     const response = await invitationService.generateImage({
-      design_id: designId.value,
+      design_id: designId.value!,
       selected_tone: selectedTone.value.tone,
       selected_text: selectedTone.value.main_text,
       prompt: data.prompt,
-      model_type: 'free', // 무료 모델만 사용
+      model: selectedModel, // 선택한 모델 전달
+      model_type: modelType, // 하위 호환성
       base_image_url: data.image || undefined
     })
     
@@ -457,28 +508,54 @@ const handleImageGenerate = async (data: { image: string; prompt: string; style:
     
     // Step 3 완료 표시 (이미지 생성 완료 시)
     stepCompleted.value.step3 = true
-  } catch (error) {
+  } catch (error: any) {
     console.error('이미지 생성 실패:', error)
-    alert('이미지 생성에 실패했습니다.')
+    console.error('에러 상세:', {
+      message: error?.message,
+      response: error?.response?.data,
+      status: error?.response?.status
+    })
+    
+    // 더 자세한 에러 메시지 표시
+    let errorMessage = '이미지 생성에 실패했습니다.'
+    if (error?.response?.data?.detail) {
+      errorMessage = `이미지 생성 실패: ${error.response.data.detail}`
+    } else if (error?.response?.data?.message) {
+      errorMessage = `이미지 생성 실패: ${error.response.data.message}`
+    } else if (error?.message) {
+      errorMessage = `이미지 생성 실패: ${error.message}`
+    }
+    
+    alert(errorMessage)
   } finally {
     designGenerator.value?.setLoading(false)
   }
 }
 
-// Step 3: 다음 단계로 (수정 단계로 이동)
+// Step 3: 다음 단계로 (수정 단계로 이동) - 더 이상 사용 안 함
 const handleNextToModify = () => {
+  // 이 함수는 더 이상 사용하지 않음 (InvitationDesignStep에서 호출하지 않음)
+}
+
+// Step 3: 다음 버튼 클릭 (선택한 톤을 프롬프트로 사용해서 다음 단계로)
+const handleNextFromDesign = () => {
   if (!generatedImageUrl.value) {
     alert('먼저 디자인을 생성해주세요.')
     return
   }
   
-  // Step 3은 이미지 생성 완료 시 완료 표시됨 (handleImageGenerate에서)
-  // Step 4로 이동
+  if (!selectedTone.value) {
+    alert('톤이 선택되지 않았습니다.')
+    return
+  }
+  
+  // 선택한 톤의 텍스트를 프롬프트로 사용
+  // Step 4로 이동 (커스텀 단계)
   currentStep.value = 4
 }
 
 // Step 4: 커스텀 (이미지 수정)
-const handleImageModifyPro = async (data: { image: string; prompt: string; textRequirements: string }) => {
+const handleImageModifyPro = async (data: { image: string; prompt: string; textRequirements: string; model: string }) => {
   if (!designId.value) {
     alert('디자인 정보가 없습니다.')
     return
@@ -493,12 +570,14 @@ const handleImageModifyPro = async (data: { image: string; prompt: string; textR
   designModifier.value?.setLoading(true)
   
   try {
-    // Gemini 3.0 Pro로 수정 (유료)
+    // 선택한 모델로 수정
     const response = await invitationService.modifyImage({
       design_id: designId.value,
       base_image_url: data.image,
       modification_prompt: data.prompt,
-      model_type: 'pro' // Gemini 3.0 Pro 사용
+      model: data.model, // 선택한 모델 사용
+      // 하위 호환성을 위해 model_type도 설정 (model이 있으면 무시됨)
+      model_type: data.model === 'gemini' ? 'pro' : 'free'
     })
     
     const imageB64 = response.data.image_b64
