@@ -33,11 +33,14 @@ Wedding OS 프론트엔드는 예비부부를 위한 웨딩 준비 통합 관리
 │   │   │   ├── BudgetView.vue
 │   │   │   ├── ChatView.vue
 │   │   │   ├── VoiceView.vue
-│   │   │   └── VendorView.vue
+│   │   │   ├── VendorView.vue
+│   │   │   ├── InvitationView.vue  # 청첩장 디자인 생성
+│   │   │   └── DigitalInvitationView.vue  # 디지털 청첩장
 │   │   ├── components/       # 재사용 컴포넌트
 │   │   │   ├── layout/      # 레이아웃 컴포넌트
 │   │   │   ├── sections/    # 섹션 컴포넌트
-│   │   │   └── modals/      # 모달 컴포넌트
+│   │   │   ├── modals/      # 모달 컴포넌트
+│   │   │   └── invitation/  # 청첩장 관련 컴포넌트
 │   │   ├── services/         # API 클라이언트
 │   │   ├── stores/          # Pinia 스토어
 │   │   ├── router/          # Vue Router 설정
@@ -70,13 +73,19 @@ pnpm install
 
 ```env
 VITE_API_BASE_URL=http://localhost:8101/api
+VITE_MODEL_API_BASE_URL=http://localhost:8102
 ```
 
 `.env.production` 파일 생성 (프로덕션):
 
 ```env
 VITE_API_BASE_URL=https://your-api-server.com/api
+VITE_MODEL_API_BASE_URL=https://your-model-server.com
 ```
+
+**모바일 접속을 위한 설정**:
+- Vite 서버는 기본적으로 `0.0.0.0:5173`에서 실행됩니다
+- 같은 네트워크의 모바일 기기에서 `http://<서버IP>:5173`으로 접속 가능합니다
 
 ### 3. 개발 서버 실행
 
@@ -139,7 +148,21 @@ pnpm preview
 - 즐겨찾기 관리
 - 업체 상세 정보
 
-### 8. 사용자 인증
+### 8. 청첩장 디자인 생성
+- **5단계 디자인 생성 프로세스**:
+  1. 기본 정보 입력 (신랑/신부 이름, 예식일, 장소, 부모님 성함 등)
+  2. 요구사항 입력 및 톤 선택 (AI가 5가지 톤 추천)
+  3. AI 이미지 생성 (모델 선택: Gemini 3 Pro Image Preview 또는 HuggingFace)
+  4. 커스텀 수정 (인물 사진 1장, 스타일 참고 사진 최대 3장 업로드)
+  5. 최종 저장 및 다운로드 (수정 전/후 이미지 선택 가능, PNG/JPEG 다운로드)
+- **주요 기능**:
+  - 반응형 디자인 (모바일/태블릿/데스크톱 지원)
+  - 실시간 이미지 생성 및 수정
+  - 이미지 다운로드 (PNG/JPEG)
+  - Gemini 모델 일일 사용 횟수 표시
+  - 테스트 계정 제한 해제 (`boy@naver.com`, `girl@naver.com`)
+
+### 9. 사용자 인증
 - 로그인 / 회원가입
 - JWT 토큰 기반 인증
 - 프로필 수정
@@ -155,6 +178,8 @@ pnpm preview
 ### 반응형 디자인
 - 모바일, 태블릿, 데스크톱 지원
 - 반응형 레이아웃
+- PWA (Progressive Web App) 지원
+- 모바일 브라우저 최적화
 
 ### 사이드바
 - 접기/펼치기 기능
