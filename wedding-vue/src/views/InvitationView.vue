@@ -245,25 +245,12 @@ const remainingCustomCount = ref(5) // 하루 5번 제한
 // Design data
 const designId = ref<number>()
 
-// 저장된 기본 정보 로드 (컴포넌트 마운트 시)
+// 컴포넌트 마운트 시: 기본 정보는 브라우저에 저장하지 않고, 매 세션 새로 입력받는다.
 onMounted(() => {
-  try {
-    const saved = localStorage.getItem('invitation_basic_info')
-    if (saved) {
-      savedBasicInfo.value = JSON.parse(saved)
-      basicInfo.value = savedBasicInfo.value
-      stepCompleted.value.step0 = true
-    } else {
-      // 저장된 정보가 없으면 모달 자동 열기
-      showBasicInfoModal.value = true
-    }
-  } catch (error) {
-    console.error('저장된 기본 정보 로드 실패:', error)
-    // 에러 발생 시 모달 열기
-    showBasicInfoModal.value = true
-  }
-  
-  // 커스텀 사용 횟수 로드
+  // 항상 기본 정보 입력 모달을 먼저 보여줌
+  showBasicInfoModal.value = true
+
+  // 커스텀 사용 횟수 로드 (하루 5회 제한은 유지)
   loadCustomCount()
 })
 
@@ -324,13 +311,6 @@ const handleStepClick = (stepNumber: number) => {
 const handleBasicInfoSubmit = async (data: InvitationBasicInfo & { mapInfo?: MapInfo }) => {
   basicInfo.value = data
   savedBasicInfo.value = data
-  
-  // 기본 정보 저장 (로컬 스토리지 또는 백엔드)
-  try {
-    localStorage.setItem('invitation_basic_info', JSON.stringify(data))
-  } catch (error) {
-    console.error('기본 정보 저장 실패:', error)
-  }
   
   // Step 0 완료 표시
   stepCompleted.value.step0 = true
