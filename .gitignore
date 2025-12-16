@@ -57,5 +57,13 @@ dist-ssr/
 *.sln
 *.sw?
 
+# Personal Excel files (개인정보 포함 - 절대 커밋 금지!)
+0.Wedding_excelfiles/
+*.xlsx
+*.xls
 
+# Other project directories (subtree 구조에서 제외)
+1.Wedding_OS_front/
+2.Wedding_OS_back/
+3.Wedding_OS_model/
 
