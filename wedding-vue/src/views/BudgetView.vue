@@ -268,18 +268,81 @@ function exportCSV() {
   )
 }
 
+const isDragging = ref(false)
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const importInputId = `budget-import-input-${Math.random().toString(36).slice(2)}`
+const ocrInputRef = ref<HTMLInputElement | null>(null)
+const ocrInputId = `budget-ocr-input-${Math.random().toString(36).slice(2)}`
+
 function openImportModal() {
   showImportModal.value = true
+  // 모달이 열릴 때 파일 입력 초기화
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+  }
+  // 모달이 열리면 자동으로 파일 선택 다이얼로그 열기
+  setTimeout(() => {
+    if (fileInputRef.value) {
+      fileInputRef.value.click()
+    }
+  }, 100)
 }
 
 function closeImportModal() {
   showImportModal.value = false
+  isDragging.value = false
+}
+
+function triggerFileInput() {
+  fileInputRef.value?.click()
+}
+
+function triggerOCRInput() {
+  ocrInputRef.value?.click()
+}
+
+function handleDragOver(event: DragEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+  isDragging.value = true
+}
+
+function handleDragLeave(event: DragEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+  isDragging.value = false
+}
+
+function handleDrop(event: DragEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+  isDragging.value = false
+
+  const files = event.dataTransfer?.files
+  if (files && files.length > 0) {
+    const file = files[0]
+    if (file.name.endsWith('.xlsx') || file.name.endsWith('.csv')) {
+      processFileUpload(file)
+    } else {
+      alert('Excel(.xlsx) 또는 CSV(.csv) 파일만 업로드 가능합니다.')
+    }
+  }
 }
 
 async function handleFileUpload(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
+
+  processFileUpload(file)
+}
+
+async function processFileUpload(file: File) {
+  // 파일 타입 검증
+  if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.csv')) {
+    alert('Excel(.xlsx) 또는 CSV(.csv) 파일만 업로드 가능합니다.')
+    return
+  }
 
   const formData = new FormData()
   formData.append('file', file)
@@ -304,6 +367,11 @@ async function handleFileUpload(event: Event) {
   } catch (err) {
     console.error(err)
     alert('파일 업로드에 실패했습니다.')
+  } finally {
+    // 파일 입력 초기화
+    if (fileInputRef.value) {
+      fileInputRef.value.value = ''
+    }
   }
 }
 
@@ -516,18 +584,34 @@ async function handleOCRUpload(event: Event) {
     <div v-if="showImportModal" class="modal-overlay" @click.self="closeImportModal">
       <div class="modal-card">
         <h3 style="margin-top: 0">파일 업로드</h3>
-        <div class="file-upload-area" @click="() => document.getElementById('fileInput')?.click()">
-          <p>Excel 또는 CSV 파일을 드래그하거나 클릭하여 업로드</p>
+        <div
+          class="file-upload-area"
+          :class="{ 'dragging': isDragging }"
+          @dragover.prevent="handleDragOver"
+          @dragleave.prevent="handleDragLeave"
+          @drop.prevent="handleDrop"
+        >
           <input
-            id="fileInput"
+            ref="fileInputRef"
+            :id="importInputId"
             type="file"
-            accept=".xlsx,.csv"
-            style="display: none"
+            accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
             @change="handleFileUpload"
+            class="file-input-overlay"
           />
+          <p v-if="!isDragging" class="upload-hint">
+            Excel 또는 CSV 파일을 업로드하세요<br>
+            <small>드래그하거나 클릭하여 파일 선택</small>
+          </p>
+          <p v-else class="upload-hint" style="color: var(--accent); font-weight: 600">
+            📤 파일을 놓아주세요
+          </p>
         </div>
         <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px">
           <button class="btn" type="button" @click="closeImportModal">취소</button>
+          <button class="btn primary" type="button" @click="triggerFileInput">
+            파일 선택
+          </button>
         </div>
       </div>
     </div>
@@ -536,14 +620,18 @@ async function handleOCRUpload(event: Event) {
     <div v-if="showOCRModal" class="modal-overlay" @click.self="closeOCRModal">
       <div class="modal-card">
         <h3 style="margin-top: 0">영수증/견적서 OCR</h3>
-        <div class="file-upload-area" @click="() => document.getElementById('ocrInput')?.click()">
+        <div
+          class="file-upload-area"
+          :class="{ 'dragging': isDragging }"
+        >
           <p>이미지 파일을 드래그하거나 클릭하여 업로드</p>
           <input
-            id="ocrInput"
+            ref="ocrInputRef"
+            :id="ocrInputId"
             type="file"
             accept="image/*"
-            style="display: none"
             @change="handleOCRUpload"
+            class="file-input-overlay"
           />
         </div>
         <div
@@ -626,12 +714,47 @@ td {
   padding: 40px;
   text-align: center;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .file-upload-area:hover {
   border-color: var(--accent);
   background: rgba(139, 92, 246, 0.1);
+}
+
+.file-upload-area.dragging {
+  border-color: var(--accent);
+  background: rgba(139, 92, 246, 0.2);
+  border-style: solid;
+  transform: scale(1.02);
+}
+
+.file-input-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.upload-hint {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.upload-hint small {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.7;
 }
 
 .modal-card {
