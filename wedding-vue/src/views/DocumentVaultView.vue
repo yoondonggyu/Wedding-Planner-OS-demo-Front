@@ -69,6 +69,50 @@ const ocrText = ref<string | null>(null)
 const ocrError = ref<string | null>(null)
 const selectedFile = ref<File | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const vaultUploadInputId = `vault-upload-input-${Math.random().toString(36).slice(2)}`
+const isDragging = ref(false)
+const imageFileExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.tif', '.tiff', '.heic']
+const ocrSupportedExtensions = [
+  ...imageFileExtensions,
+  '.pdf',
+  '.xlsx',
+  '.xls',
+  '.csv',
+  '.txt',
+  '.md',
+]
+
+function getFileNameWithoutExtension(name: string) {
+  const dotIndex = name.lastIndexOf('.')
+  return dotIndex > 0 ? name.slice(0, dotIndex) : name
+}
+
+function isImageFile(file: File) {
+  const lowerName = file.name.toLowerCase()
+  return file.type.startsWith('image/') || imageFileExtensions.some((ext) => lowerName.endsWith(ext))
+}
+
+function isSupportedOcrFile(file: File) {
+  const lowerName = file.name.toLowerCase()
+  if (isImageFile(file)) return true
+  if (file.type.includes('spreadsheet') || file.type.includes('csv') || file.type.includes('excel')) {
+    return true
+  }
+  if (file.type.startsWith('text/')) {
+    return true
+  }
+  if (file.type === 'application/pdf' || lowerName.endsWith('.pdf')) {
+    return true
+  }
+  return ocrSupportedExtensions.some((ext) => lowerName.endsWith(ext))
+}
+
+function isImageAttachment(url?: string | null) {
+  if (!url) return false
+  if (url.startsWith('data:image')) return true
+  const cleanUrl = url.split('?')[0].toLowerCase()
+  return imageFileExtensions.some((ext) => cleanUrl.endsWith(ext))
+}
 
 const authStore = useAuthStore()
 const { request } = useApi()
@@ -196,33 +240,90 @@ async function submitComment() {
   }
 }
 
+function clearFile() {
+  selectedFile.value = null
+  formImageUrl.value = null
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+  }
+}
+
+function handleDragOver(event: DragEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+  if (!ocrProcessing.value) {
+    isDragging.value = true
+  }
+}
+
+function handleDragLeave(event: DragEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+  isDragging.value = false
+}
+
+function handleDrop(event: DragEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+  isDragging.value = false
+
+  if (ocrProcessing.value) return
+
+  const files = event.dataTransfer?.files
+  if (files && files.length > 0) {
+    const file = files[0]
+    if (isSupportedOcrFile(file)) {
+      processFile(file)
+    } else {
+      ocrError.value = '지원하지 않는 파일 형식입니다. 이미지, PDF, Excel, CSV, 텍스트 파일만 업로드해주세요.'
+    }
+  }
+}
+
 async function handleFileSelect(event: Event) {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
 
+  processFile(file)
+}
+
+async function processFile(file: File) {
+  if (!isSupportedOcrFile(file)) {
+    selectedFile.value = null
+    ocrError.value = '지원하지 않는 파일 형식입니다. 이미지, PDF, Excel, CSV, 텍스트 파일만 업로드해주세요.'
+    if (fileInputRef.value) {
+      fileInputRef.value.value = ''
+    }
+    return
+  }
+
   selectedFile.value = file
   
   // 파일 미리보기
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    formImageUrl.value = e.target?.result as string
+  if (isImageFile(file)) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      formImageUrl.value = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  } else {
+    formImageUrl.value = null
   }
-  reader.readAsDataURL(file)
   
   // OCR 처리 시작
   await processOCR(file)
 }
 
 async function processOCR(file: File) {
-  if (!file.type.startsWith('image/')) {
-    ocrError.value = '이미지 파일만 OCR 처리가 가능합니다.'
+  if (!isSupportedOcrFile(file)) {
+    ocrError.value = '지원하지 않는 파일 형식입니다.'
     return
   }
 
   // 제목이 없으면 파일명 사용
   if (!formTitle.value.trim()) {
-    formTitle.value = file.name.rsplit('.', 1)[0] || file.name
+    formTitle.value = getFileNameWithoutExtension(file.name) || file.name
   }
 
   ocrProcessing.value = true
@@ -336,6 +437,7 @@ function closeWriteModal() {
   ocrText.value = null
   ocrError.value = null
   aiAnalysisResult.value = null
+  isDragging.value = false
   if (fileInputRef.value) {
     fileInputRef.value.value = ''
   }
@@ -411,7 +513,23 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
         </div>
         <div class="detail-content">
           <p>{{ postDetail.content }}</p>
-          <img v-if="postDetail.image_url" :src="postDetail.image_url" alt="문서 이미지" class="detail-image" />
+          <div v-if="postDetail.image_url" class="attachment-viewer">
+            <img
+              v-if="isImageAttachment(postDetail.image_url)"
+              :src="postDetail.image_url"
+              alt="문서 이미지"
+              class="detail-image"
+            />
+            <a
+              v-else
+              class="attachment-link"
+              :href="postDetail.image_url"
+              target="_blank"
+              rel="noopener"
+            >
+              📎 원본 파일 열기
+            </a>
+          </div>
         </div>
         <div class="detail-actions">
           <button class="action-btn" :class="{ liked: postDetail.liked }" @click="toggleLike(postDetail.post_id)">
@@ -459,25 +577,39 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
           
           <div class="form-group">
             <label>문서 파일 업로드 (OCR 자동 처리) <span class="required">*</span></label>
-            <div class="file-upload-area">
+            <div 
+              class="file-upload-area"
+              :class="{ 'has-file': selectedFile, 'dragging': isDragging }"
+              @dragover.prevent="handleDragOver"
+              @dragleave.prevent="handleDragLeave"
+              @drop.prevent="handleDrop"
+            >
               <input
                 ref="fileInputRef"
+                :id="vaultUploadInputId"
                 type="file"
-                accept="image/*,.pdf"
+                accept="image/*,.pdf,.xlsx,.xls,.csv,.txt,.md"
                 @change="handleFileSelect"
                 :disabled="ocrProcessing"
-                class="file-input"
+                class="file-input-overlay"
               />
               <div class="file-upload-info">
-                <p v-if="!selectedFile" class="file-hint">
-                  📎 이미지 파일을 선택하면 자동으로 OCR 처리가 진행됩니다.<br>
-                  <small>지원 형식: JPG, PNG, WEBP (최대 10MB)</small>
+                <p v-if="!selectedFile && !isDragging" class="file-hint">
+                  📎 이미지, PDF, Excel, CSV, 텍스트 파일을 선택하면 자동으로 OCR 처리가 진행됩니다.<br>
+                  <label :for="vaultUploadInputId" class="file-select-link">
+                    파일 선택하기
+                  </label>
+                  <small>지원 형식: JPG, PNG, WEBP, PDF, XLSX, XLS, CSV, TXT, MD (최대 10MB)</small><br>
+                  <strong style="color: var(--accent, #667eea); margin-top: 8px; display: block;">클릭하거나 파일을 드래그하여 업로드</strong>
+                </p>
+                <p v-else-if="isDragging" class="file-hint" style="color: var(--accent, #667eea); font-weight: 600;">
+                  📤 파일을 놓아주세요
                 </p>
                 <div v-else class="file-selected">
                   <span>✅ {{ selectedFile.name }}</span>
                   <button 
                     type="button" 
-                    @click="selectedFile = null; formImageUrl = null; if(fileInputRef) fileInputRef.value = ''"
+                    @click.stop="clearFile"
                     class="remove-file-btn"
                   >
                     제거
@@ -686,6 +818,26 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
   margin-top: 16px;
 }
 
+.attachment-viewer {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attachment-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #4f46e5;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.attachment-link:hover {
+  text-decoration: underline;
+}
+
 .detail-actions {
   margin-bottom: 24px;
   padding-top: 24px;
@@ -880,6 +1032,11 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
   text-align: center;
   background: var(--soft, #f9fafb);
   transition: all 0.2s;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  position: relative;
 }
 
 .file-upload-area:hover {
@@ -887,8 +1044,23 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
   background: rgba(102, 126, 234, 0.05);
 }
 
-.file-input {
-  display: none;
+.file-upload-area.dragging {
+  border-color: #667eea;
+  border-style: solid;
+  background: rgba(102, 126, 234, 0.1);
+  transform: scale(1.02);
+}
+
+.file-upload-area.has-file {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.file-input-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .file-upload-info {
@@ -905,6 +1077,21 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
 .file-hint small {
   color: var(--muted, #999);
   font-size: 12px;
+}
+
+.file-select-link {
+  display: inline-flex;
+  padding: 6px 12px;
+  margin: 8px 0;
+  border-radius: 4px;
+  background: rgba(102, 126, 234, 0.1);
+  color: #4f46e5;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.file-select-link:hover {
+  text-decoration: underline;
 }
 
 .file-selected {
@@ -1183,4 +1370,3 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
   }
 }
 </style>
-
