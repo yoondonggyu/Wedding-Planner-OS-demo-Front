@@ -1,0 +1,259 @@
+
+.review-summary-view {
+  min-height: 100vh;
+  padding: 24px;
+  background: var(--bg, #ffffff);
+  color: var(--text, #1a1a1a);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--border, #e5e7eb);
+}
+
+.header-content h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text, #1a1a1a);
+}
+
+.header-content p {
+  font-size: 1rem;
+  color: var(--muted, #6b7280);
+  line-height: 1.6;
+}
+
+.header-content p strong {
+  color: var(--primary, #8b5cf6);
+  font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-write {
+  background: linear-gradient(135deg, #8b5cf6, #22d3ee);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-write:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-refresh {
+  background: var(--card-bg, #f9fafb);
+  color: var(--text, #1a1a1a);
+  border: 1px solid var(--border, #e5e7eb);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-refresh:hover:not(:disabled) {
+  background: var(--hover, #f3f4f6);
+}
+
+.btn-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.loading-state,
+.error-state,
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.spinner {
+  border: 4px solid var(--border, #e5e7eb);
+  border-top: 4px solid var(--primary, #8b5cf6);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-state p {
+  color: #ef4444;
+  font-size: 1.1rem;
+  margin-bottom: 16px;
+}
+
+.btn-retry {
+  background: var(--primary, #8b5cf6);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.empty-state p {
+  color: var(--muted, #6b7280);
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.btn-write-primary {
+  background: linear-gradient(135deg, #8b5cf6, #22d3ee);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: all 0.2s;
+}
+
+.btn-write-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.summary-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.summary-card,
+.sentiment-card,
+.review-count-card {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.summary-card h2,
+.sentiment-card h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text, #1a1a1a);
+}
+
+.summary-text {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: var(--text, #1a1a1a);
+  white-space: pre-wrap;
+}
+
+.sentiment-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.stat-item.positive {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.stat-item.negative {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--muted, #6b7280);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text, #1a1a1a);
+  margin-bottom: 4px;
+}
+
+.stat-percentage {
+  font-size: 1rem;
+  color: var(--muted, #6b7280);
+}
+
+.overall-sentiment {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.sentiment-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.sentiment-badge.positive {
+  background: rgba(34, 197, 94, 0.2);
+  color: #16a34a;
+}
+
+.sentiment-badge.negative {
+  background: rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+}
+
+.sentiment-badge.neutral {
+  background: rgba(156, 163, 175, 0.2);
+  color: #6b7280;
+}
+
+.review-count-card {
+  text-align: center;
+  padding: 20px;
+}
+
+.review-count-card p {
+  font-size: 1.1rem;
+  color: var(--text, #1a1a1a);
+}
+
+.review-count-card strong {
+  color: var(--primary, #8b5cf6);
+  font-weight: 700;
+}
+

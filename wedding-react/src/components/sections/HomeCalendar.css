@@ -1,0 +1,239 @@
+.home-calendar {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.calendar-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.calendar-title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.calendar-title-section h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.view-all-btn {
+  padding: 6px 12px;
+  background: var(--soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-all-btn:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.d-day-badge {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-radius: 20px;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.calendar-widget {
+  margin-top: 16px;
+}
+
+.calendar-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.nav-btn {
+  background: var(--soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.nav-btn:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.month-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.day-header {
+  text-align: center;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 8px 4px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  min-height: 40px;
+  padding: 4px;
+  background: var(--soft);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.calendar-day:hover {
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.calendar-day.other-month {
+  opacity: 0.3;
+}
+
+.calendar-day.today {
+  background: rgba(139, 92, 246, 0.2);
+  border: 2px solid var(--accent);
+}
+
+.day-number {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.day-events {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.event-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.event-dot.wedding-event {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  width: 8px;
+  height: 8px;
+}
+
+.event-dot.high-priority {
+  background: var(--danger);
+}
+
+.event-dot.medium-priority {
+  background: var(--warn);
+}
+
+.event-dot.low-priority {
+  background: var(--ok);
+}
+
+.more-events {
+  font-size: 9px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.login-prompt {
+  text-align: center;
+  padding: 24px;
+  margin-top: 16px;
+  background: var(--soft);
+  border-radius: 12px;
+}
+
+.login-prompt p {
+  margin: 0 0 12px 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.login-btn {
+  padding: 10px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.login-btn:hover {
+  background: var(--accent-2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .home-calendar {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .calendar-title-section h2 {
+    font-size: 18px;
+  }
+
+  .calendar-day {
+    min-height: 35px;
+    padding: 3px;
+  }
+
+  .day-number {
+    font-size: 11px;
+  }
+
+  .event-dot {
+    width: 5px;
+    height: 5px;
+  }
+
+  .event-dot.wedding-event {
+    width: 6px;
+    height: 6px;
+  }
+}
+

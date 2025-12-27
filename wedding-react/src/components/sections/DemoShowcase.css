@@ -1,0 +1,66 @@
+
+.demo-content .title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge.wip {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--warn);
+}
+
+.badge.ok {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--ok);
+}
+
+.btn.active {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.4);
+  color: var(--accent);
+}
+
+.foot {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.demo-box {
+  background: var(--soft);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  padding: 18px;
+  border-radius: 12px;
+  min-height: 200px;
+}
+
+[data-theme='light'] .demo-box {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: var(--soft);
+}
+
+.demo-inner-box {
+  background: var(--soft);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+[data-theme='light'] .demo-inner-box {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: var(--card);
+}
+
