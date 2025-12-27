@@ -336,19 +336,98 @@
           <div class="completion-actions">
             <button class="list-btn" @click="goToList">📋 목록으로</button>
             <button class="new-btn" @click="createNew">✨ 새로 만들기</button>
-            <button class="threed-btn" @click="currentStep = 6">🎨 3D 청첩장 만들기</button>
+            <button class="options-btn" @click="currentStep = 6">✨ 특별한 기능 선택하기</button>
           </div>
         </div>
       </div>
 
-      <!-- Step 6: 3D 청첩장 만들기 -->
-      <div v-if="currentStep === 6" class="step-content threed-step">
-        <div class="step-header">
-          <h2>🎨 3D 청첩장 만들기</h2>
-          <p class="step-description">
-            우리만의 사진으로 특별한 3D 청첩장을 만들 수 있어요!
-          </p>
+      <!-- Step 6: 특별한 기능 선택 (FE OptionSelectPage 스타일) -->
+      <div v-if="currentStep === 6" class="step-content options-step">
+        <div v-if="!canAccessStep(6)" class="access-denied">
+          <p>⚠️ 먼저 이전 단계들을 완료해주세요.</p>
+          <button class="back-btn" @click="currentStep = 5">완료 페이지로 돌아가기</button>
         </div>
+        <div v-else>
+          <div class="step-header">
+            <p class="step-label">STEP 6</p>
+            <h2>특별한 기능 선택하기</h2>
+            <p class="step-description">
+              청첩장을 더욱 특별하게 만들 기능을 선택하세요<br>
+              원하는 만큼 여러 기능을 사용할 수 있습니다!
+            </p>
+          </div>
+
+          <div class="options-grid">
+            <!-- 3D 청첩장 옵션 -->
+            <div class="option-card blue">
+              <div class="option-top">
+                <div class="option-icon">🎨</div>
+                <h3 class="option-title">3D 청첩장 만들기</h3>
+              </div>
+              <p class="option-desc">신랑신부의 3D 캐릭터로 특별한 청첩장 제작</p>
+              <ul class="option-bullets">
+                <li>3D 캐릭터 생성</li>
+                <li>같이 나온 사진 3장 필요</li>
+                <li>몸의 60~70% 사진</li>
+              </ul>
+              <button class="option-btn" @click="handleSelectOption('3d')">
+                시작하기
+              </button>
+            </div>
+
+            <!-- 영화 포스터 옵션 -->
+            <div class="option-card purple">
+              <div class="option-top">
+                <div class="option-icon">🎬</div>
+                <h3 class="option-title">영화 포스터 만들기</h3>
+              </div>
+              <p class="option-desc">좋아하는 영화/드라마 포스터에 신랑신부 얼굴 합성</p>
+              <ul class="option-bullets">
+                <li>포스터 이미지 업로드</li>
+                <li>같이 나온 사진 최대 3장</li>
+                <li>커스텀 문구 입력</li>
+              </ul>
+              <button class="option-btn" @click="handleSelectOption('poster')">
+                시작하기
+              </button>
+            </div>
+
+            <!-- 완료된 기능 표시 -->
+            <div v-if="stepCompleted.step7 && selectedSpecialFeature" class="completed-features">
+              <div class="completed-badge">
+                <span v-if="selectedSpecialFeature === '3d'">✅ 3D 청첩장 완료</span>
+                <span v-if="selectedSpecialFeature === 'poster'">✅ 영화 포스터 완료</span>
+              </div>
+              <p class="completed-hint">다른 기능도 사용하고 싶으시면 위에서 선택해주세요!</p>
+            </div>
+          </div>
+
+          <div class="tip-box">
+            <div class="tip-title">💡 Tip</div>
+            <ul class="tip-list">
+              <li>각 기능은 독립적으로 작동하며, 원하는 순서대로 사용할 수 있습니다</li>
+              <li>한 기능을 완료한 후 이 화면으로 돌아와 다른 기능을 선택할 수 있습니다</li>
+              <li>모든 기능을 사용할 필요는 없고, 원하는 기능만 선택하세요</li>
+              <li>완료된 기능은 언제든지 다시 만들 수 있습니다</li>
+            </ul>
+          </div>
+
+          <div class="step-actions">
+            <button class="back-btn" @click="currentStep = 5">← 결과로 돌아가기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7: 특별 기능 진행 (선택한 기능에 따라 동적 표시) -->
+      <div v-if="currentStep === 7" class="step-content">
+        <!-- 3D 청첩장 만들기 -->
+        <div v-if="selectedSpecialFeature === '3d'" class="threed-step">
+          <div class="step-header">
+            <h2>🎨 3D 청첩장 만들기</h2>
+            <p class="step-description">
+              우리만의 사진으로 특별한 3D 청첩장을 만들 수 있어요!
+            </p>
+          </div>
 
         <!-- 메인 이미지 (필수) -->
         <section class="threed-section">
@@ -437,7 +516,7 @@
 
         <!-- 버튼 -->
         <div class="step-actions">
-          <button class="back-btn" @click="currentStep = 5">← 이전</button>
+          <button class="back-btn" @click="currentStep = 6">← 특별한 기능 선택으로</button>
           <button
             v-if="['SUBMITTED', 'PENDING', 'RUNNING'].includes(threeDStatus)"
             class="danger-btn"
@@ -446,17 +525,175 @@
             생성 취소
           </button>
           <button
-            v-else
+            v-else-if="threeDStatus !== 'DONE'"
             class="next-btn"
             @click="handleThreeDSubmit"
             :disabled="!threeDMainImage || ['SUBMITTED', 'PENDING', 'RUNNING'].includes(threeDStatus)"
           >
-            {{ threeDStatus === 'DONE' ? '완료' : '3D 청첩장 생성하기' }}
+            3D 청첩장 생성하기
+          </button>
+          <button
+            v-else
+            class="next-btn"
+            @click="currentStep = 6"
+          >
+            특별 기능 선택으로 돌아가기
           </button>
         </div>
 
         <div v-if="!threeDMainImage" class="notice">
           * 메인 사진 1장은 반드시 업로드해야 생성할 수 있어요
+        </div>
+        </div>
+
+        <!-- 영화 포스터 만들기 -->
+        <div v-else-if="selectedSpecialFeature === 'poster'" class="poster-step">
+          <div class="step-header">
+            <h2>🎬 영화 포스터 만들기</h2>
+            <p class="step-description">
+              좋아하는 영화/드라마 포스터에 신랑신부 얼굴을 합성하여 특별한 포스터를 만들어보세요!
+            </p>
+          </div>
+
+          <!-- 포스터 이미지 업로드 -->
+          <section class="poster-section">
+            <div class="section-header">
+              <div class="section-title">
+                1. 포스터 이미지 <span class="req">*</span>
+              </div>
+              <div v-if="posterImage" class="pill-ok">업로드 완료</div>
+            </div>
+            
+            <input
+              type="file"
+              ref="posterImageInput"
+              accept="image/*"
+              @change="handlePosterImageChange"
+              class="file-input"
+              style="display: none;"
+            />
+            
+            <div v-if="!posterImage" class="upload-area" @click="posterImageInput?.click()">
+              <div class="upload-placeholder">
+                <span class="upload-icon">🎬</span>
+                <span class="upload-text">포스터 이미지 선택</span>
+                <span class="upload-hint">합성하고 싶은 영화/드라마 포스터 이미지를 업로드하세요</span>
+              </div>
+            </div>
+            
+            <div v-else class="image-preview-container">
+              <div class="image-preview">
+                <img :src="getImagePreview(posterImage)" alt="포스터 이미지 미리보기" />
+                <button type="button" class="remove-image-btn" @click="removePosterImage">×</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 신랑신부 사진 업로드 -->
+          <section class="poster-section">
+            <div class="section-header">
+              <div class="section-title">
+                2. 신랑신부 사진 (최대 3장) <span class="req">*</span>
+              </div>
+              <div v-if="posterMainImages.length > 0" class="pill-ok">{{ posterMainImages.length }}장 업로드 완료</div>
+            </div>
+            
+            <input
+              type="file"
+              ref="posterMainImagesInput"
+              accept="image/*"
+              multiple
+              @change="handlePosterMainImagesChange"
+              class="file-input"
+              style="display: none;"
+            />
+            
+            <div v-if="posterMainImages.length < 3" class="upload-area" @click="posterMainImagesInput?.click()">
+              <div class="upload-placeholder">
+                <span class="upload-icon">📸</span>
+                <span class="upload-text">사진 추가</span>
+                <span class="upload-hint">신랑신부가 함께 나온 사진을 업로드하세요 (최대 3장)</span>
+                <span class="upload-count">{{ posterMainImages.length }}/3</span>
+              </div>
+            </div>
+            
+            <div v-if="posterMainImages.length > 0" class="reference-images-preview">
+              <div
+                v-for="(file, index) in posterMainImages"
+                :key="index"
+                class="reference-image-item"
+              >
+                <div class="image-number">{{ index + 1 }}</div>
+                <img :src="getImagePreview(file)" :alt="`사진 ${index + 1}`" />
+                <button type="button" class="remove-image-btn" @click="removePosterMainImage(index)">×</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 커스텀 문구 입력 -->
+          <section class="poster-section">
+            <div class="section-header">
+              <div class="section-title">3. 커스텀 문구 (선택)</div>
+            </div>
+            <textarea
+              v-model="posterCustomText"
+              rows="4"
+              placeholder="포스터에 추가하고 싶은 문구를 입력하세요 (예: '우리의 이야기가 시작됩니다', '2025.03.15')"
+              class="custom-text-input"
+            ></textarea>
+          </section>
+
+          <!-- 상태 표시 -->
+          <div v-if="posterStatus !== 'IDLE'" class="poster-status">
+            <div class="status-pill" :class="`status-${posterStatus.toLowerCase()}`">
+              <span v-if="posterStatus === 'PROCESSING'">처리 중...</span>
+              <span v-if="posterStatus === 'DONE'">완료</span>
+              <span v-if="posterStatus === 'FAILED'">실패</span>
+            </div>
+            <div v-if="posterError" class="error-message">{{ posterError }}</div>
+          </div>
+
+          <!-- 결과 표시 -->
+          <div v-if="posterResultUrl && posterStatus === 'DONE'" class="poster-result">
+            <h3>생성된 포스터</h3>
+            <div class="result-image-container">
+              <img :src="posterResultUrl" alt="생성된 포스터" />
+            </div>
+            <div class="result-actions">
+              <button class="download-btn" @click="downloadPoster">다운로드</button>
+              <button class="share-btn" @click="sharePoster">공유하기</button>
+            </div>
+          </div>
+
+          <!-- 버튼 -->
+          <div class="step-actions">
+            <button class="back-btn" @click="currentStep = 6">← 특별한 기능 선택으로</button>
+            <button
+              v-if="posterStatus !== 'DONE'"
+              class="next-btn"
+              @click="handlePosterSubmit"
+              :disabled="!posterImage || posterMainImages.length === 0 || posterStatus === 'PROCESSING'"
+            >
+              {{ posterStatus === 'PROCESSING' ? '처리 중...' : '포스터 만들기' }}
+            </button>
+            <button
+              v-else
+              class="next-btn"
+              @click="currentStep = 6"
+            >
+              특별 기능 선택으로 돌아가기
+            </button>
+          </div>
+
+          <div v-if="!posterImage || posterMainImages.length === 0" class="notice">
+            * 포스터 이미지와 신랑신부 사진은 필수입니다
+          </div>
+        </div>
+
+        <!-- 선택한 기능이 없을 때 -->
+        <div v-else class="access-denied">
+          <p>⚠️ 특별 기능을 선택해주세요.</p>
+          <button class="back-btn" @click="currentStep = 6">특별한 기능 선택으로</button>
         </div>
       </div>
     </div>
@@ -484,12 +721,16 @@ const steps = [
   { number: 3, label: '디자인 요청', description: '스타일 이미지 업로드' },
   { number: 4, label: '디자인 생성', description: '청첩장 디자인 생성' },
   { number: 5, label: '완료', description: '청첩장 완성' },
-  { number: 6, label: '3D 청첩장', description: '3D 모델 생성' }
+  { number: 6, label: '특별한 기능', description: '추가 기능 선택' },
+  { number: 7, label: '특별 기능 진행', description: '선택한 기능 진행' }
 ]
 
 // 기본 정보 모달
 const showBasicInfoModal = ref(false)
 const savedBasicInfo = ref<InvitationBasicInfo & { mapInfo?: MapInfo } | null>(null)
+
+// 선택한 특별 기능 타입
+const selectedSpecialFeature = ref<'3d' | 'poster' | null>(null)
 
 // 단계별 완료 상태 관리
 const stepCompleted = ref({
@@ -499,7 +740,8 @@ const stepCompleted = ref({
   step3: false, // 디자인 요청 완료
   step4: false, // 디자인 생성 완료
   step5: false, // 완료 단계
-  step6: false  // 3D 청첩장 생성 완료
+  step6: false, // 특별한 기능 선택 완료
+  step7: false  // 특별 기능 진행 완료
 })
 
 // 요구사항 입력 데이터
@@ -631,6 +873,7 @@ const getStepCompleted = (stepNumber: number): boolean => {
   if (stepNumber === 4) return stepCompleted.value.step4
   if (stepNumber === 5) return stepCompleted.value.step5
   if (stepNumber === 6) return stepCompleted.value.step6
+  if (stepNumber === 7) return stepCompleted.value.step7
   return false
 }
 
@@ -1353,6 +1596,16 @@ const goToList = () => {
 const threeDMainImageInput = ref<HTMLInputElement>()
 const threeDReferenceImagesInput = ref<HTMLInputElement>()
 
+// 영화 포스터 관련 데이터
+const posterImage = ref<File | null>(null) // 포스터 이미지
+const posterMainImages = ref<File[]>([]) // 신랑신부 사진 (최대 3장)
+const posterCustomText = ref<string>('') // 커스텀 문구
+const posterStatus = ref<'IDLE' | 'PROCESSING' | 'DONE' | 'FAILED'>('IDLE')
+const posterError = ref<string | null>(null)
+const posterResultUrl = ref<string | null>(null)
+const posterImageInput = ref<HTMLInputElement>()
+const posterMainImagesInput = ref<HTMLInputElement>()
+
 const handleThreeDMainImageChange = (e: Event) => {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
@@ -1469,7 +1722,12 @@ const startThreeDPolling = async () => {
           threeDModelUrl.value = response.assets.model3dUrl
         }
         stopThreeDPolling()
+        stepCompleted.value.step7 = true
         alert('3D 청첩장이 완성되었습니다!')
+        // 완료 후 특별 기능 선택 화면으로 돌아가기
+        setTimeout(() => {
+          currentStep.value = 6
+        }, 1000)
         return
       }
 
@@ -1519,6 +1777,138 @@ onUnmounted(() => {
   stopThreeDPolling()
 })
 
+// 영화 포스터 관련 함수들
+const handlePosterImageChange = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (file) {
+    posterImage.value = file
+  }
+}
+
+const removePosterImage = () => {
+  if (posterImage.value) {
+    URL.revokeObjectURL(getImagePreview(posterImage.value))
+    posterImage.value = null
+  }
+}
+
+const handlePosterMainImagesChange = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const files = Array.from(target.files || [])
+  if (files.length === 0) return
+
+  // 최대 3장 제한
+  if (files.length + posterMainImages.value.length > 3) {
+    alert('최대 3장까지만 업로드할 수 있습니다.')
+    return
+  }
+
+  posterMainImages.value = [...posterMainImages.value, ...files.slice(0, 3 - posterMainImages.value.length)]
+}
+
+const removePosterMainImage = (index: number) => {
+  if (posterMainImages.value[index]) {
+    URL.revokeObjectURL(getImagePreview(posterMainImages.value[index]))
+    posterMainImages.value.splice(index, 1)
+  }
+}
+
+const handlePosterSubmit = async () => {
+  if (!posterImage.value || posterMainImages.value.length === 0) {
+    alert('포스터 이미지와 신랑신부 사진을 업로드해주세요.')
+    return
+  }
+
+  posterStatus.value = 'PROCESSING'
+  posterError.value = null
+  posterResultUrl.value = null
+
+  try {
+    const formData = new FormData()
+    formData.append('posterImage', posterImage.value)
+    posterMainImages.value.forEach((file) => {
+      formData.append('mainImages', file)
+    })
+    if (posterCustomText.value.trim()) {
+      formData.append('customText', posterCustomText.value.trim())
+    }
+
+    const response = await request<{
+      message: string
+      data: {
+        resultImageUrl: string
+      }
+    }>('/invitations/poster', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (response.data?.resultImageUrl) {
+      posterResultUrl.value = response.data.resultImageUrl
+      posterStatus.value = 'DONE'
+      stepCompleted.value.step7 = true
+      alert('영화 포스터가 완성되었습니다!')
+      // 완료 후 특별 기능 선택 화면으로 돌아가기
+      setTimeout(() => {
+        currentStep.value = 6
+      }, 1000)
+    } else {
+      throw new Error('포스터 생성에 실패했습니다.')
+    }
+  } catch (error: any) {
+    console.error('영화 포스터 생성 실패:', error)
+    posterStatus.value = 'FAILED'
+    posterError.value = error?.data?.error || error?.message || '영화 포스터 생성에 실패했습니다.'
+  }
+}
+
+const downloadPoster = () => {
+  if (!posterResultUrl.value) return
+  
+  const link = document.createElement('a')
+  link.href = posterResultUrl.value
+  link.download = `영화포스터_${basicInfo.value?.groom_name || '신랑'}_${basicInfo.value?.bride_name || '신부'}_${new Date().toISOString().split('T')[0]}.png`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+const sharePoster = async () => {
+  if (!posterResultUrl.value) return
+  
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: '우리의 영화 포스터',
+        text: '특별한 영화 포스터를 만들어봤어요!',
+        url: posterResultUrl.value,
+      })
+    } catch (err) {
+      console.error('공유 실패:', err)
+    }
+  } else {
+    // 공유 API가 없는 경우 클립보드에 복사
+    try {
+      await navigator.clipboard.writeText(posterResultUrl.value)
+      alert('포스터 URL이 클립보드에 복사되었습니다!')
+    } catch (err) {
+      console.error('클립보드 복사 실패:', err)
+    }
+  }
+}
+
+// 특별한 기능 선택 핸들러
+const handleSelectOption = (option: '3d' | 'poster') => {
+  if (option === '3d') {
+    currentStep.value = 7 // 3D 청첩장 단계로 이동
+    stepCompleted.value.step6 = true
+  } else if (option === 'poster') {
+    currentStep.value = 8 // 영화 포스터 단계로 이동
+    stepCompleted.value.step6 = true
+  }
+}
+
 const createNew = () => {
   currentStep.value = 1
   requirements.value = ''
@@ -1543,6 +1933,17 @@ const createNew = () => {
   threeDError.value = null
   stopThreeDPolling()
   
+  // 영화 포스터 관련 초기화
+  posterImage.value = null
+  posterMainImages.value = []
+  posterCustomText.value = ''
+  posterStatus.value = 'IDLE'
+  posterError.value = null
+  posterResultUrl.value = null
+  
+  // 특별 기능 선택 초기화
+  selectedSpecialFeature.value = null
+  
   // 모든 단계 완료 상태 초기화 (기본 정보는 유지)
   stepCompleted.value = {
     step0: stepCompleted.value.step0, // 기본 정보는 유지
@@ -1551,7 +1952,8 @@ const createNew = () => {
     step3: false,
     step4: false,
     step5: false,
-    step6: false
+    step6: false,
+    step7: false
   }
 }
 </script>
@@ -2798,6 +3200,290 @@ h1 {
 .threed-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+}
+
+.status-processing {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-canceled {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+/* 특별한 기능 선택 스타일 (FE OptionSelectPage 스타일) */
+.options-step {
+  padding: 2rem;
+}
+
+.options-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+  margin-top: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .options-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.option-card {
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.07);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  min-height: 320px;
+}
+
+.option-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 65px rgba(0, 0, 0, 0.1);
+}
+
+.option-top {
+  padding: 22px 22px 16px;
+  color: #fff;
+}
+
+.option-card.blue .option-top {
+  background: linear-gradient(135deg, #fb7185 0%, #f97316 65%, #f59e0b 100%);
+}
+
+.option-card.purple .option-top {
+  background: linear-gradient(135deg, #a855f7 0%, #8b5cf6 65%, #7c3aed 100%);
+}
+
+.option-icon {
+  font-size: 34px;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.15));
+  margin-bottom: 10px;
+}
+
+.option-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.option-desc {
+  margin: 0;
+  padding: 16px 22px 0;
+  color: rgba(31, 41, 55, 0.78);
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.option-bullets {
+  margin: 12px 0 0;
+  padding: 0 22px 18px;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+  color: rgba(31, 41, 55, 0.75);
+  font-weight: 650;
+}
+
+.option-bullets li {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.option-bullets li::before {
+  content: "•";
+  color: rgba(34, 197, 94, 0.95);
+  font-size: 20px;
+  line-height: 1;
+  margin-top: -2px;
+}
+
+.option-btn {
+  margin: 0 22px 22px;
+  height: 52px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  background: #fff;
+  color: #f63f73;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 16px;
+  transition: transform 120ms ease, filter 120ms ease;
+  border-image: linear-gradient(135deg, #fb7185, #f97316, #f59e0b) 1;
+}
+
+.option-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.02);
+}
+
+.option-btn:active {
+  transform: translateY(0);
+}
+
+.tip-box {
+  margin-top: 1.5rem;
+  border-radius: 18px;
+  border: 1px solid rgba(147, 197, 253, 0.65);
+  background: rgba(219, 234, 254, 0.45);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 18px;
+}
+
+.tip-title {
+  font-weight: 900;
+  color: rgba(30, 64, 175, 0.9);
+  margin-bottom: 10px;
+}
+
+.tip-list {
+  margin: 0;
+  padding-left: 18px;
+  color: rgba(30, 58, 138, 0.85);
+  font-weight: 650;
+  line-height: 1.7;
+  display: grid;
+  gap: 6px;
+}
+
+.completed-features {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: rgba(212, 237, 218, 0.3);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 12px;
+}
+
+.completed-badge {
+  font-weight: 700;
+  color: #16a34a;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.completed-hint {
+  margin: 0;
+  color: rgba(22, 163, 74, 0.8);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* 영화 포스터 스타일 */
+.poster-step {
+  padding: 2rem;
+}
+
+.poster-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.custom-text-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  margin-top: 0.5rem;
+}
+
+.poster-status {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.poster-result {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.poster-result h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.result-image-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto 1rem;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.result-image-container img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.result-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.download-btn,
+.share-btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.download-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.share-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.download-btn:hover,
+.share-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.options-btn {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.options-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 </style>
 
