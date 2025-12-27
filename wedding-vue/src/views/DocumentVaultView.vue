@@ -63,6 +63,9 @@ const aiAnalysisResult = ref<{
   sentiment?: { label: string; confidence: number }
 } | null>(null)
 
+// 파일 분석 중 상태
+const analyzingFile = ref(false)
+
 // OCR 관련
 const ocrProcessing = ref(false)
 const ocrText = ref<string | null>(null)
@@ -117,7 +120,8 @@ function isImageAttachment(url?: string | null) {
 const authStore = useAuthStore()
 const { request } = useApi()
 
-const canWrite = computed(() => authStore.isAuthenticated)
+// 로그인 없이도 파일 첨부 및 분석 가능하도록 수정
+const canWrite = computed(() => true)
 const hasPosts = computed(() => posts.value.length > 0)
 
 function normalizeTags(tags?: { name: string }[] | string[]) {
@@ -272,11 +276,8 @@ function handleDrop(event: DragEvent) {
   const files = event.dataTransfer?.files
   if (files && files.length > 0) {
     const file = files[0]
-    if (isSupportedOcrFile(file)) {
-      processFile(file)
-    } else {
-      ocrError.value = '지원하지 않는 파일 형식입니다. 이미지, PDF, Excel, CSV, 텍스트 파일만 업로드해주세요.'
-    }
+    // 모든 파일 형식 허용 (OCR 지원 여부와 관계없이 첨부 가능)
+    processFile(file)
   }
 }
 
@@ -289,18 +290,10 @@ async function handleFileSelect(event: Event) {
 }
 
 async function processFile(file: File) {
-  if (!isSupportedOcrFile(file)) {
-    selectedFile.value = null
-    ocrError.value = '지원하지 않는 파일 형식입니다. 이미지, PDF, Excel, CSV, 텍스트 파일만 업로드해주세요.'
-    if (fileInputRef.value) {
-      fileInputRef.value.value = ''
-    }
-    return
-  }
-
+  // 모든 파일 형식 허용 (OCR 지원 파일이 아니어도 첨부 가능)
   selectedFile.value = file
   
-  // 파일 미리보기
+  // 파일 미리보기 (이미지인 경우에만)
   if (isImageFile(file)) {
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -311,30 +304,42 @@ async function processFile(file: File) {
     formImageUrl.value = null
   }
   
-  // OCR 처리 시작
-  await processOCR(file)
-}
-
-async function processOCR(file: File) {
-  if (!isSupportedOcrFile(file)) {
-    ocrError.value = '지원하지 않는 파일 형식입니다.'
-    return
-  }
-
   // 제목이 없으면 파일명 사용
   if (!formTitle.value.trim()) {
     formTitle.value = getFileNameWithoutExtension(file.name) || file.name
   }
-
-  ocrProcessing.value = true
+  
+  // OCR은 자동으로 처리하지 않음 (사용자가 버튼을 눌러야 함)
   ocrText.value = null
   ocrError.value = null
+}
+
+// 파일 분석하기 (OCR + VLLM)
+async function analyzeFile() {
+  if (!selectedFile.value) {
+    alert('파일을 먼저 선택해주세요.')
+    return
+  }
+
+  const file = selectedFile.value
+
+  if (!isSupportedOcrFile(file)) {
+    ocrError.value = '지원하지 않는 파일 형식입니다. 이미지, PDF, Excel, CSV, 텍스트 파일만 분석이 가능합니다.'
+    return
+  }
+
+  ocrProcessing.value = true
+  analyzingFile.value = true
+  ocrText.value = null
+  ocrError.value = null
+  aiAnalysisResult.value = null
 
   try {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('title', formTitle.value.trim() || file.name)
 
+    // OCR + VLLM 분석 API 호출
     const res = await request<{
       message: string
       data: {
@@ -342,6 +347,7 @@ async function processOCR(file: File) {
         ocr_text: string | null
         ocr_error: string | null
         summary: string | null
+        tags?: string[]
       }
     }>('/posts/upload-document', {
       method: 'POST',
@@ -352,73 +358,114 @@ async function processOCR(file: File) {
       ocrText.value = res.data.ocr_text
       formContent.value = res.data.ocr_text
       
+      // VLLM 분석 결과 (AI 요약 및 태그)
       if (res.data.summary) {
         aiAnalysisResult.value = {
-          summary: res.data.summary
+          summary: res.data.summary,
+          tags: res.data.tags || []
         }
-      }
-      
-      // OCR 성공 시 자동 저장 완료
-      await fetchPosts()
-      if (res.data?.post_id) {
-        await fetchPostDetail(res.data.post_id)
-        closeWriteModal()
       }
     } else if (res.data?.ocr_error) {
       ocrError.value = res.data.ocr_error
-      formContent.value = 'OCR 처리에 실패했습니다. 수동으로 내용을 입력해주세요.'
+      formContent.value = '파일 분석에 실패했습니다. 수동으로 내용을 입력해주세요.'
     }
   } catch (err: any) {
-    console.error('OCR 처리 실패:', err)
-    ocrError.value = err?.data?.error || err?.message || 'OCR 처리에 실패했습니다.'
-    formContent.value = 'OCR 처리에 실패했습니다. 수동으로 내용을 입력해주세요.'
+    console.error('파일 분석 실패:', err)
+    ocrError.value = err?.data?.error || err?.message || '파일 분석에 실패했습니다.'
+    formContent.value = '파일 분석에 실패했습니다. 수동으로 내용을 입력해주세요.'
   } finally {
     ocrProcessing.value = false
+    analyzingFile.value = false
   }
 }
 
+// 하위 호환성을 위해 processOCR도 유지
+async function processOCR() {
+  await analyzeFile()
+}
+
 async function submitPost() {
-  // 파일이 선택된 경우 OCR 처리로 이미 저장되었을 수 있음
-  if (selectedFile.value && ocrProcessing.value) {
+  if (ocrProcessing.value) {
     alert('OCR 처리 중입니다. 잠시만 기다려주세요.')
     return
   }
 
-  if (!formTitle.value.trim() || !formContent.value.trim() || formSubmitting.value) {
-    alert('제목과 내용을 입력해주세요.')
+  if (!formTitle.value.trim() || formSubmitting.value) {
+    alert('제목을 입력해주세요.')
+    return
+  }
+
+  // 내용이 없으면 경고 (파일만 첨부한 경우도 허용)
+  if (!formContent.value.trim() && !selectedFile.value) {
+    alert('내용을 입력하거나 파일을 첨부해주세요.')
     return
   }
 
   formSubmitting.value = true
   try {
-    const res = await request<{
-      message: string
-      data: { post_id: number }
-    }>('/posts', {
-      method: 'POST',
-      body: {
-        title: formTitle.value.trim(),
-        content: formContent.value.trim(),
-        image_url: formImageUrl.value || null,
-        board_type: 'vault',
-      },
-    })
+    // 파일이 있는 경우 파일 업로드 API 사용
+    if (selectedFile.value) {
+      const formData = new FormData()
+      formData.append('file', selectedFile.value)
+      formData.append('title', formTitle.value.trim())
+      formData.append('content', formContent.value.trim() || '')
+      formData.append('board_type', 'vault')
 
-    showWriteModal.value = false
-    formTitle.value = ''
-    formContent.value = ''
-    formImageUrl.value = null
-    selectedFile.value = null
-    ocrText.value = null
-    ocrError.value = null
-    aiAnalysisResult.value = null
-    if (fileInputRef.value) {
-      fileInputRef.value.value = ''
-    }
+      const res = await request<{
+        message: string
+        data: { post_id: number }
+      }>('/posts/upload-document', {
+        method: 'POST',
+        body: formData,
+      })
 
-    await fetchPosts()
-    if (res.data?.post_id) {
-      await fetchPostDetail(res.data.post_id)
+      showWriteModal.value = false
+      formTitle.value = ''
+      formContent.value = ''
+      formImageUrl.value = null
+      selectedFile.value = null
+      ocrText.value = null
+      ocrError.value = null
+      aiAnalysisResult.value = null
+      if (fileInputRef.value) {
+        fileInputRef.value.value = ''
+      }
+
+      await fetchPosts()
+      if (res.data?.post_id) {
+        await fetchPostDetail(res.data.post_id)
+      }
+    } else {
+      // 파일이 없는 경우 일반 게시글 API 사용
+      const res = await request<{
+        message: string
+        data: { post_id: number }
+      }>('/posts', {
+        method: 'POST',
+        body: {
+          title: formTitle.value.trim(),
+          content: formContent.value.trim(),
+          image_url: formImageUrl.value || null,
+          board_type: 'vault',
+        },
+      })
+
+      showWriteModal.value = false
+      formTitle.value = ''
+      formContent.value = ''
+      formImageUrl.value = null
+      selectedFile.value = null
+      ocrText.value = null
+      ocrError.value = null
+      aiAnalysisResult.value = null
+      if (fileInputRef.value) {
+        fileInputRef.value.value = ''
+      }
+
+      await fetchPosts()
+      if (res.data?.post_id) {
+        await fetchPostDetail(res.data.post_id)
+      }
     }
   } catch (err: any) {
     console.error('게시글 작성 실패:', err)
@@ -444,18 +491,13 @@ function closeWriteModal() {
 }
 
 onMounted(() => {
-  if (authStore.isAuthenticated) {
-    fetchPosts()
-  }
+  // 로그인 없이도 문서 목록 조회 가능하도록 수정
+  fetchPosts()
 })
 
 watch(() => authStore.isAuthenticated, (isAuth) => {
-  if (isAuth) {
-    fetchPosts()
-  } else {
-    posts.value = []
-    postDetail.value = null
-  }
+  // 로그인 상태 변경 시에도 문서 목록 조회
+  fetchPosts()
 })
 </script>
 
@@ -576,7 +618,7 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
           </div>
           
           <div class="form-group">
-            <label>문서 파일 업로드 (OCR 자동 처리) <span class="required">*</span></label>
+            <label>문서 파일 첨부 (선택사항)</label>
             <div 
               class="file-upload-area"
               :class="{ 'has-file': selectedFile, 'dragging': isDragging }"
@@ -588,19 +630,19 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
                 ref="fileInputRef"
                 :id="vaultUploadInputId"
                 type="file"
-                accept="image/*,.pdf,.xlsx,.xls,.csv,.txt,.md"
+                accept="*/*"
                 @change="handleFileSelect"
                 :disabled="ocrProcessing"
                 class="file-input-overlay"
               />
               <div class="file-upload-info">
                 <p v-if="!selectedFile && !isDragging" class="file-hint">
-                  📎 이미지, PDF, Excel, CSV, 텍스트 파일을 선택하면 자동으로 OCR 처리가 진행됩니다.<br>
+                  📎 문서 파일을 첨부할 수 있습니다.<br>
                   <label :for="vaultUploadInputId" class="file-select-link">
                     파일 선택하기
                   </label>
-                  <small>지원 형식: JPG, PNG, WEBP, PDF, XLSX, XLS, CSV, TXT, MD (최대 10MB)</small><br>
-                  <strong style="color: var(--accent, #667eea); margin-top: 8px; display: block;">클릭하거나 파일을 드래그하여 업로드</strong>
+                  <small>모든 파일 형식 지원 (최대 10MB)</small><br>
+                  <strong style="color: var(--accent, #667eea); margin-top: 8px; display: block;">클릭하거나 파일을 드래그하여 첨부</strong>
                 </p>
                 <p v-else-if="isDragging" class="file-hint" style="color: var(--accent, #667eea); font-weight: 600;">
                   📤 파일을 놓아주세요
@@ -611,6 +653,7 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
                     type="button" 
                     @click.stop="clearFile"
                     class="remove-file-btn"
+                    :disabled="ocrProcessing"
                   >
                     제거
                   </button>
@@ -618,10 +661,23 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
               </div>
             </div>
             
+            <!-- 파일 분석하기 버튼 (OCR 지원 파일인 경우에만 표시) -->
+            <div v-if="selectedFile && isSupportedOcrFile(selectedFile) && !ocrText" class="ocr-action">
+              <button 
+                type="button"
+                @click="analyzeFile"
+                :disabled="ocrProcessing"
+                class="ocr-btn"
+              >
+                {{ ocrProcessing ? '분석 중...' : '🔍 파일 분석하기 (OCR + VLLM)' }}
+              </button>
+              <small class="ocr-hint">OCR로 텍스트를 추출하고 VLLM으로 문서를 분석하여 요약 및 태그를 생성합니다.</small>
+            </div>
+            
             <div v-if="ocrProcessing" class="ocr-status">
               <div class="ocr-loading">
                 <span class="spinner">⏳</span>
-                <span>OCR 처리 중... 문서에서 텍스트를 추출하고 있습니다.</span>
+                <span>파일 분석 중... OCR로 텍스트를 추출하고 VLLM으로 분석하고 있습니다.</span>
               </div>
             </div>
             
@@ -630,34 +686,40 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
             </div>
             
             <div v-if="ocrText && !ocrProcessing" class="ocr-success">
-              <span>✅ OCR 완료: {{ ocrText.length }}자 추출됨</span>
+              <span>✅ 분석 완료: {{ ocrText.length }}자 추출됨</span>
             </div>
           </div>
           
           <div class="form-group">
-            <label>문서 내용 <span class="required">*</span></label>
+            <label>문서 내용 <span class="required" v-if="!selectedFile">*</span></label>
             <textarea 
               v-model="formContent" 
-              required 
-              placeholder="OCR 결과가 자동으로 입력됩니다. 필요시 수정하세요." 
+              :required="!selectedFile"
+              placeholder="OCR 결과가 자동으로 입력되거나 수동으로 입력할 수 있습니다." 
               rows="12"
               :disabled="ocrProcessing"
             ></textarea>
             <small class="form-hint">
-              💡 OCR로 추출된 텍스트가 자동으로 입력됩니다. 필요시 수정할 수 있습니다.
+              💡 OCR로 추출된 텍스트가 자동으로 입력됩니다. 필요시 수정할 수 있습니다. 파일만 첨부하고 내용을 입력하지 않아도 됩니다.
             </small>
           </div>
           
           <div v-if="aiAnalysisResult?.summary" class="ai-summary">
-            <label>🤖 AI 요약</label>
-            <div class="summary-box">{{ aiAnalysisResult.summary }}</div>
+            <label>🤖 VLLM 분석 결과</label>
+            <div class="summary-box">
+              <div class="summary-content">{{ aiAnalysisResult.summary }}</div>
+              <div v-if="aiAnalysisResult.tags && aiAnalysisResult.tags.length > 0" class="summary-tags">
+                <span class="tags-label">태그:</span>
+                <span v-for="tag in aiAnalysisResult.tags" :key="tag" class="tag-badge">{{ tag }}</span>
+              </div>
+            </div>
           </div>
           
           <div class="form-actions">
             <button type="button" @click="closeWriteModal" :disabled="ocrProcessing">취소</button>
             <button 
               type="submit" 
-              :disabled="formSubmitting || ocrProcessing || !formTitle.trim() || !formContent.trim()"
+              :disabled="formSubmitting || ocrProcessing || !formTitle.trim() || (!formContent.trim() && !selectedFile)"
             >
               {{ ocrProcessing ? 'OCR 처리 중...' : formSubmitting ? '저장 중...' : '저장' }}
             </button>
@@ -1161,6 +1223,45 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
   font-size: 14px;
 }
 
+.ocr-action {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.ocr-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.ocr-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.ocr-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ocr-hint {
+  display: block;
+  color: var(--muted, #666);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
 .form-hint {
   display: block;
   margin-top: 4px;
@@ -1195,6 +1296,36 @@ watch(() => authStore.isAuthenticated, (isAuth) => {
   font-size: 14px;
   line-height: 1.6;
   color: var(--text, #666);
+}
+
+.summary-content {
+  margin-bottom: 12px;
+}
+
+.summary-tags {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border, #e5e7eb);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.tags-label {
+  font-weight: 600;
+  color: var(--text, #333);
+  font-size: 13px;
+}
+
+.tag-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 /* 모바일 스타일 */

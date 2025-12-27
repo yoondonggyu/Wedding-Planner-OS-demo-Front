@@ -52,14 +52,15 @@ const itemForm = ref({
 
 const ocrResult = ref<string | null>(null)
 
-const canAccess = computed(() => authStore.isAuthenticated)
+// 로그인 체크 제거 - 로그인 없이도 접근 가능
+const canAccess = computed(() => true)
 
 onMounted(() => {
-  if (!canAccess.value) {
-    authStore.openLoginModal()
-    return
+  // 로그인 체크 제거됨 - 로그인 없이도 접근 가능
+  // 로그인 상태일 때만 데이터 로드
+  if (authStore.isAuthenticated) {
+    loadData()
   }
-  loadData()
 })
 
 async function loadData() {

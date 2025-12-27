@@ -1,22 +1,31 @@
 <script setup lang="ts">
-import HeroSection from '@/components/sections/HeroSection.vue'
-import FeaturesSection from '@/components/sections/FeaturesSection.vue'
-import FlowSection from '@/components/sections/FlowSection.vue'
-import DemoShowcase from '@/components/sections/DemoShowcase.vue'
-import BoardSection from '@/components/sections/BoardSection.vue'
-import FooterSection from '@/components/sections/FooterSection.vue'
+import HomeCalendar from '@/components/sections/HomeCalendar.vue'
 </script>
 
 <template>
-  <div>
-    <div id="hero">
-      <HeroSection />
+  <div class="home-view">
+    <div class="home-content">
+      <HomeCalendar />
     </div>
-    <FeaturesSection />
-    <FlowSection />
-    <DemoShowcase />
-    <BoardSection />
-    <FooterSection />
   </div>
 </template>
+
+<style scoped>
+.home-view {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.home-content {
+  padding: 16px;
+  padding-bottom: 100px; /* 하단 네비게이션 공간 */
+}
+
+@media (max-width: 768px) {
+  .home-content {
+    padding: 12px;
+    padding-bottom: 100px;
+  }
+}
+</style>
 

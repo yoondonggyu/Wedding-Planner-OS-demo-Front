@@ -30,13 +30,11 @@ const showResponse = ref(false)
 let mediaRecorder: MediaRecorder | null = null
 let audioChunks: Blob[] = []
 
-const canAccess = computed(() => authStore.isAuthenticated)
+// 로그인 체크 제거 - 로그인 없이도 접근 가능
+const canAccess = computed(() => true)
 
 onMounted(() => {
-  if (!canAccess.value) {
-    authStore.openLoginModal()
-    return
-  }
+  // 로그인 체크 제거됨
 })
 
 async function toggleRecording() {

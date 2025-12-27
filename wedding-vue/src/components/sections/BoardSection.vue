@@ -13,6 +13,7 @@ interface PostSummary {
   nickname: string
   created_at?: string
   tags?: { name: string }[] | string[]
+  category?: string | null
   sentiment_label?: string | null
   summary?: string | null
   image_url?: string | null
@@ -43,6 +44,7 @@ const tabs: { label: string; type: BoardType; description: string }[] = [
 ]
 
 const currentTab = ref<BoardType>('couple')
+const selectedCategory = ref<string | null>(null)
 const posts = ref<PostSummary[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -63,6 +65,9 @@ const showWriteModal = ref(false)
 const formTitle = ref('')
 const formContent = ref('')
 const formImageUrl = ref<string | null>(null)
+const formCategory = ref<string>('')
+const formCustomCategory = ref<string>('')
+const showCustomCategoryInput = ref(false)
 const formSubmitting = ref(false)
 const imageUploading = ref(false)
 const aiAnalyzing = ref(false)
@@ -72,17 +77,81 @@ const aiAnalysisResult = ref<{
   sentiment?: { label: string; confidence: number }
 } | null>(null)
 
+// 제휴 업체 예약 페이지의 모든 카테고리 목록
+const categories = [
+  // 사진/영상
+  { value: 'IPHONE_SNAP', label: '아이폰 스냅', icon: '📱' },
+  { value: 'STUDIO_PREWEDDING', label: '웨딩 스튜디오', icon: '📸' },
+  { value: 'WEDDING_PHOTO', label: '웨딩 사진', icon: '📷' },
+  { value: 'VIDEO', label: '웨딩 영상', icon: '🎬' },
+  // 웨딩홀/장소
+  { value: 'WEDDING_HALL', label: '웨딩홀', icon: '🏛️' },
+  { value: 'VENUE_INDOOR', label: '실내 식장', icon: '🏢' },
+  { value: 'VENUE_OUTDOOR', label: '야외 식장', icon: '🏞️' },
+  { value: 'VENUE_COMPLEX', label: '복합 식장', icon: '🏰' },
+  // 플래너/기획
+  { value: 'PLANNER', label: '웨딩 플래너', icon: '📅' },
+  { value: 'COORDINATOR', label: '웨딩 코디네이터', icon: '🎯' },
+  // 패션/뷰티
+  { value: 'DRESS_SHOP', label: '드레스샵', icon: '👗' },
+  { value: 'SUIT_SHOP', label: '턱시도샵', icon: '🤵' },
+  { value: 'MAKEUP_HAIR', label: '메이크업/헤어', icon: '💄' },
+  { value: 'BEAUTY_SALON', label: '뷰티 살롱', icon: '💅' },
+  // 음식/케이터링
+  { value: 'CATERING', label: '케이터링', icon: '🍽️' },
+  { value: 'BUFFET', label: '뷔페/식당', icon: '🍴' },
+  { value: 'CAKE', label: '케이크/디저트', icon: '🎂' },
+  { value: 'BAR', label: '바/음료', icon: '🍷' },
+  // 꽃/장식
+  { value: 'FLORIST', label: '꽃/플로리스트', icon: '🌸' },
+  { value: 'DECORATION', label: '장식/데코', icon: '🎨' },
+  { value: 'BOUQUET', label: '부케/꽃다발', icon: '💐' },
+  // 예물/주얼리
+  { value: 'JEWELRY', label: '예물/주얼리', icon: '💍' },
+  { value: 'RING', label: '예물/반지', icon: '💎' },
+  // 교통/운송
+  { value: 'WEDDING_CAR', label: '웨딩카', icon: '🚗' },
+  { value: 'LIMOUSINE', label: '리무진', icon: '🚙' },
+  { value: 'TRANSPORTATION', label: '교통/운송', icon: '🚌' },
+  // 기타
+  { value: 'MC', label: '사회자', icon: '🎤' },
+  { value: 'SINGER', label: '축가', icon: '🎵' },
+  { value: 'BAND', label: '밴드/연주자', icon: '🎸' },
+  { value: 'MUSIC', label: '축가/연주', icon: '🎼' },
+  { value: 'INVITATION', label: '청첩장/인쇄', icon: '💌' },
+  { value: 'GIFT', label: '웨딩선물/답례품', icon: '🎁' },
+  { value: 'HOTEL', label: '호텔/숙박', icon: '🏨' },
+  { value: 'WEDDING_FAIR', label: '웨딩박람회', icon: '🎪' },
+  { value: 'HANBOK', label: '한복', icon: '🎎' },
+  { value: 'HONEYMOON', label: '신혼여행', icon: '✈️' },
+]
+
 const authStore = useAuthStore()
 const { request } = useApi()
 
 const canWrite = computed(() => authStore.isAuthenticated)
 const hasPosts = computed(() => posts.value.length > 0)
 
+// 카테고리별 필터링된 게시글
+const filteredPosts = computed(() => {
+  if (!selectedCategory.value) {
+    return posts.value
+  }
+  return posts.value.filter(post => post.category === selectedCategory.value)
+})
+
 function normalizeTags(tags?: { name: string }[] | string[]) {
   return (tags ?? []).map((tag) => (typeof tag === 'string' ? tag : tag.name))
 }
 
 const detailTags = computed(() => (postDetail.value?.tags ? normalizeTags(postDetail.value.tags) : []))
+
+// 카테고리 코드를 한글 라벨로 변환
+function getCategoryLabel(categoryCode?: string | null): string {
+  if (!categoryCode) return ''
+  const category = categories.find(c => c.value === categoryCode)
+  return category ? `${category.icon} ${category.label}` : categoryCode
+}
 
 async function fetchPosts() {
   loading.value = true
@@ -128,6 +197,9 @@ function closeWriteModal() {
   formTitle.value = ''
   formContent.value = ''
   formImageUrl.value = null
+  formCategory.value = ''
+  formCustomCategory.value = ''
+  showCustomCategoryInput.value = false
   formSubmitting.value = false
   aiAnalysisResult.value = null
   aiAnalyzing.value = false
@@ -142,6 +214,17 @@ async function submitPost() {
     error.value = '제목과 내용을 입력해주세요.'
     return
   }
+  
+  // 카테고리 선택 확인
+  const selectedCategory = showCustomCategoryInput.value && formCustomCategory.value.trim()
+    ? formCustomCategory.value.trim()
+    : formCategory.value
+    
+  if (!selectedCategory) {
+    error.value = '카테고리를 선택하거나 직접 입력해주세요.'
+    return
+  }
+  
   formSubmitting.value = true
   try {
     await request('/posts', {
@@ -151,6 +234,7 @@ async function submitPost() {
         content: formContent.value,
         board_type: currentTab.value,
         image_url: formImageUrl.value || null,
+        category: selectedCategory,
       },
     })
     closeWriteModal()
@@ -385,6 +469,38 @@ async function toggleLike() {
   }
 }
 
+async function analyzeWithAI() {
+  if (!formContent.value.trim()) {
+    error.value = '내용을 먼저 입력해주세요.'
+    return
+  }
+  
+  aiAnalyzing.value = true
+  aiAnalysisResult.value = null
+  
+  try {
+    const res = await request<{
+      data: {
+        tags?: string[]
+        summary?: string
+        sentiment?: { label: string; confidence: number }
+      }
+    }>('/posts/analyze', {
+      method: 'POST',
+      body: {
+        content: formContent.value,
+      },
+    })
+    
+    aiAnalysisResult.value = res.data || {}
+  } catch (err) {
+    console.error(err)
+    error.value = 'AI 분석에 실패했습니다.'
+  } finally {
+    aiAnalyzing.value = false
+  }
+}
+
 onMounted(fetchPosts)
 
 watch(
@@ -398,7 +514,17 @@ watch(currentTab, () => {
   selectedPostId.value = null
   postDetail.value = null
   comments.value = []
+  selectedCategory.value = null // 탭 변경 시 카테고리 필터 초기화
   fetchPosts()
+})
+
+watch(selectedCategory, () => {
+  // 카테고리 필터 변경 시 선택된 게시글 초기화
+  if (selectedCategory.value) {
+    selectedPostId.value = null
+    postDetail.value = null
+    comments.value = []
+  }
 })
 
 watch(selectedPostId, (postId) => {
@@ -441,17 +567,47 @@ watch(selectedPostId, (postId) => {
         <span class="badge">Core Data Layer</span>
       </div>
 
+      <!-- 카테고리 필터 -->
+      <div class="category-filter-section">
+        <div class="category-filter-header">
+          <label style="font-weight: 600; color: var(--text); margin-right: 12px;">카테고리 필터:</label>
+          <button
+            class="category-filter-btn"
+            :class="{ active: !selectedCategory }"
+            @click="selectedCategory = null"
+          >
+            전체
+          </button>
+          <div class="category-filter-group">
+            <button
+              v-for="cat in categories"
+              :key="cat.value"
+              class="category-filter-btn"
+              :class="{ active: selectedCategory === cat.value }"
+              @click="selectedCategory = selectedCategory === cat.value ? null : cat.value"
+            >
+              {{ cat.icon }} {{ cat.label }}
+            </button>
+          </div>
+        </div>
+        <div v-if="selectedCategory" class="category-filter-info">
+          <span>{{ getCategoryLabel(selectedCategory) }} 카테고리만 표시 중</span>
+          <button class="clear-filter-btn" @click="selectedCategory = null">✕ 필터 해제</button>
+        </div>
+      </div>
+
       <div v-if="error" class="card error-card">{{ error }}</div>
       <div v-else-if="loading" class="card">불러오는 중...</div>
       <template v-else>
-        <div v-if="!hasPosts" class="card coming-soon">
-          <h3>아직 게시글이 없습니다.</h3>
+        <div v-if="filteredPosts.length === 0" class="card coming-soon">
+          <h3 v-if="selectedCategory">선택한 카테고리에 해당하는 게시글이 없습니다.</h3>
+          <h3 v-else>아직 게시글이 없습니다.</h3>
           <p>첫 번째 경험을 공유해 주세요!</p>
         </div>
         <div v-else class="board-grid">
           <div class="board-list">
             <article
-              v-for="post in posts"
+              v-for="post in filteredPosts"
               :key="post.post_id"
               class="card board-card"
               :class="{ active: post.post_id === selectedPostId }"
@@ -472,6 +628,9 @@ watch(selectedPostId, (postId) => {
                   <span>👁️ {{ post.view_count ?? 0 }}</span>
                   <span>💬 {{ post.comment_count ?? 0 }}</span>
                 </div>
+              </div>
+              <div v-if="post.category" class="category-badge">
+                <span class="category-label">{{ getCategoryLabel(post.category) }}</span>
               </div>
               <div class="tag-row">
                 <span v-for="tag in normalizeTags(post.tags)" :key="tag" class="chip">#{{ tag }}</span>
@@ -502,6 +661,9 @@ watch(selectedPostId, (postId) => {
                     <span>❤️ {{ postDetail.like_count ?? 0 }}</span>
                     <span>👁️ {{ postDetail.view_count ?? 0 }}</span>
                   </div>
+                </div>
+                <div v-if="postDetail.category" class="category-badge">
+                  <span class="category-label">{{ getCategoryLabel(postDetail.category) }}</span>
                 </div>
                 <div class="tag-row">
                   <span v-for="tag in detailTags" :key="tag" class="chip">#{{ tag }}</span>
@@ -643,6 +805,62 @@ watch(selectedPostId, (postId) => {
         <div class="form-group">
           <label for="post-content">내용</label>
           <textarea id="post-content" v-model="formContent" rows="8" placeholder="내용을 입력하세요"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="post-category">카테고리 <span style="color: var(--danger)">*</span></label>
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <select 
+              id="post-category" 
+              v-model="formCategory" 
+              :disabled="showCustomCategoryInput"
+              style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1); background: var(--soft); color: var(--text); font-size: 14px;"
+            >
+              <option value="">카테고리를 선택하세요</option>
+              <optgroup label="사진/영상">
+                <option v-for="cat in categories.filter(c => ['IPHONE_SNAP', 'STUDIO_PREWEDDING', 'WEDDING_PHOTO', 'VIDEO'].includes(c.value))" :key="cat.value" :value="cat.value">{{ cat.icon }} {{ cat.label }}</option>
+              </optgroup>
+              <optgroup label="웨딩홀/장소">
+                <option v-for="cat in categories.filter(c => ['WEDDING_HALL', 'VENUE_INDOOR', 'VENUE_OUTDOOR', 'VENUE_COMPLEX'].includes(c.value))" :key="cat.value" :value="cat.value">{{ cat.icon }} {{ cat.label }}</option>
+              </optgroup>
+              <optgroup label="플래너/기획">
+                <option v-for="cat in categories.filter(c => ['PLANNER', 'COORDINATOR'].includes(c.value))" :key="cat.value" :value="cat.value">{{ cat.icon }} {{ cat.label }}</option>
+              </optgroup>
+              <optgroup label="패션/뷰티">
+                <option v-for="cat in categories.filter(c => ['DRESS_SHOP', 'SUIT_SHOP', 'MAKEUP_HAIR', 'BEAUTY_SALON'].includes(c.value))" :key="cat.value" :value="cat.value">{{ cat.icon }} {{ cat.label }}</option>
+              </optgroup>
+              <optgroup label="음식/케이터링">
+                <option v-for="cat in categories.filter(c => ['CATERING', 'BUFFET', 'CAKE', 'BAR'].includes(c.value))" :key="cat.value" :value="cat.value">{{ cat.icon }} {{ cat.label }}</option>
+              </optgroup>
+              <optgroup label="꽃/장식">
+                <option v-for="cat in categories.filter(c => ['FLORIST', 'DECORATION', 'BOUQUET'].includes(c.value))" :key="cat.value" :value="cat.value">{{ cat.icon }} {{ cat.label }}</option>
+              </optgroup>
+              <optgroup label="예물/주얼리">
+                <option v-for="cat in categories.filter(c => ['JEWELRY', 'RING'].includes(c.value))" :key="cat.value" :value="cat.value">{{ cat.icon }} {{ cat.label }}</option>
+              </optgroup>
+              <optgroup label="교통/운송">
+                <option v-for="cat in categories.filter(c => ['WEDDING_CAR', 'LIMOUSINE', 'TRANSPORTATION'].includes(c.value))" :key="cat.value" :value="cat.value">{{ cat.icon }} {{ cat.label }}</option>
+              </optgroup>
+              <optgroup label="기타">
+                <option v-for="cat in categories.filter(c => ['MC', 'SINGER', 'BAND', 'MUSIC', 'INVITATION', 'GIFT', 'HOTEL', 'WEDDING_FAIR', 'HANBOK', 'HONEYMOON'].includes(c.value))" :key="cat.value" :value="cat.value">{{ cat.icon }} {{ cat.label }}</option>
+              </optgroup>
+            </select>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <input 
+                type="checkbox" 
+                id="custom-category-checkbox"
+                v-model="showCustomCategoryInput"
+                style="width: auto;"
+              />
+              <label for="custom-category-checkbox" style="font-size: 13px; color: var(--muted); cursor: pointer;">직접 입력</label>
+            </div>
+            <input 
+              v-if="showCustomCategoryInput"
+              v-model="formCustomCategory"
+              type="text" 
+              placeholder="카테고리를 직접 입력하세요"
+              style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1); background: var(--soft); color: var(--text); font-size: 14px;"
+            />
+          </div>
         </div>
         <div class="form-group">
           <label for="post-image">이미지 (선택)</label>
@@ -802,6 +1020,21 @@ watch(selectedPostId, (postId) => {
   gap: 12px;
   font-size: 12px;
   color: var(--muted);
+}
+
+.category-badge {
+  margin: 8px 0;
+}
+
+.category-label {
+  display: inline-block;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(102, 126, 234, 0.2));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
 }
 
 .tag-row {
@@ -972,6 +1205,81 @@ watch(selectedPostId, (postId) => {
   resize: vertical;
 }
 
+.category-filter-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--card);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.category-filter-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.category-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+}
+
+.category-filter-btn {
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.category-filter-btn:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: var(--text);
+}
+
+.category-filter-btn.active {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(102, 126, 234, 0.3));
+  border-color: rgba(139, 92, 246, 0.5);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.category-filter-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.clear-filter-btn {
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 6px;
+  color: var(--accent);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-filter-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+}
+
 @media (max-width: 1024px) {
   .board-grid {
     grid-template-columns: 1fr;
@@ -979,6 +1287,15 @@ watch(selectedPostId, (postId) => {
 
   .detail-panel {
     order: -1;
+  }
+
+  .category-filter-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .category-filter-group {
+    width: 100%;
   }
 }
 </style>

@@ -12,62 +12,47 @@ const props = defineProps<{
 const emit = defineEmits<{
   navigate: [link: SidebarLink]
   openMoreMenu: []
+  openAIMenu: []
 }>()
 
 const route = useRoute()
 
-// 모바일에서 표시할 주요 메뉴 (최대 5개)
+// 모바일에서 표시할 주요 메뉴: 홈 / 게시판 / AI / 업체 예약 / 추천 업체
 const mobileMenuItems = computed(() => {
-  const items: SidebarLink[] = []
-  
-  // 로그인 불필요한 메뉴 중 홈만
-  const homeLink = props.publicLinks.find(link => link.route === '/')
-  if (homeLink) {
-    items.push(homeLink)
-  }
-  
-  // 로그인 필요한 메뉴 중 주요 기능만 선택
-  if (props.isAuthenticated) {
-    const priorityLinks = [
-      { label: '캘린더', icon: '📅', route: '/calendar' },
-      { label: '예산서', icon: '💰', route: '/budget' },
-      { label: 'AI 플래너', icon: '🤖', route: '/chat' },
-    ]
-    
-    priorityLinks.forEach(priority => {
-      const link = props.protectedLinks.find(l => l.route === priority.route)
-      if (link) {
-        items.push(link)
-      }
-    })
-    
-    // 더 보기 메뉴
-    items.push({ 
-      label: '더보기', 
-      icon: '☰', 
-      route: '/more',
-      isMoreMenu: true 
-    })
-  } else {
-    // 로그인 안 된 경우
-    items.push(
-      { label: '게시판', icon: '📋', route: '/board' },
-      { label: '로그인', icon: '🔐', route: '/login', isLogin: true }
-    )
-  }
-  
-  return items.slice(0, 5) // 최대 5개
+  return [
+    { label: '홈', icon: '🏠', route: '/' },
+    { label: '게시판', icon: '📋', route: '/board' },
+    { label: 'AI', icon: '🤖', route: '/ai', isAIMenu: true },
+    { label: '업체 예약', icon: '📅', route: '/vendor-message' },
+    { label: '추천 업체', icon: '💍', route: '/vendor' },
+  ]
 })
 
 const isActive = (link: SidebarLink) => {
   if (link.route) {
+    // AI 메뉴는 서브메뉴 경로들도 활성화로 처리
+    if ((link as any).isAIMenu) {
+      return ['/invitation-design', '/chat', '/document-vault'].includes(route.path)
+    }
+    // 업체 예약은 /vendor-message 경로
+    if (link.route === '/vendor-message') {
+      return route.path === '/vendor-message'
+    }
     return route.path === link.route
   }
   return false
 }
 
 const handleClick = (link: SidebarLink) => {
-  if (link.isMoreMenu) {
+  console.log('메뉴 클릭:', link.label, link)
+  if ((link as any).isAIMenu) {
+    // AI 메뉴 클릭 시 서브메뉴 표시
+    console.log('AI 메뉴 클릭됨 - 서브메뉴 열기')
+    console.log('emit 호출 전')
+    emit('openAIMenu')
+    emit('open-ai-menu') // kebab-case도 시도
+    console.log('emit 호출 후')
+  } else if (link.isMoreMenu) {
     emit('openMoreMenu')
   } else {
     emit('navigate', link)

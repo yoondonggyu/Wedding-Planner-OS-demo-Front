@@ -300,7 +300,8 @@ const demoMessages = ref<VendorMessage[]>([
   },
 ])
 
-const canAccess = computed(() => authStore.isAuthenticated)
+// 로그인 체크 제거 - 로그인 없이도 접근 가능
+const canAccess = computed(() => true)
 const isVendorAccount = computed(() => authStore.user?.role === 'PARTNER_VENDOR')
 
 // 모바일 감지
@@ -313,10 +314,7 @@ onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
   
-  if (!canAccess.value) {
-    authStore.openLoginModal()
-    return
-  }
+  // 로그인 체크 제거됨 - 로그인 없이도 접근 가능
   loadThreads()
   if (!isVendorAccount.value) {
     // 일반 사용자만 제휴 업체 목록 로드 (제휴 업체 계정은 불필요)

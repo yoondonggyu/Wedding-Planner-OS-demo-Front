@@ -12,7 +12,6 @@ const { theme, isAuthenticated, nickname, profileImageUrl, showContactButton = t
 const emit = defineEmits<{
   login: []
   navigate: [href: string]
-  'toggle-theme': []
   logout: []
   'open-profile': []
   'open-contact': []
@@ -27,9 +26,6 @@ const emit = defineEmits<{
         <strong>PromiseMarry Lab</strong>
       </div>
       <div class="header-actions">
-        <button class="btn mobile-hide" type="button" @click="emit('navigate', '#demo')">
-          <span class="btn-text">📺 데모 보기</span>
-        </button>
         <button
           v-if="showContactButton"
           class="btn mobile-hide"
@@ -39,9 +35,6 @@ const emit = defineEmits<{
           <span class="btn-text">✉️ 문의하기</span>
         </button>
         <div class="action-group">
-          <button class="btn theme-btn" type="button" @click="emit('toggle-theme')">
-            <span class="btn-text">{{ theme === 'dark' ? '☀️ Light' : '🌙 Dark' }}</span>
-          </button>
           <button
             v-if="!isAuthenticated"
             class="btn primary"

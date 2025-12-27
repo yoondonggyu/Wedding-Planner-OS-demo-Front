@@ -6,6 +6,7 @@ import HeaderBar from '@/components/layout/HeaderBar.vue'
 import MobileBottomNav from '@/components/layout/MobileBottomNav.vue'
 import MobileMoreMenuModal from '@/components/modals/MobileMoreMenuModal.vue'
 import LoginModal from '@/components/modals/LoginModal.vue'
+import LandingPage from '@/components/landing/LandingPage.vue'
 import ProfileEditModal from '@/components/modals/ProfileEditModal.vue'
 import ContactModal from '@/components/modals/ContactModal.vue'
 import LoginRequiredModal from '@/components/modals/LoginRequiredModal.vue'
@@ -21,7 +22,11 @@ const isMobile = ref(false)
 
 // 모바일 감지
 const checkMobile = () => {
-  isMobile.value = window.innerWidth <= 768
+  if (typeof window !== 'undefined') {
+    // 개발 중: 항상 모바일 뷰로 표시 (실제 배포 시에는 아래 주석 해제하고 위 줄 주석 처리)
+    isMobile.value = true
+    // isMobile.value = window.innerWidth <= 768
+  }
 }
 
 // 모바일 메뉴 토글
@@ -39,12 +44,8 @@ const closeMobileMenu = () => {
   mobileMenuOpen.value = false
   document.body.style.overflow = ''
 }
-// 기본 테마를 라이트 모드로 설정 (localStorage에 저장된 테마가 있으면 사용)
-const theme = ref<'dark' | 'light'>(
-  typeof window !== 'undefined' 
-    ? (localStorage.getItem('theme') as 'dark' | 'light' | null) || 'light'
-    : 'light'
-)
+// 테마를 항상 라이트 모드로 고정
+const theme = ref<'dark' | 'light'>('light')
 const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
@@ -105,6 +106,25 @@ const showProfileModal = ref(false)
 const showContactModal = ref(false)
 const showLoginRequired = ref(false)
 const pendingProtectedLink = ref<SidebarLink | null>(null)
+const showAIMenu = ref(false)
+const showLandingPage = ref(false)
+
+// AI 메뉴 열기 함수
+const openAIMenu = () => {
+  console.log('=== App.vue openAIMenu 호출됨 ===')
+  console.log('현재 showAIMenu 값:', showAIMenu.value)
+  showAIMenu.value = true
+  console.log('showAIMenu를 true로 설정함:', showAIMenu.value)
+  // 강제로 DOM 업데이트
+  nextTick(() => {
+    console.log('nextTick 후 showAIMenu:', showAIMenu.value)
+    const modal = document.querySelector('.ai-menu-modal-overlay')
+    console.log('모달 요소 존재 여부:', modal !== null)
+    if (modal) {
+      console.log('모달 스타일:', window.getComputedStyle(modal).display)
+    }
+  })
+}
 
 // 커플 초대 팝업
 const showCoupleInviteModal = ref(false)
@@ -112,12 +132,9 @@ const coupleKey = ref<string | null>(null)
 const userGender = ref<'BRIDE' | 'GROOM' | null>(null)
 const { request } = useApi()
 
+// 테마 토글 기능 제거 (항상 라이트 모드)
 const handleToggleTheme = () => {
-  theme.value = theme.value === 'dark' ? 'light' : 'dark'
-  // 테마 변경 시 localStorage에 저장
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('theme', theme.value)
-  }
+  // 아무 작업도 하지 않음
 }
 
 const recomputeActiveLinks = () => {
@@ -144,11 +161,8 @@ const scrollToAnchor = (anchor: string) => {
 }
 
 const isProtectedRoute = (link: SidebarLink) => {
-  // 게시판은 공개이므로 protected가 아님
-  if (link.route === '/board') {
-    return false
-  }
-  return Boolean(link.route && protectedLinks.value.some((item) => item.route === link.route))
+  // 모든 라우트를 공개로 설정 (로그인 없이 접근 가능)
+  return false
 }
 
 const promptLoginRequired = (link: SidebarLink) => {
@@ -175,10 +189,7 @@ const handleNavigate = async (link: SidebarLink) => {
   }
   
   if (link.route) {
-    if (isProtectedRoute(link) && !isAuthenticated.value) {
-      promptLoginRequired(link)
-      return
-    }
+    // 로그인 체크 제거 - 모든 라우트 접근 허용
     
     // "우리만의 공간" 메뉴 클릭 시 커플 연결 상태 확인
     if (link.route === '/private-space' && isAuthenticated.value) {
@@ -283,11 +294,8 @@ watch(
 watch(
   theme,
   (value) => {
-    document.body.dataset.theme = value
-    // 테마 변경 시 localStorage에 저장
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('theme', value)
-    }
+    // 항상 라이트 모드로 설정
+    document.body.dataset.theme = 'light'
   },
   { immediate: true }
 )
@@ -371,75 +379,92 @@ watch(
   { immediate: true }
 )
 
+// 랜딩 페이지 닫기
+const closeLandingPage = () => {
+  showLandingPage.value = false
+  localStorage.setItem('has_seen_landing', 'true')
+}
+
 onMounted(() => {
-  document.body.dataset.theme = theme.value
+  document.body.dataset.theme = 'light'
   checkMobile()
   window.addEventListener('resize', checkMobile)
+  
+  // 랜딩 페이지 표시 여부 확인
+  const hasSeenLanding = localStorage.getItem('has_seen_landing')
+  if (!hasSeenLanding && !isAuthenticated.value) {
+    showLandingPage.value = true
+  }
+  
   // 초기 로드 시에도 확인
   if (isAuthenticated.value) {
     setTimeout(() => {
       checkCoupleStatus()
     }, 1000)
   }
-})
+  })
 </script>
 
 <template>
-  <!-- 모바일 오버레이 -->
-  <div 
-    v-if="isMobile"
-    :class="['mobile-overlay', { active: mobileMenuOpen }]"
-    @click="closeMobileMenu"
-  />
+  <!-- 랜딩 페이지 -->
+  <LandingPage v-if="showLandingPage" @close="closeLandingPage" />
 
+  <!-- 모바일에서는 사이드바 숨김, 데스크톱에서만 표시 -->
   <Sidebar
+    v-if="!isMobile"
     :collapsed="sidebarCollapsed"
     :public-links="publicLinks"
     :protected-links="protectedLinks"
     :current-user="currentUser"
-    :class="{ expanded: mobileMenuOpen }"
     @toggle="sidebarCollapsed = !sidebarCollapsed"
     @navigate="handleNavigate"
     @open-profile="showProfileModal = true"
   />
 
   <div :class="appShellClass">
-        <div class="main-content">
-          <!-- 모바일 메뉴 버튼 (더보기 메뉴용) -->
-          <button
-            v-if="isMobile"
-            class="mobile-menu-btn"
-            type="button"
-            @click="toggleMobileMenu"
-            style="position: fixed; top: 16px; left: 16px; z-index: 30;"
-          >
-            ☰
-          </button>
-          <HeaderBar
-            :theme="theme"
-            :is-authenticated="isAuthenticated"
-            :nickname="currentUser?.nickname"
-            :profile-image-url="currentUser?.profileImageUrl"
-            @login="authStore.openLoginModal()"
-            @logout="authStore.logout()"
-            @navigate="(href) => handleNavigate({ href, label: 'anchor', icon: '' })"
-            @toggle-theme="handleToggleTheme"
-            @open-profile="showProfileModal = true"
-            @open-contact="showContactModal = true"
-          />
+    <div class="main-content">
+      <!-- 모바일 헤더 -->
+      <HeaderBar
+        v-if="isMobile"
+        :theme="theme"
+        :is-authenticated="isAuthenticated"
+        :nickname="currentUser?.nickname"
+        :profile-image-url="currentUser?.profileImageUrl"
+        @login="authStore.openLoginModal()"
+        @logout="authStore.logout()"
+        @navigate="(href) => handleNavigate({ href, label: 'anchor', icon: '' })"
+        @open-profile="showProfileModal = true"
+        @open-contact="showContactModal = true"
+      />
+      
+      <!-- 데스크톱 헤더 -->
+      <HeaderBar
+        v-else
+        :theme="theme"
+        :is-authenticated="isAuthenticated"
+        :nickname="currentUser?.nickname"
+        :profile-image-url="currentUser?.profileImageUrl"
+        @login="authStore.openLoginModal()"
+        @logout="authStore.logout()"
+        @navigate="(href) => handleNavigate({ href, label: 'anchor', icon: '' })"
+        @open-profile="showProfileModal = true"
+        @open-contact="showContactModal = true"
+      />
+      
       <main :class="{ 'mobile-main': isMobile }">
         <RouterView />
       </main>
     </div>
 
-    <!-- 모바일 하단 네비게이션 -->
+    <!-- 모바일 하단 네비게이션 (개발 중: 항상 표시) -->
     <MobileBottomNav
-      v-if="isMobile"
       :public-links="publicLinks"
       :protected-links="protectedLinks"
       :is-authenticated="isAuthenticated"
       @navigate="handleNavigate"
       @open-more-menu="mobileMenuOpen = true"
+      @openAIMenu="openAIMenu"
+      @open-ai-menu="openAIMenu"
     />
 
     <!-- 모바일 더보기 메뉴 모달 -->
@@ -483,6 +508,50 @@ onMounted(() => {
       @connected="handleCoupleConnected"
     />
 
+    <!-- AI 서브메뉴 모달 -->
+    <Teleport to="body">
+      <div v-show="showAIMenu" v-if="showAIMenu" class="ai-menu-modal-overlay" @click="showAIMenu = false" style="display: flex !important; visibility: visible !important; opacity: 1 !important;">
+        <div class="ai-menu-modal" @click.stop>
+          <div class="ai-menu-header">
+            <h3>AI 기능</h3>
+            <button class="close-btn" @click="showAIMenu = false">×</button>
+          </div>
+          <div class="ai-menu-items">
+            <button
+              class="ai-menu-item"
+              @click="handleNavigate({ label: '문서 관리 AI', icon: '📁', route: '/document-vault' }); showAIMenu = false"
+            >
+              <span class="ai-menu-icon">📁</span>
+              <div class="ai-menu-content">
+                <div class="ai-menu-title">문서 관리 AI</div>
+                <div class="ai-menu-desc">VLLM, OCR로 문서 자동 관리</div>
+              </div>
+            </button>
+            <button
+              class="ai-menu-item"
+              @click="handleNavigate({ label: '대화형 AI 비서', icon: '🤖', route: '/chat' }); showAIMenu = false"
+            >
+              <span class="ai-menu-icon">🤖</span>
+              <div class="ai-menu-content">
+                <div class="ai-menu-title">대화형 AI 비서</div>
+                <div class="ai-menu-desc">LLM 기반 웨딩 플래너</div>
+              </div>
+            </button>
+            <button
+              class="ai-menu-item"
+              @click="handleNavigate({ label: '청첩장 만들기', icon: '💌', route: '/invitation-design' }); showAIMenu = false"
+            >
+              <span class="ai-menu-icon">💌</span>
+              <div class="ai-menu-content">
+                <div class="ai-menu-title">청첩장 만들기</div>
+                <div class="ai-menu-desc">AI로 나만의 청첩장 디자인</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <Toast />
   </div>
 </template>
@@ -500,6 +569,135 @@ onMounted(() => {
   /* 모바일에서 전체적인 패딩 증가 */
   main {
     padding: 20px 16px; /* 패딩 증가 */
+  }
+}
+
+/* AI 메뉴 모달 스타일 */
+.ai-menu-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+.ai-menu-modal {
+  background: var(--card);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 500px;
+  max-height: 70vh;
+  padding: 24px;
+  animation: slideUp 0.3s ease;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.ai-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ai-menu-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ai-menu-header .close-btn {
+  background: none;
+  border: none;
+  font-size: 32px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.ai-menu-header .close-btn:hover {
+  background: var(--soft);
+  color: var(--text);
+}
+
+.ai-menu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ai-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--soft);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  width: 100%;
+}
+
+.ai-menu-item:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+}
+
+.ai-menu-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.ai-menu-content {
+  flex: 1;
+}
+
+.ai-menu-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.ai-menu-desc {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
   }
 }
 </style>

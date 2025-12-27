@@ -155,7 +155,8 @@ const calendarDays = computed(() => {
   return days
 })
 
-const canAccess = computed(() => authStore.isAuthenticated)
+// 로그인 체크 제거 - 로그인 없이도 접근 가능
+const canAccess = computed(() => true)
 
 // 로그인 상태 변경 감지 - 사용자 ID 변경 시
 watch(
@@ -240,17 +241,14 @@ onMounted(() => {
     canAccess: canAccess.value
   })
   
-  if (!canAccess.value) {
-    authStore.openLoginModal()
-    return
-  }
+  // 로그인 체크 제거됨 - 로그인 없이도 접근 가능
   
-  // 로그인 상태면 데이터 로드
+  // 로그인 상태면 데이터 로드 (로그인하지 않아도 페이지는 접근 가능)
   if (authStore.user?.id) {
     console.log('onMounted: 사용자 ID가 있으므로 데이터 로드 시작')
     loadData()
   } else {
-    console.warn('onMounted: 사용자 ID가 없습니다. 로그인 모달을 엽니다.')
+    console.log('onMounted: 로그인하지 않았지만 페이지 접근은 가능합니다.')
   }
 })
 

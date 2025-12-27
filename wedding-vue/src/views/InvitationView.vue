@@ -38,49 +38,106 @@
         @close="showBasicInfoModal = false"
       />
 
-      <!-- Step 1: 요구사항 입력 -->
+      <!-- Step 1: 메인 사진 업로드 (FE 스타일) -->
       <div v-if="currentStep === 1" class="step-content">
         <div v-if="!canAccessStep(1)" class="access-denied">
           <p>⚠️ 먼저 기본 정보를 입력해주세요.</p>
           <button class="back-btn" @click="showBasicInfoModal = true">기본 정보 입력하기</button>
         </div>
-        <InvitationRequirementsForm v-else :basic-info="basicInfo" @submit="handleRequirementsSubmit" />
+        <div v-else>
+          <div class="step-header">
+            <h2>STEP 1 청첩장 메인 사진 업로드</h2>
+            <p class="step-description">
+              웨딩 촬영 사진, 일상 사진, 연애 사진 등 다양한 사진을 올려주세요.
+            </p>
+          </div>
+          
+          <div class="image-upload-section">
+            <input
+              type="file"
+              ref="mainImageInput"
+              accept="image/*"
+              @change="handleMainImageChange"
+              class="file-input"
+              style="display: none;"
+            />
+            
+            <div v-if="!mainImage" class="upload-area" @click="mainImageInput?.click()">
+              <div class="upload-placeholder">
+                <span class="upload-icon">📸</span>
+                <span class="upload-text">메인 사진 선택</span>
+                <span class="upload-hint">고화질 이미지를 권장합니다 (최소 1000x1000 픽셀)</span>
+              </div>
+            </div>
+            
+            <div v-else class="image-preview-container">
+              <div class="image-preview">
+                <img :src="getImagePreview(mainImage)" alt="메인 사진 미리보기" />
+                <button type="button" class="remove-image-btn" @click="removeMainImage">×</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="step-actions">
+            <button class="back-btn" @click="showBasicInfoModal = true">← 기본 정보 수정</button>
+            <button
+              class="next-btn"
+              @click="handleNextFromMainImage"
+              :disabled="!mainImage"
+            >
+              다음 단계 →
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- Step 2: 톤 선택 (자동 제안) -->
+      <!-- Step 2: 톤 선택 (6가지 고정 톤) -->
       <div v-if="currentStep === 2" class="step-content">
         <div v-if="!canAccessStep(2)" class="access-denied">
-          <p>⚠️ 먼저 요구사항을 입력해주세요.</p>
-          <button class="back-btn" @click="currentStep = 1">요구사항 입력하러 가기</button>
+          <p>⚠️ 먼저 메인 사진을 업로드해주세요.</p>
+          <button class="back-btn" @click="currentStep = 1">메인 사진 업로드하러 가기</button>
         </div>
         <div v-else>
           <div class="step-header">
-            <h2>🎨 AI가 제안한 5가지 톤</h2>
+            <h2>STEP 2 문구 톤 선택</h2>
             <p class="step-description">
-              입력하신 요구사항을 바탕으로 Gemini 2.5가 5가지 톤의 멘트를 자동으로 생성했습니다.<br>
-              원하는 톤을 선택해주세요.
+              청첩장에 사용할 문구의 톤을 선택해주세요.
             </p>
           </div>
-        <InvitationToneSelector
-          :tones="tones"
-          :loading="loadingTones"
-          @select="handleToneSelect"
-          @regenerate="handleRegenerateTones"
-        />
-        <div class="step-actions">
-          <button class="back-btn" @click="currentStep--">← 이전</button>
-          <button
-            class="next-btn"
-            @click="handleNextFromTone"
-              :disabled="!selectedTone || !stepCompleted.step2"
-          >
-            다음 →
-          </button>
+          
+          <!-- 6가지 고정 톤 선택 (FE 스타일) -->
+          <div class="tone-selection-grid">
+            <div
+              v-for="tone in fixedTones"
+              :key="tone.value"
+              class="tone-selection-card"
+              :class="{ selected: selectedFixedTone === tone.value }"
+              @click="selectFixedTone(tone)"
+            >
+              <div class="tone-card-header">
+                <span class="tone-icon">{{ tone.icon }}</span>
+                <h3>{{ tone.name }}</h3>
+                <span v-if="selectedFixedTone === tone.value" class="tone-check">✓</span>
+              </div>
+              <p class="tone-description">{{ tone.description }}</p>
+              <p class="tone-example">{{ tone.example }}</p>
+            </div>
+          </div>
+          
+          <div class="step-actions">
+            <button class="back-btn" @click="currentStep--">← 이전</button>
+            <button
+              class="next-btn"
+              @click="handleNextFromTone"
+              :disabled="!selectedFixedTone"
+            >
+              다음 단계 →
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Step 3: 디자인 생성 (1차 - 무료 모델) -->
+      <!-- Step 3: 디자인 요청 사항 (스타일 이미지 업로드) -->
       <div v-if="currentStep === 3" class="step-content">
         <div v-if="!canAccessStep(3)" class="access-denied">
           <p>⚠️ 먼저 기본 정보 입력과 톤 선택을 완료해주세요.</p>
@@ -91,17 +148,84 @@
         </div>
         <div v-else>
           <div class="step-header">
-            <h2>🎨 청첩장 디자인 생성</h2>
+            <h2>STEP 3 디자인 요청 사항</h2>
             <p class="step-description">
-              선택한 톤과 문구를 바탕으로 청첩장 디자인을 생성합니다.<br>
-              원하는 디자인 스타일을 텍스트로 설명해주세요.
+              원하는 스타일의 청첩장 이미지를 첨부해주세요.
             </p>
           </div>
+          
+          <!-- 스타일 이미지 업로드 (FE DesignDetailPage 스타일) -->
+          <div class="style-images-section">
+            <div class="style-images-uploader">
+              <input
+                type="file"
+                ref="styleImagesInput"
+                multiple
+                accept="image/*"
+                @change="handleStyleImagesChange"
+                class="style-images-input"
+              />
+              
+              <!-- 업로드 영역 -->
+              <div class="upload-area" @click="styleImagesInput?.click()" v-if="styleImages.length < 3">
+                <div class="upload-placeholder">
+                  <span class="upload-icon">+</span>
+                  <span class="upload-text">이미지 추가</span>
+                  <span class="upload-count">{{ styleImages.length }}/3</span>
+                </div>
+              </div>
+              
+              <!-- 업로드된 이미지 미리보기 -->
+              <div class="style-images-preview" v-if="styleImages.length > 0">
+                <div
+                  v-for="(file, index) in styleImages"
+                  :key="index"
+                  class="style-image-item"
+                >
+                  <div class="image-number">{{ index + 1 }}</div>
+                  <img :src="getImagePreview(file)" :alt="`스타일 이미지 ${index + 1}`" />
+                  <button type="button" class="remove-style-image" @click.stop="removeStyleImage(index)" aria-label="이미지 제거">×</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="step-actions">
+            <button class="back-btn" @click="currentStep--">← 이전</button>
+            <button
+              class="next-btn"
+              @click="handleNextFromStyleUpload"
+              :disabled="false"
+            >
+              청첩장 만들기 →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: 디자인 생성 -->
+      <div v-if="currentStep === 4" class="step-content">
+        <div v-if="!canAccessStep(4)" class="access-denied">
+          <p>⚠️ 먼저 이전 단계들을 완료해주세요.</p>
+          <div class="access-actions">
+            <button class="back-btn" @click="currentStep = 1" v-if="!stepCompleted.step1">요구사항 입력하러 가기</button>
+            <button class="back-btn" @click="currentStep = 2" v-if="stepCompleted.step1 && !stepCompleted.step2">톤 선택하러 가기</button>
+            <button class="back-btn" @click="currentStep = 3" v-if="stepCompleted.step2 && !stepCompleted.step3">스타일 업로드하러 가기</button>
+          </div>
+        </div>
+        <div v-else>
+          <div class="step-header">
+            <h2>🎨 청첩장 디자인 생성</h2>
+            <p class="step-description">
+              선택한 톤과 스타일 이미지를 바탕으로 청첩장 디자인을 생성합니다.
+            </p>
+          </div>
+
           <InvitationDesignStep
-          :selected-text="selectedTone?.main_text || ''"
-          :selected-tone="selectedTone?.tone || ''"
+            :selected-text="selectedTone?.main_text || ''"
+            :selected-tone="selectedTone?.tone || ''"
             :basic-info="basicInfo"
-          @generate="handleImageGenerate"
+            @generate="handleImageGenerate"
             ref="designGenerator"
           />
           <div class="step-actions">
@@ -109,78 +233,230 @@
             <button
               class="next-btn"
               @click="handleNextFromDesign"
-              :disabled="!generatedImageUrl || !stepCompleted.step3"
+              :disabled="designGenerator?.loading || stepCompleted.step4"
             >
-              다음 →
+              {{ designGenerator?.loading ? '생성 중...' : (stepCompleted.step4 ? '다음 →' : '청첩장 만들기') }}
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Step 4: 커스텀 (이미지 업로드 및 수정) -->
-      <div v-if="currentStep === 4" class="step-content">
-        <div v-if="!canAccessStep(4)" class="access-denied">
-          <p>⚠️ 먼저 이전 단계들을 완료해주세요.</p>
-          <div class="access-actions">
-            <button class="back-btn" @click="showBasicInfoModal = true" v-if="!stepCompleted.step0">기본 정보 입력하러 가기</button>
-            <button class="back-btn" @click="currentStep = 1" v-if="stepCompleted.step0 && !stepCompleted.step1">요구사항 입력하러 가기</button>
-            <button class="back-btn" @click="currentStep = 2" v-if="stepCompleted.step0 && stepCompleted.step1 && !stepCompleted.step2">톤 선택하러 가기</button>
-            <button class="back-btn" @click="currentStep = 3" v-if="stepCompleted.step0 && stepCompleted.step1 && stepCompleted.step2 && !stepCompleted.step3">디자인 생성하러 가기</button>
-          </div>
-        </div>
-        <div v-else>
-          <div class="step-header">
-            <h2>✨ 청첩장 커스텀</h2>
-            <p class="step-description">
-              생성된 디자인을 이미지와 텍스트로 더 정교하게 수정할 수 있습니다.<br>
-              <strong class="pro-badge">하루 5번 사용 제한</strong> - 남은 횟수: {{ remainingCustomCount }}회
+      <!-- Step 5: 완료 (FE ResultPage 스타일) -->
+      <div v-if="currentStep === 5" class="step-content completion">
+        <div class="result-page">
+          <div class="result-header">
+            <h2>최종 결과</h2>
+            <p class="result-hint">
+              <span aria-hidden="true">📱</span> 좌우로 스와이프하여 {{ resultImages.length }}장의 청첩장을 확인하세요
             </p>
           </div>
-          <InvitationDesignModifier
-            :base-image="generatedImageUrl || ''"
-            :selected-text="selectedTone?.main_text || ''"
-            :remaining-count="remainingCustomCount"
-            @modify="handleImageModifyPro"
-            @skip="handleSkipModify"
-          @save="handleImageSave"
-            ref="designModifier"
-        />
-        <div class="step-actions">
-          <button class="back-btn" @click="currentStep--">← 이전</button>
-          </div>
-        </div>
-      </div>
 
-      <!-- Step 5: 완료 -->
-      <div v-if="currentStep === 5" class="step-content completion">
-        <div class="success-message">
-          <h2>🎉 청첩장이 완성되었습니다!</h2>
-          <p class="success-subtitle">아래에서 완성된 청첩장을 확인하고 다운로드하세요.</p>
-          
-          <!-- 완성된 이미지 미리보기 -->
-          <div class="final-image-preview" v-if="generatedImageUrl">
-            <img :src="generatedImageUrl" alt="완성된 청첩장" />
-          </div>
-          
-          <!-- 다운로드 버튼들 -->
-          <div class="download-section">
-            <h3>📥 이미지 다운로드</h3>
-            <p class="download-hint">PC 또는 휴대폰에 이미지를 저장할 수 있습니다.</p>
-            <div class="download-buttons">
-              <button class="download-btn png" @click="downloadImage('png')">
-                🖼️ PNG로 다운로드
+          <!-- 스와이프 가능한 이미지 뷰어 (FE 스타일) -->
+          <div class="viewer-card">
+            <div class="viewer-top">
+              <div class="viewer-badge">청첩장 {{ currentImageIndex + 1 }}</div>
+              <div class="viewer-counter" aria-label="현재 {{ currentImageIndex + 1 }} / {{ resultImages.length }}">
+                {{ currentImageIndex + 1 }} / {{ resultImages.length }}
+              </div>
+            </div>
+
+            <div
+              class="viewer"
+              @touchstart="onTouchStart"
+              @touchend="onTouchEnd"
+              @keydown="handleViewerKeydown"
+              tabindex="0"
+            >
+              <button
+                type="button"
+                class="viewer-arrow left"
+                @click="goPrevImage"
+                :disabled="currentImageIndex === 0"
+                aria-label="이전 이미지"
+              >
+                ‹
               </button>
-              <button class="download-btn jpeg" @click="downloadImage('jpeg')">
-                📷 JPEG로 다운로드
+
+              <div
+                class="viewer-track"
+                :style="{ transform: `translateX(-${currentImageIndex * 100}%)` }"
+              >
+                <div
+                  v-for="(img, idx) in resultImages"
+                  :key="idx"
+                  class="viewer-slide"
+                >
+                  <div class="viewer-poster">
+                    <img :src="img.src" :alt="img.title" class="viewer-img" />
+                  </div>
+                  <div class="viewer-meta">
+                    <h3 class="viewer-title">{{ img.title }}</h3>
+                    <p class="viewer-desc">{{ img.desc }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="viewer-arrow right"
+                @click="goNextImage"
+                :disabled="currentImageIndex === resultImages.length - 1"
+                aria-label="다음 이미지"
+              >
+                ›
               </button>
             </div>
+
+            <!-- 이미지 인디케이터 -->
+            <div class="viewer-dots" role="tablist" aria-label="청첩장 페이지">
+              <button
+                v-for="(_, i) in resultImages"
+                :key="i"
+                type="button"
+                class="viewer-dot"
+                :class="{ active: i === currentImageIndex }"
+                @click="currentImageIndex = i"
+                :aria-label="`${i + 1}번 이미지로 이동`"
+                :aria-current="i === currentImageIndex ? 'true' : 'false'"
+              />
+            </div>
           </div>
-          
+
+          <!-- 액션 버튼들 -->
+          <div class="result-actions">
+            <button type="button" class="result-btn primary" @click="downloadAllImages">
+              청첩장 {{ resultImages.length }}장 모두 다운로드
+            </button>
+            <button type="button" class="result-btn outline" @click="redoDesign">
+              디자인 다시하기
+            </button>
+          </div>
+
           <!-- 기타 액션 버튼 -->
           <div class="completion-actions">
             <button class="list-btn" @click="goToList">📋 목록으로</button>
             <button class="new-btn" @click="createNew">✨ 새로 만들기</button>
+            <button class="threed-btn" @click="currentStep = 6">🎨 3D 청첩장 만들기</button>
           </div>
+        </div>
+      </div>
+
+      <!-- Step 6: 3D 청첩장 만들기 -->
+      <div v-if="currentStep === 6" class="step-content threed-step">
+        <div class="step-header">
+          <h2>🎨 3D 청첩장 만들기</h2>
+          <p class="step-description">
+            우리만의 사진으로 특별한 3D 청첩장을 만들 수 있어요!
+          </p>
+        </div>
+
+        <!-- 메인 이미지 (필수) -->
+        <section class="threed-section">
+          <div class="section-header">
+            <div class="section-title">
+              1. 메인 사진 <span class="req">*</span>
+            </div>
+            <div v-if="threeDMainImage" class="pill-ok">업로드 완료</div>
+          </div>
+          
+          <input
+            type="file"
+            ref="threeDMainImageInput"
+            accept="image/*"
+            @change="handleThreeDMainImageChange"
+            class="file-input"
+            style="display: none;"
+          />
+          
+          <div v-if="!threeDMainImage" class="upload-area" @click="threeDMainImageInput?.click()">
+            <div class="upload-placeholder">
+              <span class="upload-icon">📸</span>
+              <span class="upload-text">메인 사진 선택</span>
+              <span class="upload-hint">신랑/신부가 함께 나온 대표 사진 1장을 올려주세요</span>
+            </div>
+          </div>
+          
+          <div v-else class="image-preview-container">
+            <div class="image-preview">
+              <img :src="getImagePreview(threeDMainImage)" alt="메인 사진 미리보기" />
+              <button type="button" class="remove-image-btn" @click="removeThreeDMainImage">×</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 레퍼런스 이미지 (선택) -->
+        <section class="threed-section">
+          <div class="section-header">
+            <div class="section-title">2. 레퍼런스 사진 (선택, 최대 2장)</div>
+            <div class="hint-text">원하는 분위기/포즈 참고용 (없어도 진행 가능)</div>
+          </div>
+          
+          <input
+            type="file"
+            ref="threeDReferenceImagesInput"
+            accept="image/*"
+            multiple
+            @change="handleThreeDReferenceImagesChange"
+            class="file-input"
+            style="display: none;"
+          />
+          
+          <div v-if="threeDReferenceImages.length < 2" class="upload-area" @click="threeDReferenceImagesInput?.click()">
+            <div class="upload-placeholder">
+              <span class="upload-icon">+</span>
+              <span class="upload-text">레퍼런스 사진 추가</span>
+              <span class="upload-count">{{ threeDReferenceImages.length }}/2</span>
+            </div>
+          </div>
+          
+          <div v-if="threeDReferenceImages.length > 0" class="reference-images-preview">
+            <div
+              v-for="(file, index) in threeDReferenceImages"
+              :key="index"
+              class="reference-image-item"
+            >
+              <div class="image-number">{{ index + 1 }}</div>
+              <img :src="getImagePreview(file)" :alt="`레퍼런스 이미지 ${index + 1}`" />
+              <button type="button" class="remove-image-btn" @click="removeThreeDReferenceImage(index)">×</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 상태 표시 -->
+        <div v-if="threeDStatus !== 'IDLE'" class="threed-status">
+          <div class="status-pill" :class="`status-${threeDStatus.toLowerCase()}`">
+            <span v-if="threeDStatus === 'SUBMITTED'">요청 전송</span>
+            <span v-if="threeDStatus === 'PENDING'">대기 중</span>
+            <span v-if="threeDStatus === 'RUNNING'">생성 중 (최대 10분)</span>
+            <span v-if="threeDStatus === 'DONE'">완료</span>
+            <span v-if="threeDStatus === 'FAILED'">실패</span>
+            <span v-if="threeDStatus === 'CANCELED'">취소됨</span>
+          </div>
+          <div v-if="threeDError" class="error-message">{{ threeDError }}</div>
+        </div>
+
+        <!-- 버튼 -->
+        <div class="step-actions">
+          <button class="back-btn" @click="currentStep = 5">← 이전</button>
+          <button
+            v-if="['SUBMITTED', 'PENDING', 'RUNNING'].includes(threeDStatus)"
+            class="danger-btn"
+            @click="stopThreeDPolling"
+          >
+            생성 취소
+          </button>
+          <button
+            v-else
+            class="next-btn"
+            @click="handleThreeDSubmit"
+            :disabled="!threeDMainImage || ['SUBMITTED', 'PENDING', 'RUNNING'].includes(threeDStatus)"
+          >
+            {{ threeDStatus === 'DONE' ? '완료' : '3D 청첩장 생성하기' }}
+          </button>
+        </div>
+
+        <div v-if="!threeDMainImage" class="notice">
+          * 메인 사진 1장은 반드시 업로드해야 생성할 수 있어요
         </div>
       </div>
     </div>
@@ -188,7 +464,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import InvitationBasicInfoModal from '@/components/invitation/InvitationBasicInfoModal.vue'
 import InvitationRequirementsForm from '@/components/invitation/InvitationRequirementsForm.vue'
@@ -196,16 +472,19 @@ import InvitationToneSelector from '@/components/invitation/InvitationToneSelect
 import InvitationDesignStep from '@/components/invitation/InvitationDesignStep.vue'
 import InvitationDesignModifier from '@/components/invitation/InvitationDesignModifier.vue'
 import { invitationService, type InvitationBasicInfo, type ToneOption, type MapInfo } from '@/services/invitationService'
+import { useApi } from '@/composables/useApi'
 
 const router = useRouter()
+const { request } = useApi()
 
 const currentStep = ref(1)
 const steps = [
-  { number: 1, label: '요구사항 입력', description: '청첩장 요구사항 입력' },
-  { number: 2, label: '톤 선택', description: 'AI가 생성한 5가지 톤 중 선택' },
-  { number: 3, label: '디자인 생성', description: '초안, 스타일 선택, 이미지 생성' },
-  { number: 4, label: '커스텀', description: '이미지 업로드 및 수정 (하루 5번)' },
-  { number: 5, label: '완료', description: '청첩장 완성' }
+  { number: 1, label: '메인 사진', description: '업로드' },
+  { number: 2, label: '톤 선택', description: '6가지 톤 중 선택' },
+  { number: 3, label: '디자인 요청', description: '스타일 이미지 업로드' },
+  { number: 4, label: '디자인 생성', description: '청첩장 디자인 생성' },
+  { number: 5, label: '완료', description: '청첩장 완성' },
+  { number: 6, label: '3D 청첩장', description: '3D 모델 생성' }
 ]
 
 // 기본 정보 모달
@@ -215,10 +494,12 @@ const savedBasicInfo = ref<InvitationBasicInfo & { mapInfo?: MapInfo } | null>(n
 // 단계별 완료 상태 관리
 const stepCompleted = ref({
   step0: false, // 기본 정보 입력 완료 (모달에서)
-  step1: false, // 요구사항 입력 완료
+  step1: false, // 메인 사진 업로드 완료
   step2: false, // 톤 선택 완료
-  step3: false, // 디자인 생성 완료
-  step4: false  // 커스텀 완료 (선택사항)
+  step3: false, // 디자인 요청 완료
+  step4: false, // 디자인 생성 완료
+  step5: false, // 완료 단계
+  step6: false  // 3D 청첩장 생성 완료
 })
 
 // 요구사항 입력 데이터
@@ -227,16 +508,78 @@ const requirements = ref('')
 // Step 1 data
 const basicInfo = ref<InvitationBasicInfo & { mapInfo?: MapInfo }>()
 
-// Step 2 data
+// 메인 사진 업로드 (FE 스타일)
+const mainImage = ref<File | null>(null)
+const mainImageInput = ref<HTMLInputElement>()
+
+// Step 2 data - 6가지 고정 톤
+const fixedTones = [
+  {
+    value: 'formal',
+    name: '격식있는',
+    icon: '🎩',
+    description: '전통적이고 예의바른 표현',
+    example: '상기 정중히...'
+  },
+  {
+    value: 'warm',
+    name: '따뜻한',
+    icon: '💕',
+    description: '정겹고 포근한 느낌',
+    example: '따뜻한 마음으로 초대합니다'
+  },
+  {
+    value: 'modern',
+    name: '현대적인',
+    icon: '✨',
+    description: '세련되고 트렌디한 표현',
+    example: '저희의 새로운 시작에 함께 해 주세요'
+  },
+  {
+    value: 'classic',
+    name: '클래식',
+    icon: '🌹',
+    description: '고전적이고 우아한 분위기',
+    example: '영원한 사랑을 약속하는 자리에'
+  },
+  {
+    value: 'casual',
+    name: '캐주얼',
+    icon: '😊',
+    description: '편안하고 친근한 느낌',
+    example: '우리 결혼해요! 축하해주세요'
+  },
+  {
+    value: 'romantic',
+    name: '로맨틱',
+    icon: '💖',
+    description: '감성적이고 낭만적인 표현',
+    example: '사랑이 꽃피는 그날, 함께해주세요'
+  }
+]
+
+const selectedFixedTone = ref<string | null>(null)
+const selectedTone = ref<ToneOption | null>(null) // 하위 호환성을 위해 유지
 const tones = ref<ToneOption[]>([])
 const loadingTones = ref(false)
-const selectedTone = ref<ToneOption | null>(null)
 
 // Step 3 data (디자인 생성)
 const designGenerator = ref<InstanceType<typeof InvitationDesignStep>>()
 const generatedImageUrl = ref('')
+const generatedImageUrls = ref<string[]>([]) // 여러 이미지 지원 (FE 스타일)
 const originalGeneratedImageUrl = ref('') // 원본 이미지 보존용
 const designRequirements = ref('')
+const styleImages = ref<File[]>([]) // 스타일 이미지 업로드 (FE 스타일)
+
+// 3D 청첩장 관련 데이터
+const threeDMainImage = ref<File | null>(null)
+const threeDReferenceImages = ref<File[]>([])
+const threeDStatus = ref<'IDLE' | 'SUBMITTED' | 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED' | 'CANCELED'>('IDLE')
+const threeDInvitationId = ref<number | null>(null)
+const threeDModelUrl = ref<string>('')
+const threeDResultImageUrls = ref<string[]>([])
+const threeDPollingTimer = ref<number | null>(null)
+const threeDError = ref<string | null>(null)
 
 // Step 4 data (커스텀)
 const designModifier = ref<InstanceType<typeof InvitationDesignModifier>>()
@@ -272,10 +615,11 @@ const loadCustomCount = () => {
 // 단계 접근 제어 함수
 const canAccessStep = (stepNumber: number): boolean => {
   if (stepNumber === 1) return stepCompleted.value.step0 // 기본 정보 입력 완료 필요
-  if (stepNumber === 2) return stepCompleted.value.step0 && stepCompleted.value.step1
-  if (stepNumber === 3) return stepCompleted.value.step0 && stepCompleted.value.step1 && stepCompleted.value.step2
-  if (stepNumber === 4) return stepCompleted.value.step0 && stepCompleted.value.step1 && stepCompleted.value.step2 && stepCompleted.value.step3
-  if (stepNumber === 5) return stepCompleted.value.step0 && stepCompleted.value.step1 && stepCompleted.value.step2 && stepCompleted.value.step3
+  if (stepNumber === 2) return stepCompleted.value.step0 && stepCompleted.value.step1 // 메인 사진 업로드 완료
+  if (stepNumber === 3) return stepCompleted.value.step0 && stepCompleted.value.step1 && stepCompleted.value.step2 // 톤 선택 완료
+  if (stepNumber === 4) return stepCompleted.value.step0 && stepCompleted.value.step1 && stepCompleted.value.step2 && stepCompleted.value.step3 // 디자인 요청 완료
+  if (stepNumber === 5) return stepCompleted.value.step0 && stepCompleted.value.step1 && stepCompleted.value.step2 && stepCompleted.value.step3 && stepCompleted.value.step4 // 디자인 생성 완료
+  if (stepNumber === 6) return stepCompleted.value.step0 && stepCompleted.value.step1 && stepCompleted.value.step2 && stepCompleted.value.step3 && stepCompleted.value.step4 // 3D 청첩장 (선택사항)
   return false
 }
 
@@ -285,7 +629,8 @@ const getStepCompleted = (stepNumber: number): boolean => {
   if (stepNumber === 2) return stepCompleted.value.step2
   if (stepNumber === 3) return stepCompleted.value.step3
   if (stepNumber === 4) return stepCompleted.value.step4
-  if (stepNumber === 5) return stepCompleted.value.step3 // Step 5는 Step 3 완료 시 활성화
+  if (stepNumber === 5) return stepCompleted.value.step5
+  if (stepNumber === 6) return stepCompleted.value.step6
   return false
 }
 
@@ -348,16 +693,86 @@ const handleBasicInfoSubmit = async (data: InvitationBasicInfo & { mapInfo?: Map
   }
 }
 
-// Step 1: 요구사항 제출
-const handleRequirementsSubmit = async (req: string) => {
-  requirements.value = req
+// Step 1: 메인 이미지 업로드 핸들러
+const handleMainImageChange = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (file) {
+    mainImage.value = file
+  }
+}
+
+const getImagePreview = (file: File): string => {
+  return URL.createObjectURL(file)
+}
+
+const removeMainImage = () => {
+  if (mainImage.value) {
+    URL.revokeObjectURL(getImagePreview(mainImage.value))
+    mainImage.value = null
+  }
+}
+
+const handleNextFromMainImage = () => {
+  if (!mainImage.value) {
+    alert('메인 사진을 업로드해주세요.')
+    return
+  }
   
   // Step 1 완료 표시
   stepCompleted.value.step1 = true
   
-  // 자동으로 톤 생성 및 Step 2로 이동
+  // Step 2로 이동 (톤 선택)
   currentStep.value = 2
-  await loadTones()
+}
+
+// Step 1: 요구사항 제출 (더 이상 사용하지 않지만 하위 호환성을 위해 유지)
+const handleRequirementsSubmit = async (req: string) => {
+  requirements.value = req
+  
+  // Step 1 완료 표시는 메인 이미지 업로드에서 처리
+  // 이 함수는 더 이상 사용하지 않음
+}
+
+// Step 2: 고정 톤 선택
+const selectFixedTone = (tone: typeof fixedTones[0]) => {
+  selectedFixedTone.value = tone.value
+  
+  // 선택한 톤을 ToneOption 형식으로 변환 (하위 호환성)
+  selectedTone.value = {
+    tone: tone.value,
+    description: tone.description,
+    main_text: tone.example,
+    parents_greeting: '',
+    wedding_info: '',
+    closing: ''
+  }
+  
+  // Step 2 완료 표시
+  stepCompleted.value.step2 = true
+}
+
+// Step 2: 다음 단계
+const handleNextFromTone = () => {
+  if (!selectedFixedTone.value) {
+    alert('톤을 선택해주세요.')
+    return
+  }
+  
+  // Step 2 완료 표시
+  stepCompleted.value.step2 = true
+  
+  // Step 3로 이동 (스타일 이미지 업로드)
+  currentStep.value = 3
+}
+
+// Step 3: 스타일 이미지 업로드 후 다음 단계
+const handleNextFromStyleUpload = () => {
+  // Step 3 완료 표시
+  stepCompleted.value.step3 = true
+  
+  // Step 4로 이동 (디자인 생성)
+  currentStep.value = 4
 }
 
 // Step 2: 톤 로드 (자동 생성)
@@ -416,32 +831,18 @@ const loadTones = async () => {
   }
 }
 
-// Step 2: 톤 선택
+// Step 2: 톤 선택 (하위 호환성 - 더 이상 사용하지 않음)
 const handleToneSelect = (tone: ToneOption) => {
   selectedTone.value = tone
   // 톤 선택 시 step2 완료 표시
   stepCompleted.value.step2 = true
 }
 
-// Step 2: 톤 재생성
+// Step 2: 톤 재생성 (하위 호환성 - 더 이상 사용하지 않음)
 const handleRegenerateTones = async () => {
   selectedTone.value = null
   stepCompleted.value.step2 = false
   await loadTones()
-}
-
-// Step 2: 다음 단계
-const handleNextFromTone = () => {
-  if (!selectedTone.value) {
-    alert('톤을 선택해주세요.')
-    return
-  }
-  
-  // Step 2 완료 표시
-  stepCompleted.value.step2 = true
-  
-  // Step 3로 이동
-  currentStep.value = 3
 }
 
 // Step 3: 디자인 생성 (초안, 스타일 선택, 추가 요청, 이미지 생성)
@@ -547,21 +948,120 @@ const handleNextToModify = () => {
   // 이 함수는 더 이상 사용하지 않음 (InvitationDesignStep에서 호출하지 않음)
 }
 
-// Step 3: 다음 버튼 클릭 (선택한 톤을 프롬프트로 사용해서 다음 단계로)
-const handleNextFromDesign = () => {
-  if (!generatedImageUrl.value) {
-    alert('먼저 디자인을 생성해주세요.')
+// 스타일 이미지 업로드 핸들러
+const styleImagesInput = ref<HTMLInputElement>()
+const handleStyleImagesChange = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const files = Array.from(target.files || [])
+  if (files.length + styleImages.value.length > 3) {
+    alert('최대 3장까지 업로드 가능합니다.')
     return
   }
-  
+  styleImages.value = [...styleImages.value, ...files.slice(0, 3 - styleImages.value.length)]
+}
+
+// getImagePreview 함수는 이미 위에서 선언됨 (705번 라인)
+
+const removeStyleImage = (index: number) => {
+  URL.revokeObjectURL(getImagePreview(styleImages.value[index]))
+  styleImages.value.splice(index, 1)
+}
+
+// getImagePreview 함수는 이미 위에서 선언됨 (705번 라인)
+
+// Step 3: 디자인 생성 (FE 스타일 - /api/invitations/design 사용)
+const handleDesignSubmit = async () => {
   if (!selectedTone.value) {
     alert('톤이 선택되지 않았습니다.')
     return
   }
+
+  if (!basicInfo.value) {
+    alert('기본 정보가 없습니다.')
+    return
+  }
+
+  designGenerator.value?.setLoading(true)
   
-  // 선택한 톤의 텍스트를 프롬프트로 사용
-  // Step 4로 이동 (커스텀 단계)
-  currentStep.value = 4
+  try {
+    const payload = {
+      groom: {
+        name: basicInfo.value.groom_name,
+        fatherName: basicInfo.value.groom_father_name || '',
+        motherName: basicInfo.value.groom_mother_name || ''
+      },
+      bride: {
+        name: basicInfo.value.bride_name,
+        fatherName: basicInfo.value.bride_father_name || '',
+        motherName: basicInfo.value.bride_mother_name || ''
+      },
+      wedding: {
+        hallName: basicInfo.value.wedding_location || '',
+        address: basicInfo.value.wedding_location_detail || '',
+        date: basicInfo.value.wedding_date || '',
+        time: basicInfo.value.wedding_time || ''
+      },
+      extraMessage: basicInfo.value.additional_message || '',
+      additionalRequest: designRequirements.value || '',
+      tone: selectedTone.value.tone
+    }
+
+    const formData = new FormData()
+    
+    // 메인 이미지 추가 (FE 스타일)
+    if (mainImage.value) {
+      formData.append("weddingImage", mainImage.value)
+    }
+    
+    // 스타일 이미지 추가
+    styleImages.value.forEach((f) => formData.append("styleImages", f))
+    
+    // 데이터 추가
+    formData.append("data", new Blob([JSON.stringify(payload)], { type: "application/json" }))
+
+    // FE 스타일 API 호출
+    const response = await request<{
+      status: string
+      result2dImageUrls: string[]
+    }>('/invitations/design', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response) {
+      throw new Error("디자인 생성 응답이 없습니다.")
+    }
+
+    const urls = response.result2dImageUrls || []
+    if (!Array.isArray(urls) || urls.length === 0) {
+      throw new Error("생성된 청첩장 이미지가 없습니다.")
+    }
+
+    // 여러 이미지 저장
+    generatedImageUrls.value = urls
+    generatedImageUrl.value = urls[0] // 첫 번째 이미지를 기본값으로
+    originalGeneratedImageUrl.value = urls[0]
+
+    // Step 4 완료 표시
+    stepCompleted.value.step4 = true
+    
+    // Step 5로 이동 (완료 페이지)
+    if (generatedImageUrls.value.length > 0) {
+      currentStep.value = 5
+      stepCompleted.value.step5 = true
+    }
+  } catch (error: any) {
+    console.error('디자인 생성 실패:', error)
+    alert(error?.message || "전송 중 오류가 발생했습니다.")
+  } finally {
+    designGenerator.value?.setLoading(false)
+  }
+}
+
+// Step 3: 다음 버튼 클릭 (FE 스타일 디자인 생성)
+const handleNextFromDesign = async () => {
+  // FE 스타일로 디자인 생성
+  await handleDesignSubmit()
 }
 
 // Step 4: 커스텀 (이미지 수정)
@@ -680,30 +1180,138 @@ const handleImageSave = async (image: string) => {
   }
 }
 
-// Step 5: 완료 후 액션
+// Step 5: 결과 페이지 (FE 스타일)
+const currentImageIndex = ref(0)
+const startXRef = ref(0)
+const draggingRef = ref(false)
 
-// 이미지 다운로드 함수
+// 결과 이미지 목록 (FE 스타일)
+const resultImages = computed(() => {
+  if (generatedImageUrls.value.length > 0) {
+    return generatedImageUrls.value.map((url, idx) => ({
+      id: `result-${idx + 1}`,
+      title: `청첩장 ${idx + 1}`,
+      desc: idx === 0
+        ? "STEP2에서 업로드한 웨딩 사진 + 배경 디자인 + 선택한 테두리"
+        : "백엔드에서 전달된 최종 이미지",
+      src: url,
+    }))
+  }
+  
+  // 기본 이미지가 있으면 사용
+  if (generatedImageUrl.value) {
+    return [{
+      id: "result-1",
+      title: "청첩장 1",
+      desc: "완성된 청첩장",
+      src: generatedImageUrl.value,
+    }]
+  }
+  
+  // 더미 데이터
+  return [
+    {
+      id: "result-1",
+      title: "페이지 1",
+      desc: "STEP2에서 업로드한 웨딩 사진 + 배경 디자인 + 선택한 테두리",
+      src: "/images/1.png",
+    },
+    {
+      id: "result-2",
+      title: "페이지 2",
+      desc: "문구/정보가 포함된 청첩장",
+      src: "/images/2.png",
+    },
+    {
+      id: "result-3",
+      title: "페이지 3",
+      desc: "추가 옵션으로 꾸며본 레이아웃 예시",
+      src: "/images/3.png",
+    },
+  ]
+})
+
+const clampIndex = (next: number) => Math.max(0, Math.min(resultImages.value.length - 1, next))
+
+const goPrevImage = () => {
+  currentImageIndex.value = clampIndex(currentImageIndex.value - 1)
+}
+
+const goNextImage = () => {
+  currentImageIndex.value = clampIndex(currentImageIndex.value + 1)
+}
+
+// 스와이프 핸들러 (FE 스타일)
+const onTouchStart = (e: TouchEvent) => {
+  draggingRef.value = true
+  startXRef.value = e.touches[0].clientX
+}
+
+const onTouchEnd = (e: TouchEvent) => {
+  if (!draggingRef.value) return
+  draggingRef.value = false
+  const endX = e.changedTouches[0].clientX
+  const dx = endX - startXRef.value
+
+  // threshold: 스와이프 감지 거리
+  const TH = 50
+  if (dx > TH) goPrevImage()
+  if (dx < -TH) goNextImage()
+}
+
+// 키보드 네비게이션 (FE 스타일)
+const handleViewerKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault()
+    goPrevImage()
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault()
+    goNextImage()
+  }
+}
+
+// 모든 이미지 다운로드 (FE 스타일)
+const downloadAllImages = () => {
+  resultImages.value.forEach((img, i) => {
+    setTimeout(() => {
+      const a = document.createElement("a")
+      a.href = img.src
+      a.download = `${img.id}.png`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+    }, i * 250)
+  })
+}
+
+// 디자인 다시하기
+const redoDesign = () => {
+  currentStep.value = 3
+  generatedImageUrls.value = []
+  generatedImageUrl.value = ''
+  stepCompleted.value.step3 = false
+}
+
+// 이미지 다운로드 함수 (단일 이미지용 - 하위 호환성)
 const downloadImage = (format: 'png' | 'jpeg') => {
-  if (!generatedImageUrl.value) {
+  if (resultImages.value.length === 0) {
     alert('다운로드할 이미지가 없습니다.')
     return
   }
   
+  const currentImage = resultImages.value[currentImageIndex.value]
+  if (!currentImage) return
+  
   try {
-    // base64 데이터 URL에서 실제 데이터 추출
-    const imageData = generatedImageUrl.value
-    
-    // 파일명 생성 (신랑_신부_청첩장_날짜)
+    const imageData = currentImage.src
     const groomName = basicInfo.value?.groom_name || '신랑'
     const brideName = basicInfo.value?.bride_name || '신부'
     const today = new Date().toISOString().split('T')[0]
-    const fileName = `${groomName}_${brideName}_청첩장_${today}.${format}`
+    const fileName = `${groomName}_${brideName}_청첩장_${currentImageIndex.value + 1}_${today}.${format}`
     
-    // 다운로드 링크 생성
     const link = document.createElement('a')
     
     if (format === 'jpeg' && imageData.includes('image/png')) {
-      // PNG를 JPEG로 변환해야 하는 경우
       const canvas = document.createElement('canvas')
       const img = new Image()
       img.onload = () => {
@@ -711,7 +1319,6 @@ const downloadImage = (format: 'png' | 'jpeg') => {
         canvas.height = img.height
         const ctx = canvas.getContext('2d')
         if (ctx) {
-          // 흰색 배경 (JPEG는 투명도 미지원)
           ctx.fillStyle = '#FFFFFF'
           ctx.fillRect(0, 0, canvas.width, canvas.height)
           ctx.drawImage(img, 0, 0)
@@ -726,15 +1333,12 @@ const downloadImage = (format: 'png' | 'jpeg') => {
       }
       img.src = imageData
     } else {
-      // 원본 형식 그대로 다운로드
       link.href = imageData
       link.download = fileName
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
     }
-    
-    console.log(`이미지 다운로드: ${fileName}`)
   } catch (error) {
     console.error('다운로드 실패:', error)
     alert('이미지 다운로드에 실패했습니다. 다시 시도해주세요.')
@@ -745,15 +1349,199 @@ const goToList = () => {
   router.push('/invitation/list')
 }
 
+// 3D 청첩장 관련 함수들
+const threeDMainImageInput = ref<HTMLInputElement>()
+const threeDReferenceImagesInput = ref<HTMLInputElement>()
+
+const handleThreeDMainImageChange = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (file) {
+    threeDMainImage.value = file
+  }
+}
+
+const removeThreeDMainImage = () => {
+  if (threeDMainImage.value) {
+    URL.revokeObjectURL(getImagePreview(threeDMainImage.value))
+    threeDMainImage.value = null
+  }
+}
+
+const handleThreeDReferenceImagesChange = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const files = Array.from(target.files || [])
+  if (files.length + threeDReferenceImages.value.length > 2) {
+    alert('최대 2장까지 업로드 가능합니다.')
+    return
+  }
+  threeDReferenceImages.value = [...threeDReferenceImages.value, ...files.slice(0, 2 - threeDReferenceImages.value.length)]
+}
+
+const removeThreeDReferenceImage = (index: number) => {
+  URL.revokeObjectURL(getImagePreview(threeDReferenceImages.value[index]))
+  threeDReferenceImages.value.splice(index, 1)
+}
+
+// 3D 청첩장 생성 시작
+const handleThreeDSubmit = async () => {
+  if (!threeDMainImage.value) {
+    alert('메인 사진을 업로드해주세요.')
+    return
+  }
+
+  if (threeDReferenceImages.value.length > 2) {
+    alert('레퍼런스 사진은 최대 2장까지 가능합니다.')
+    return
+  }
+
+  threeDStatus.value = 'SUBMITTED'
+  threeDError.value = null
+
+  try {
+    const formData = new FormData()
+    formData.append('mainImage', threeDMainImage.value)
+    threeDReferenceImages.value.forEach((f) => formData.append('optionalImages', f))
+
+    const response = await request<{
+      status: string
+      invitationId?: number
+      result2dImageUrls?: string[]
+      assets?: {
+        model3dUrl?: string
+      }
+      message?: string
+    }>('/invitations/3d', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (response.result2dImageUrls && response.result2dImageUrls.length > 0) {
+      threeDResultImageUrls.value = response.result2dImageUrls
+      if (response.assets?.model3dUrl) {
+        threeDModelUrl.value = response.assets.model3dUrl
+      }
+    }
+
+    threeDInvitationId.value = response.invitationId || null
+    threeDStatus.value = 'PENDING'
+
+    // 폴링 시작
+    startThreeDPolling()
+  } catch (error: any) {
+    console.error('3D 청첩장 생성 요청 실패:', error)
+    threeDStatus.value = 'FAILED'
+    threeDError.value = error?.message || '3D 청첩장 생성 요청에 실패했습니다.'
+  }
+}
+
+// 3D 상태 폴링
+const startThreeDPolling = async () => {
+  const pollInterval = 5000 // 5초마다 확인
+
+  const pollOnce = async () => {
+    if (!threeDInvitationId.value) {
+      stopThreeDPolling()
+      return
+    }
+
+    try {
+      const response = await request<{
+        status: string
+        invitationId?: number
+        result2dImageUrls?: string[]
+        assets?: {
+          model3dUrl?: string
+        }
+        message?: string
+      }>('/invitations/3d/status', {
+        method: 'GET',
+      })
+
+      const status = String(response.status || '').toUpperCase()
+
+      if (status === 'COMPLETED' || status === 'DONE' || status === 'SUCCESS') {
+        threeDStatus.value = 'DONE'
+        if (response.result2dImageUrls) {
+          threeDResultImageUrls.value = response.result2dImageUrls
+        }
+        if (response.assets?.model3dUrl) {
+          threeDModelUrl.value = response.assets.model3dUrl
+        }
+        stopThreeDPolling()
+        alert('3D 청첩장이 완성되었습니다!')
+        return
+      }
+
+      if (status.includes('FAILED') || status.includes('ERROR')) {
+        threeDStatus.value = 'FAILED'
+        threeDError.value = response.message || '3D 청첩장 생성에 실패했습니다.'
+        stopThreeDPolling()
+        return
+      }
+
+      // 진행 중
+      threeDStatus.value = 'RUNNING'
+      if (response.result2dImageUrls) {
+        threeDResultImageUrls.value = response.result2dImageUrls
+      }
+      if (response.assets?.model3dUrl) {
+        threeDModelUrl.value = response.assets.model3dUrl
+      }
+
+      // 다음 폴링 예약
+      threeDPollingTimer.value = window.setTimeout(pollOnce, pollInterval)
+    } catch (error: any) {
+      console.error('3D 상태 확인 실패:', error)
+      // 네트워크 오류인 경우 재시도
+      threeDPollingTimer.value = window.setTimeout(pollOnce, pollInterval)
+    }
+  }
+
+  // 첫 폴링 시작
+  threeDPollingTimer.value = window.setTimeout(pollOnce, pollInterval)
+}
+
+// 3D 폴링 중지
+const stopThreeDPolling = () => {
+  if (threeDPollingTimer.value) {
+    clearTimeout(threeDPollingTimer.value)
+    threeDPollingTimer.value = null
+  }
+  if (threeDStatus.value === 'SUBMITTED' || threeDStatus.value === 'PENDING' || threeDStatus.value === 'RUNNING') {
+    threeDStatus.value = 'CANCELED'
+    threeDError.value = '사용자에 의해 취소되었습니다.'
+  }
+}
+
+// 컴포넌트 언마운트 시 폴링 정리
+onUnmounted(() => {
+  stopThreeDPolling()
+})
+
 const createNew = () => {
   currentStep.value = 1
   requirements.value = ''
   tones.value = []
   selectedTone.value = null
   generatedImageUrl.value = ''
+  generatedImageUrls.value = []
   originalGeneratedImageUrl.value = '' // 원본 이미지도 초기화
   designRequirements.value = ''
   designId.value = undefined
+  styleImages.value = []
+  mainImage.value = null
+  currentImageIndex.value = 0
+  
+  // 3D 관련 초기화
+  threeDMainImage.value = null
+  threeDReferenceImages.value = []
+  threeDStatus.value = 'IDLE'
+  threeDInvitationId.value = null
+  threeDModelUrl.value = ''
+  threeDResultImageUrls.value = []
+  threeDError.value = null
+  stopThreeDPolling()
   
   // 모든 단계 완료 상태 초기화 (기본 정보는 유지)
   stepCompleted.value = {
@@ -761,7 +1549,9 @@ const createNew = () => {
     step1: false,
     step2: false,
     step3: false,
-    step4: false
+    step4: false,
+    step5: false,
+    step6: false
   }
 }
 </script>
@@ -1229,6 +2019,785 @@ h1 {
   .download-section h3 {
     font-size: 1.1rem;
   }
+}
+
+/* Step 2: 톤 선택 그리드 (FE 스타일) */
+.tone-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.tone-selection-card {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tone-selection-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+}
+
+.tone-selection-card.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  position: relative;
+}
+
+.tone-selection-card.selected::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  background: #667eea;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tone-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.tone-icon {
+  font-size: 2rem;
+}
+
+.tone-card-header h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+  flex: 1;
+}
+
+.tone-check {
+  font-size: 1.5rem;
+  color: #667eea;
+  font-weight: 700;
+}
+
+.tone-description {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.tone-example {
+  font-size: 0.95rem;
+  color: #495057;
+  margin: 0.75rem 0 0;
+  font-style: italic;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+/* Step 3: 스타일 이미지 업로드 섹션 */
+.style-images-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.style-images-section h3 {
+  font-size: 1.2rem;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.style-images-desc {
+  color: #6c757d;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.style-images-uploader {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.style-images-input {
+  display: none;
+}
+
+.upload-area {
+  width: 100%;
+  min-height: 200px;
+  border: 2px dashed #dee2e6;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: white;
+  margin-bottom: 1rem;
+}
+
+.upload-area:hover {
+  border-color: #667eea;
+  background: #f8f9ff;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  color: #667eea;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.upload-text {
+  font-size: 1rem;
+  color: #495057;
+  font-weight: 500;
+}
+
+.upload-count {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.style-images-preview {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.style-image-item {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #dee2e6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-number {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(102, 126, 234, 0.9);
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  z-index: 2;
+}
+
+.style-image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-style-image {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.upload-style-images-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.upload-style-images-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.upload-style-images-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #6c757d;
+}
+
+.style-images-hint {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin: 0;
+}
+
+/* Step 5: 결과 페이지 (FE 스타일) */
+.result-page {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.result-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.result-header h2 {
+  font-size: 2rem;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.result-hint {
+  font-size: 0.95rem;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.viewer-card {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 22px;
+  background: rgba(255, 235, 242, 0.8);
+  border: 1px solid rgba(255, 170, 190, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.viewer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.viewer-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #cf2d71;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 170, 190, 0.35);
+}
+
+.viewer-counter {
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #2a2f3a;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 170, 190, 0.35);
+}
+
+.viewer {
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  background: rgba(255, 240, 245, 0.55);
+  border: 1px solid rgba(255, 170, 190, 0.18);
+  margin-top: 0.5rem;
+  min-height: 400px;
+  outline: none;
+}
+
+.viewer:focus {
+  border-color: rgba(255, 170, 190, 0.5);
+  box-shadow: 0 0 0 3px rgba(255, 170, 190, 0.2);
+}
+
+.viewer-track {
+  display: flex;
+  width: 100%;
+  transition: transform 260ms ease;
+  will-change: transform;
+}
+
+.viewer-slide {
+  min-width: 100%;
+  padding: 1.5rem 1rem 1rem;
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
+.viewer-poster {
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 170, 190, 0.22);
+  box-shadow: 0 16px 40px rgba(30, 30, 40, 0.08);
+  width: 50%;
+  margin: 0 auto;
+}
+
+.viewer-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.viewer-meta {
+  text-align: center;
+  padding: 0.5rem 0.25rem 0.5rem;
+}
+
+.viewer-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0.5rem;
+  color: #20242c;
+}
+
+.viewer-desc {
+  font-size: 0.9rem;
+  color: #3c4250;
+  margin: 0 0 0.75rem;
+}
+
+.viewer-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 170, 190, 0.22);
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 12px 26px rgba(30, 30, 40, 0.10);
+  cursor: pointer;
+  font-size: 28px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.viewer-arrow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.viewer-arrow.left {
+  left: 10px;
+}
+
+.viewer-arrow.right {
+  right: 10px;
+}
+
+.viewer-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 1rem 0 0.5rem;
+}
+
+.viewer-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(80, 90, 110, 0.25);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.viewer-dot.active {
+  width: 38px;
+  background: rgba(196, 55, 108, 0.85);
+}
+
+.result-actions {
+  margin-top: 1.5rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.result-btn {
+  width: 100%;
+  height: 56px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.result-btn.primary {
+  color: #fff;
+  background: linear-gradient(135deg, #fb7185 0%, #f97316 65%, #f59e0b 100%);
+  box-shadow: 0 18px 50px rgba(249, 115, 22, 0.25);
+}
+
+.result-btn.outline {
+  color: #f95085;
+  background: #fff;
+  border-image: linear-gradient(135deg, #fb7185, #f97316, #f59e0b) 1;
+  box-shadow: 0 12px 34px rgba(249, 115, 22, 0.1);
+}
+
+.result-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.02);
+}
+
+/* 태블릿 이상: 화살표 노출 */
+@media (min-width: 900px) {
+  .viewer-arrow {
+    display: flex;
+  }
+  .viewer-slide {
+    padding: 1.5rem 1.25rem 1.25rem;
+  }
+}
+
+/* 모바일 최적화 */
+@media (max-width: 420px) {
+  .viewer-card {
+    padding: 1rem 0.875rem 0.875rem;
+  }
+  .result-header h2 {
+    font-size: 1.5rem;
+  }
+  .viewer-poster {
+    width: 80%;
+  }
+}
+
+/* 메인 이미지 업로드 섹션 */
+.image-upload-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.upload-area {
+  width: 100%;
+  min-height: 200px;
+  border: 2px dashed #dee2e6;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: white;
+  margin-bottom: 1rem;
+}
+
+.upload-area:hover {
+  border-color: #667eea;
+  background: #f8f9ff;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  color: #667eea;
+}
+
+.upload-text {
+  font-size: 1rem;
+  color: #495057;
+  font-weight: 500;
+}
+
+.upload-hint {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.upload-count {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.image-preview-container {
+  margin-top: 1rem;
+}
+
+.image-preview {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #dee2e6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-preview img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+  transition: all 0.3s;
+}
+
+.remove-image-btn:hover {
+  background: rgba(239, 68, 68, 1);
+  transform: scale(1.1);
+}
+
+/* 3D 청첩장 스타일 */
+.threed-step {
+  padding: 2rem;
+}
+
+.threed-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.req {
+  color: #ef4444;
+}
+
+.pill-ok {
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #28a745;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+.hint-text {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-top: 0.5rem;
+}
+
+.reference-images-preview {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.reference-image-item {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #dee2e6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-number {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(102, 126, 234, 0.9);
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  z-index: 2;
+}
+
+.reference-image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.threed-status {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.status-submitted {
+  background: #e7f3ff;
+  color: #0066cc;
+}
+
+.status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-running {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-done {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-canceled {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.notice {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  color: #856404;
+  font-size: 0.9rem;
+}
+
+.danger-btn {
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: #ef4444;
+  color: white;
+}
+
+.danger-btn:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+}
+
+.threed-btn {
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+}
+
+.threed-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
 }
 </style>
 

@@ -32,11 +32,13 @@ const availableModels = ref<any[]>([])
 const selectedModel = ref<string | null>(null)
 const showModelSelector = ref(false)
 
-const canAccess = computed(() => authStore.isAuthenticated)
+// 로그인 체크 제거 - 로그인 없이도 접근 가능
+const canAccess = computed(() => true)
 
 // WebSocket 연결
 function connectWebSocket() {
   if (!authStore.accessToken || !authStore.user) {
+    // 로그인하지 않은 경우에도 연결 시도하지 않음 (에러 방지)
     return
   }
 
@@ -377,10 +379,7 @@ async function sendMessage() {
 }
 
 onMounted(() => {
-  if (!canAccess.value) {
-    authStore.openLoginModal()
-    return
-  }
+  // 로그인 체크 제거됨 - 로그인 없이도 접근 가능
   // 초기 환영 메시지
   messages.value = [
     {

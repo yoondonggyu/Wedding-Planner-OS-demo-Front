@@ -34,6 +34,8 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const showStatisticsModal = ref(false)
 const statistics = ref<any>(null)
+const showLandingPage = ref(true) // 랜딩 페이지 표시 여부
+const initializing = ref(false) // 초기화 중 여부
 
 const selectedTemplateId = ref<number | null>(null)
 const selectedDesignId = ref<number | null>(null)
@@ -700,21 +702,158 @@ async function viewStatistics(invitationId: number) {
 }
 
 
-onMounted(() => {
-  fetchTemplates()
+// 초기화 API 호출 (FE의 /api/invitations/init)
+async function initInvitation() {
+  initializing.value = true
+  error.value = null
+  
+  try {
+    // 백엔드 서버가 없을 경우를 대비해 try-catch로 처리
+    await request('/invitations/init', {
+      method: 'GET',
+    })
+    console.log('초기화 완료')
+  } catch (err: any) {
+    console.log('초기화 API 호출 실패 (데모 모드로 진행):', err)
+    // API 호출 실패해도 계속 진행 (데모 모드)
+  } finally {
+    initializing.value = false
+  }
+}
+
+// 시작하기 버튼 클릭
+async function handleStart() {
+  if (initializing.value) return
+  
+  await initInvitation()
+  showLandingPage.value = false
+  await fetchTemplates()
   if (canEdit.value) {
     fetchDesigns()
     fetchMyDigitalInvitations()
+  }
+}
+
+// 기능 미리보기 스크롤
+function scrollToFeatures() {
+  showLandingPage.value = false
+  nextTick(() => {
+    const featuresSection = document.querySelector('.templates-section')
+    if (featuresSection) {
+      featuresSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  })
+}
+
+onMounted(() => {
+  // 랜딩 페이지를 이미 본 경우 바로 로드
+  const hasSeenLanding = localStorage.getItem('has_seen_invitation_landing')
+  if (hasSeenLanding) {
+    showLandingPage.value = false
+    fetchTemplates()
+    if (canEdit.value) {
+      fetchDesigns()
+      fetchMyDigitalInvitations()
+    }
   }
 })
 </script>
 
 <template>
   <div class="invitation-design-view">
-    <div class="header">
-      <h1>💌 청첩장 디자인</h1>
-      <p class="description">템플릿을 선택하고 문구를 편집하여 나만의 청첩장을 만들어보세요.</p>
+    <!-- 랜딩 페이지 -->
+    <div v-if="showLandingPage" class="landing-page">
+      <div class="landing-bg" aria-hidden="true">
+        <span class="orb1"></span>
+        <span class="orb2"></span>
+        <span class="orb3"></span>
+      </div>
+
+      <main class="landing-main">
+        <section class="hero-card">
+          <div class="badge">AI Wedding Invitation</div>
+
+          <h1 class="landing-title">
+            따뜻한 감성의 <span class="highlight">AI 청첩장</span>을
+            <br />
+            만들어보세요
+          </h1>
+
+          <p class="landing-subtitle">
+            신랑·신부 정보 입력 → 사진 업로드 → 디자인 선택까지
+            <br />
+            완성된 청첩장 이미지를 바로 다운로드할 수 있어요.
+          </p>
+
+          <div class="cta-row">
+            <button
+              type="button"
+              class="primary-btn"
+              @click="handleStart"
+              :disabled="initializing"
+            >
+              <span v-if="initializing" class="btn-inner">
+                <span class="spinner" aria-hidden="true"></span>
+                준비 중...
+              </span>
+              <span v-else>시작하기</span>
+            </button>
+
+            <button
+              type="button"
+              class="ghost-btn"
+              @click="scrollToFeatures"
+            >
+              기능 미리보기
+            </button>
+          </div>
+
+          <div v-if="error" class="error-box">{{ error }}</div>
+
+          <div class="meta-row">
+            <div class="meta-item">
+              <span class="meta-dot"></span>
+              임시 토큰 발급 후 진행
+            </div>
+            <div class="meta-item">
+              <span class="meta-dot"></span>
+              결과물 다운로드 지원
+            </div>
+            <div class="meta-item">
+              <span class="meta-dot"></span>
+              웨딩 감성 + 글래스 UI
+            </div>
+          </div>
+        </section>
+
+        <section class="features">
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">🧾</div>
+            <div class="feature-title">정보 입력</div>
+            <div class="feature-desc">예식장, 날짜/시간, 추가 안내까지 한 번에</div>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">🖼️</div>
+            <div class="feature-title">사진 업로드</div>
+            <div class="feature-desc">메인/스타일 이미지로 원하는 무드 전달</div>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">✨</div>
+            <div class="feature-title">디자인 선택</div>
+            <div class="feature-desc">톤/프레임 조합으로 완성도 높은 결과</div>
+          </article>
+        </section>
+      </main>
     </div>
+
+    <!-- 메인 콘텐츠 -->
+    <div v-else>
+      <div class="header">
+        <h1>💌 청첩장 디자인</h1>
+        <p class="description">템플릿을 선택하고 문구를 편집하여 나만의 청첩장을 만들어보세요.</p>
+      </div>
 
     <div v-if="loading" class="loading">로딩 중...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
@@ -1236,10 +1375,310 @@ onMounted(() => {
         </div>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
+/* 랜딩 페이지 스타일 */
+.landing-page {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  background: radial-gradient(1200px 800px at 20% 15%, rgba(255, 205, 220, 0.45), transparent 55%),
+              radial-gradient(1200px 800px at 80% 20%, rgba(255, 228, 200, 0.38), transparent 55%),
+              radial-gradient(1200px 800px at 60% 90%, rgba(210, 200, 255, 0.30), transparent 60%),
+              linear-gradient(180deg, #fff, #fff7fb);
+}
+
+.landing-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.orb1, .orb2, .orb3 {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(40px);
+  opacity: 0.55;
+  transform: translateZ(0);
+}
+
+.orb1 {
+  width: 420px;
+  height: 420px;
+  left: -120px;
+  top: -120px;
+  background: rgba(255, 160, 190, 0.65);
+}
+
+.orb2 {
+  width: 520px;
+  height: 520px;
+  right: -160px;
+  top: -140px;
+  background: rgba(255, 210, 170, 0.60);
+}
+
+.orb3 {
+  width: 520px;
+  height: 520px;
+  left: 18%;
+  bottom: -220px;
+  background: rgba(190, 170, 255, 0.55);
+}
+
+.landing-main {
+  position: relative;
+  max-width: 1080px;
+  width: min(1080px, 100%);
+  padding: 72px 28px 52px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  z-index: 1;
+}
+
+.hero-card {
+  border-radius: 32px;
+  padding: 48px 36px 36px;
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  box-shadow: 0 18px 50px rgba(25, 10, 35, 0.10);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  color: rgba(70, 20, 45, 0.82);
+  background: rgba(255, 220, 235, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+}
+
+.landing-title {
+  margin: 20px 0 14px;
+  font-size: 48px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #1e1e2a;
+}
+
+.highlight {
+  background: linear-gradient(90deg, rgba(255, 88, 150, 0.92), rgba(255, 140, 90, 0.92));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.landing-subtitle {
+  margin: 0 0 24px;
+  font-size: 18px;
+  line-height: 1.7;
+  color: rgba(35, 35, 55, 0.72);
+}
+
+.cta-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.primary-btn {
+  min-width: 220px;
+  height: 58px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 17px;
+  color: white;
+  background: linear-gradient(90deg, rgba(223, 65, 129, 0.95), rgba(255, 130, 84, 0.92));
+  box-shadow: 0 18px 40px rgba(223, 65, 129, 0.20);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.primary-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.02);
+}
+
+.primary-btn:active {
+  transform: translateY(0px) scale(0.99);
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  border-top-color: rgba(255, 255, 255, 1);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ghost-btn {
+  height: 58px;
+  padding: 0 20px;
+  border-radius: 18px;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 16px;
+  color: rgba(50, 30, 60, 0.88);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.ghost-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.70);
+}
+
+.ghost-btn:active {
+  transform: translateY(0px) scale(0.99);
+}
+
+.error-box {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 235, 240, 0.78);
+  border: 1px solid rgba(255, 120, 140, 0.22);
+  color: rgba(140, 20, 55, 0.92);
+  font-weight: 700;
+}
+
+.meta-row {
+  margin-top: 18px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  color: rgba(35, 35, 55, 0.66);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meta-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(223, 65, 129, 0.65);
+  box-shadow: 0 0 0 4px rgba(223, 65, 129, 0.10);
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.feature-card {
+  border-radius: 26px;
+  padding: 24px 20px;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.64);
+  box-shadow: 0 14px 32px rgba(25, 10, 35, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.15s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+}
+
+.feature-icon {
+  font-size: 32px;
+}
+
+.feature-title {
+  margin-top: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e1e2a;
+}
+
+.feature-desc {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: rgba(35, 35, 55, 0.68);
+}
+
+/* 반응형 */
+@media (max-width: 900px) {
+  .landing-title {
+    font-size: 34px;
+  }
+  .features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .landing-main {
+    padding: 44px 16px 34px;
+  }
+  .hero-card {
+    padding: 26px 18px 20px;
+    border-radius: 22px;
+  }
+  .landing-title {
+    font-size: 28px;
+  }
+  .landing-subtitle {
+    font-size: 14px;
+  }
+  .primary-btn {
+    width: 100%;
+  }
+  .ghost-btn {
+    width: 100%;
+  }
+  .features {
+    grid-template-columns: 1fr;
+  }
+}
+
 .invitation-design-view {
   padding: 24px;
   max-width: 1400px;
